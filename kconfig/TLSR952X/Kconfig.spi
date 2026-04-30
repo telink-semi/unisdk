@@ -1,0 +1,712 @@
+#TODO: update this Kconfig
+
+config SPI_COUNT
+    int
+    default 2
+
+
+menuconfig TLK_SPI
+    bool "SPI"
+    select TLK_GPIO
+    select TLK_PLIC
+
+
+if TLK_SPI
+
+config TLK_SPI_AUTO_CONFIG
+    bool "Configure SPI automatically"
+
+#AUTO_CONFIG
+if TLK_SPI_AUTO_CONFIG #if-1
+
+config SPI0_AUTO_CONFIG
+    bool "Configure SPI0 automatically"
+
+#SPIXX AUTO_CONFIG
+if SPI0_AUTO_CONFIG #if-2
+
+#SPIXX CS PORT PIN
+menu "CS port pin"
+
+#PORT SELECT
+choice
+    prompt "CS port"
+    default SPI0_CS_PORT_E
+
+config SPI0_CS_PORT_A
+    bool "CS port A"
+config SPI0_CS_PORT_B
+    bool "CS port B"
+config SPI0_CS_PORT_C
+    bool "CS port C"
+config SPI0_CS_PORT_D
+    bool "CS port D"
+config SPI0_CS_PORT_E
+    bool "CS port E"
+config SPI0_CS_PORT_F
+    bool "CS port F"
+endchoice
+
+#PORT DEFINE
+config SPI0_CS_PORT
+    string
+
+    default "TLK_GPIO_PORT_A" if SPI0_CS_PORT_A
+    default "TLK_GPIO_PORT_B" if SPI0_CS_PORT_B
+    default "TLK_GPIO_PORT_C" if SPI0_CS_PORT_C
+    default "TLK_GPIO_PORT_D" if SPI0_CS_PORT_D
+    default "TLK_GPIO_PORT_E" if SPI0_CS_PORT_E
+    default "TLK_GPIO_PORT_F" if SPI0_CS_PORT_F
+
+#PIN SELECT
+choice
+    prompt "CS pin"
+    default SPI0_CS_PIN_0
+
+config SPI0_CS_PIN_0
+    bool "CS pin 0"
+config SPI0_CS_PIN_1
+    bool "CS pin 1"
+config SPI0_CS_PIN_2
+    bool "CS pin 2"
+config SPI0_CS_PIN_3
+    bool "CS pin 3"
+config SPI0_CS_PIN_4
+    bool "CS pin 4"
+config SPI0_CS_PIN_5
+    bool "CS pin 5"
+config SPI0_CS_PIN_6
+    bool "CS pin 6"
+endchoice
+
+#PIN DEFINE
+config SPI0_CS_PIN
+    string
+
+    default "TLK_GPIO_PIN_0" if SPI0_CS_PIN_0
+    default "TLK_GPIO_PIN_1" if SPI0_CS_PIN_1
+    default "TLK_GPIO_PIN_2" if SPI0_CS_PIN_2
+    default "TLK_GPIO_PIN_3" if SPI0_CS_PIN_3
+    default "TLK_GPIO_PIN_4" if SPI0_CS_PIN_4
+    default "TLK_GPIO_PIN_5" if SPI0_CS_PIN_5
+    default "TLK_GPIO_PIN_6" if SPI0_CS_PIN_6
+endmenu
+
+#SPIXX SCK PORT PIN
+menu "SCK port pin"
+
+#PORT SELECT
+choice
+    prompt "SCK port"
+    default SPI0_SCK_PORT_E
+
+config SPI0_SCK_PORT_A
+    bool "SCK port A"
+config SPI0_SCK_PORT_B
+    bool "SCK port B"
+config SPI0_SCK_PORT_C
+    bool "SCK port C"
+config SPI0_SCK_PORT_D
+    bool "SCK port D"
+config SPI0_SCK_PORT_E
+    bool "SCK port E"
+config SPI0_SCK_PORT_F
+    bool "SCK port F"
+endchoice
+
+#PORT DEFINE
+config SPI0_SCK_PORT
+    string
+
+    default "TLK_GPIO_PORT_A" if SPI0_SCK_PORT_A
+    default "TLK_GPIO_PORT_B" if SPI0_SCK_PORT_B
+    default "TLK_GPIO_PORT_C" if SPI0_SCK_PORT_C
+    default "TLK_GPIO_PORT_D" if SPI0_SCK_PORT_D
+    default "TLK_GPIO_PORT_E" if SPI0_SCK_PORT_E
+    default "TLK_GPIO_PORT_F" if SPI0_SCK_PORT_F
+
+#PIN SELECT
+choice
+    prompt "SCK pin"
+    default SPI0_SCK_PIN_1
+
+config SPI0_SCK_PIN_0
+    bool "SCK pin 0"
+config SPI0_SCK_PIN_1
+    bool "SCK pin 1"
+config SPI0_SCK_PIN_2
+    bool "SCK pin 2"
+config SPI0_SCK_PIN_3
+    bool "SCK pin 3"
+config SPI0_SCK_PIN_4
+    bool "SCK pin 4"
+config SPI0_SCK_PIN_5
+    bool "SCK pin 5"
+config SPI0_SCK_PIN_6
+    bool "SCK pin 6"
+endchoice
+
+#PIN DEFINE
+config SPI0_SCK_PIN
+    string
+
+    default "TLK_GPIO_PIN_0" if SPI0_SCK_PIN_0
+    default "TLK_GPIO_PIN_1" if SPI0_SCK_PIN_1
+    default "TLK_GPIO_PIN_2" if SPI0_SCK_PIN_2
+    default "TLK_GPIO_PIN_3" if SPI0_SCK_PIN_3
+    default "TLK_GPIO_PIN_4" if SPI0_SCK_PIN_4
+    default "TLK_GPIO_PIN_5" if SPI0_SCK_PIN_5
+    default "TLK_GPIO_PIN_6" if SPI0_SCK_PIN_6
+endmenu
+
+#SPIXX MOSI PORT PIN
+menu "MOSI port pin"
+
+#PORT SELECT
+choice
+    prompt "MOSI port"
+    default SPI0_MOSI_PORT_E
+
+config SPI0_MOSI_PORT_A
+    bool "MOSI port A"
+config SPI0_MOSI_PORT_B
+    bool "MOSI port B"
+config SPI0_MOSI_PORT_C
+    bool "MOSI port C"
+config SPI0_MOSI_PORT_D
+    bool "MOSI port D"
+config SPI0_MOSI_PORT_E
+    bool "MOSI port E"
+config SPI0_MOSI_PORT_F
+    bool "MOSI port F"
+endchoice
+
+#PORT DEFINE
+config SPI0_MOSI_PORT
+    string
+
+    default "TLK_GPIO_PORT_A" if SPI0_MOSI_PORT_A
+    default "TLK_GPIO_PORT_B" if SPI0_MOSI_PORT_B
+    default "TLK_GPIO_PORT_C" if SPI0_MOSI_PORT_C
+    default "TLK_GPIO_PORT_D" if SPI0_MOSI_PORT_D
+    default "TLK_GPIO_PORT_E" if SPI0_MOSI_PORT_E
+    default "TLK_GPIO_PORT_F" if SPI0_MOSI_PORT_F
+
+#PIN SELECT
+choice
+    prompt "MOSI pin"
+    default SPI0_MOSI_PIN_2
+
+config SPI0_MOSI_PIN_0
+    bool "MOSI pin 0"
+config SPI0_MOSI_PIN_1
+    bool "MOSI pin 1"
+config SPI0_MOSI_PIN_2
+    bool "MOSI pin 2"
+config SPI0_MOSI_PIN_3
+    bool "MOSI pin 3"
+config SPI0_MOSI_PIN_4
+    bool "MOSI pin 4"
+config SPI0_MOSI_PIN_5
+    bool "MOSI pin 5"
+config SPI0_MOSI_PIN_6
+    bool "MOSI pin 6"
+endchoice
+
+#PIN DEFINE
+config SPI0_MOSI_PIN
+    string
+
+    default "TLK_GPIO_PIN_0" if SPI0_MOSI_PIN_0
+    default "TLK_GPIO_PIN_1" if SPI0_MOSI_PIN_1
+    default "TLK_GPIO_PIN_2" if SPI0_MOSI_PIN_2
+    default "TLK_GPIO_PIN_3" if SPI0_MOSI_PIN_3
+    default "TLK_GPIO_PIN_4" if SPI0_MOSI_PIN_4
+    default "TLK_GPIO_PIN_5" if SPI0_MOSI_PIN_5
+    default "TLK_GPIO_PIN_6" if SPI0_MOSI_PIN_6
+endmenu
+
+#SPIXX MISO PORT PIN
+menu "MISO port pin"
+
+#PORT SELECT
+choice
+    prompt "MISO port"
+    default SPI0_MISO_PORT_E
+
+config SPI0_MISO_PORT_A
+    bool "MISO port A"
+config SPI0_MISO_PORT_B
+    bool "MISO port B"
+config SPI0_MISO_PORT_C
+    bool "MISO port C"
+config SPI0_MISO_PORT_D
+    bool "MISO port D"
+config SPI0_MISO_PORT_E
+    bool "MISO port E"
+config SPI0_MISO_PORT_F
+    bool "MISO port F"
+endchoice
+
+#PORT DEFINE
+config SPI0_MISO_PORT
+    string
+
+    default "TLK_GPIO_PORT_A" if SPI0_MISO_PORT_A
+    default "TLK_GPIO_PORT_B" if SPI0_MISO_PORT_B
+    default "TLK_GPIO_PORT_C" if SPI0_MISO_PORT_C
+    default "TLK_GPIO_PORT_D" if SPI0_MISO_PORT_D
+    default "TLK_GPIO_PORT_E" if SPI0_MISO_PORT_E
+    default "TLK_GPIO_PORT_F" if SPI0_MISO_PORT_F
+
+#PIN SELECT
+choice
+    prompt "MISO pin"
+    default SPI0_MISO_PIN_3
+
+config SPI0_MISO_PIN_0
+    bool "MISO pin 0"
+config SPI0_MISO_PIN_1
+    bool "MISO pin 1"
+config SPI0_MISO_PIN_2
+    bool "MISO pin 2"
+config SPI0_MISO_PIN_3
+    bool "MISO pin 3"
+config SPI0_MISO_PIN_4
+    bool "MISO pin 4"
+config SPI0_MISO_PIN_5
+    bool "MISO pin 5"
+config SPI0_MISO_PIN_6
+    bool "MISO pin 6"
+endchoice
+
+#PIN DEFINE
+config SPI0_MISO_PIN
+    string
+
+    default "TLK_GPIO_PIN_0" if SPI0_MISO_PIN_0
+    default "TLK_GPIO_PIN_1" if SPI0_MISO_PIN_1
+    default "TLK_GPIO_PIN_2" if SPI0_MISO_PIN_2
+    default "TLK_GPIO_PIN_3" if SPI0_MISO_PIN_3
+    default "TLK_GPIO_PIN_4" if SPI0_MISO_PIN_4
+    default "TLK_GPIO_PIN_5" if SPI0_MISO_PIN_5
+    default "TLK_GPIO_PIN_6" if SPI0_MISO_PIN_6
+endmenu
+
+#SPIXX ROLE SELECT & DEFINE
+choice 
+    prompt "Role"
+    default SPI0_ROLE_MASTER
+
+config SPI0_ROLE_MASTER
+    bool "Master"
+
+config SPI0_ROLE_SLAVE
+    bool "Slave"
+
+endchoice
+
+config SPI0_ROLE
+    string 
+    default "TLK_SPI_MASTER" if SPI0_ROLE_MASTER
+    default "TLK_SPI_SLAVE" if SPI0_ROLE_SLAVE
+
+#SPIXX MODE SELECT & DEFINE
+choice 
+    prompt "Mode"
+    default SPI0_MODE_0
+
+config SPI0_MODE_0
+    bool "Mode 0"
+config SPI0_MODE_1
+    bool "Mode 1"
+config SPI0_MODE_2
+    bool "Mode 2"
+endchoice
+
+config SPI0_MODE
+    string
+
+    default "SPI_MODE0" if SPI0_MODE_0
+    default "SPI_MODE1" if SPI0_MODE_1
+    default "SPI_MODE2" if SPI0_MODE_2
+
+#SPIXX IO MODE SELECT & DEFINE
+choice 
+    prompt "IO mode"
+    default SPI0_IO_MODE_SINGLE
+
+config SPI0_IO_MODE_SINGLE
+    bool "Single"
+
+config SPI0_IO_MODE_DUAL
+    bool "Dual"
+
+config SPI0_IO_MODE_QUAD
+    bool "Quad"
+
+config SPI0_IO_MODE_3LINE
+    bool "3 line"
+
+endchoice
+
+config SPI0_IO_MODE
+    string 
+    default "TLK_SPI_SINGLE_MODE" if SPI0_IO_MODE_SINGLE
+    default "TLK_SPI_DUAL_MODE" if SPI0_IO_MODE_DUAL
+    default "TLK_SPI_QUAD_MODE" if SPI0_IO_MODE_QUAD
+    default "TLK_SPI_3_LINE_MODE" if SPI0_IO_MODE_3LINE
+
+#SPIXX DIV CLOCK SELECT
+config SPI0_DIV_CLOCK
+    int "Div clock"
+    default 200
+
+endif #if-2
+config SPI1_AUTO_CONFIG
+    bool "Configure SPI1 automatically"
+
+#SPIXX AUTO_CONFIG
+if SPI1_AUTO_CONFIG #if-2
+
+#SPIXX CS PORT PIN
+menu "CS port pin"
+
+#PORT SELECT
+choice
+    prompt "CS port"
+    default SPI1_CS_PORT_E
+
+config SPI1_CS_PORT_A
+    bool "CS port A"
+config SPI1_CS_PORT_B
+    bool "CS port B"
+config SPI1_CS_PORT_C
+    bool "CS port C"
+config SPI1_CS_PORT_D
+    bool "CS port D"
+config SPI1_CS_PORT_E
+    bool "CS port E"
+config SPI1_CS_PORT_F
+    bool "CS port F"
+endchoice
+
+#PORT DEFINE
+config SPI1_CS_PORT
+    string
+
+    default "TLK_GPIO_PORT_A" if SPI1_CS_PORT_A
+    default "TLK_GPIO_PORT_B" if SPI1_CS_PORT_B
+    default "TLK_GPIO_PORT_C" if SPI1_CS_PORT_C
+    default "TLK_GPIO_PORT_D" if SPI1_CS_PORT_D
+    default "TLK_GPIO_PORT_E" if SPI1_CS_PORT_E
+    default "TLK_GPIO_PORT_F" if SPI1_CS_PORT_F
+
+#PIN SELECT
+choice
+    prompt "CS pin"
+    default SPI1_CS_PIN_0
+
+config SPI1_CS_PIN_0
+    bool "CS pin 0"
+config SPI1_CS_PIN_1
+    bool "CS pin 1"
+config SPI1_CS_PIN_2
+    bool "CS pin 2"
+config SPI1_CS_PIN_3
+    bool "CS pin 3"
+config SPI1_CS_PIN_4
+    bool "CS pin 4"
+config SPI1_CS_PIN_5
+    bool "CS pin 5"
+config SPI1_CS_PIN_6
+    bool "CS pin 6"
+endchoice
+
+#PIN DEFINE
+config SPI1_CS_PIN
+    string
+
+    default "TLK_GPIO_PIN_0" if SPI1_CS_PIN_0
+    default "TLK_GPIO_PIN_1" if SPI1_CS_PIN_1
+    default "TLK_GPIO_PIN_2" if SPI1_CS_PIN_2
+    default "TLK_GPIO_PIN_3" if SPI1_CS_PIN_3
+    default "TLK_GPIO_PIN_4" if SPI1_CS_PIN_4
+    default "TLK_GPIO_PIN_5" if SPI1_CS_PIN_5
+    default "TLK_GPIO_PIN_6" if SPI1_CS_PIN_6
+endmenu
+
+#SPIXX SCK PORT PIN
+menu "SCK port pin"
+
+#PORT SELECT
+choice
+    prompt "SCK port"
+    default SPI1_SCK_PORT_E
+
+config SPI1_SCK_PORT_A
+    bool "SCK port A"
+config SPI1_SCK_PORT_B
+    bool "SCK port B"
+config SPI1_SCK_PORT_C
+    bool "SCK port C"
+config SPI1_SCK_PORT_D
+    bool "SCK port D"
+config SPI1_SCK_PORT_E
+    bool "SCK port E"
+config SPI1_SCK_PORT_F
+    bool "SCK port F"
+endchoice
+
+#PORT DEFINE
+config SPI1_SCK_PORT
+    string
+
+    default "TLK_GPIO_PORT_A" if SPI1_SCK_PORT_A
+    default "TLK_GPIO_PORT_B" if SPI1_SCK_PORT_B
+    default "TLK_GPIO_PORT_C" if SPI1_SCK_PORT_C
+    default "TLK_GPIO_PORT_D" if SPI1_SCK_PORT_D
+    default "TLK_GPIO_PORT_E" if SPI1_SCK_PORT_E
+    default "TLK_GPIO_PORT_F" if SPI1_SCK_PORT_F
+
+#PIN SELECT
+choice
+    prompt "SCK pin"
+    default SPI1_SCK_PIN_1
+
+config SPI1_SCK_PIN_0
+    bool "SCK pin 0"
+config SPI1_SCK_PIN_1
+    bool "SCK pin 1"
+config SPI1_SCK_PIN_2
+    bool "SCK pin 2"
+config SPI1_SCK_PIN_3
+    bool "SCK pin 3"
+config SPI1_SCK_PIN_4
+    bool "SCK pin 4"
+config SPI1_SCK_PIN_5
+    bool "SCK pin 5"
+config SPI1_SCK_PIN_6
+    bool "SCK pin 6"
+endchoice
+
+#PIN DEFINE
+config SPI1_SCK_PIN
+    string
+
+    default "TLK_GPIO_PIN_0" if SPI1_SCK_PIN_0
+    default "TLK_GPIO_PIN_1" if SPI1_SCK_PIN_1
+    default "TLK_GPIO_PIN_2" if SPI1_SCK_PIN_2
+    default "TLK_GPIO_PIN_3" if SPI1_SCK_PIN_3
+    default "TLK_GPIO_PIN_4" if SPI1_SCK_PIN_4
+    default "TLK_GPIO_PIN_5" if SPI1_SCK_PIN_5
+    default "TLK_GPIO_PIN_6" if SPI1_SCK_PIN_6
+endmenu
+
+#SPIXX MOSI PORT PIN
+menu "MOSI port pin"
+
+#PORT SELECT
+choice
+    prompt "MOSI port"
+    default SPI1_MOSI_PORT_E
+
+config SPI1_MOSI_PORT_A
+    bool "MOSI port A"
+config SPI1_MOSI_PORT_B
+    bool "MOSI port B"
+config SPI1_MOSI_PORT_C
+    bool "MOSI port C"
+config SPI1_MOSI_PORT_D
+    bool "MOSI port D"
+config SPI1_MOSI_PORT_E
+    bool "MOSI port E"
+config SPI1_MOSI_PORT_F
+    bool "MOSI port F"
+endchoice
+
+#PORT DEFINE
+config SPI1_MOSI_PORT
+    string
+
+    default "TLK_GPIO_PORT_A" if SPI1_MOSI_PORT_A
+    default "TLK_GPIO_PORT_B" if SPI1_MOSI_PORT_B
+    default "TLK_GPIO_PORT_C" if SPI1_MOSI_PORT_C
+    default "TLK_GPIO_PORT_D" if SPI1_MOSI_PORT_D
+    default "TLK_GPIO_PORT_E" if SPI1_MOSI_PORT_E
+    default "TLK_GPIO_PORT_F" if SPI1_MOSI_PORT_F
+
+#PIN SELECT
+choice
+    prompt "MOSI pin"
+    default SPI1_MOSI_PIN_2
+
+config SPI1_MOSI_PIN_0
+    bool "MOSI pin 0"
+config SPI1_MOSI_PIN_1
+    bool "MOSI pin 1"
+config SPI1_MOSI_PIN_2
+    bool "MOSI pin 2"
+config SPI1_MOSI_PIN_3
+    bool "MOSI pin 3"
+config SPI1_MOSI_PIN_4
+    bool "MOSI pin 4"
+config SPI1_MOSI_PIN_5
+    bool "MOSI pin 5"
+config SPI1_MOSI_PIN_6
+    bool "MOSI pin 6"
+endchoice
+
+#PIN DEFINE
+config SPI1_MOSI_PIN
+    string
+
+    default "TLK_GPIO_PIN_0" if SPI1_MOSI_PIN_0
+    default "TLK_GPIO_PIN_1" if SPI1_MOSI_PIN_1
+    default "TLK_GPIO_PIN_2" if SPI1_MOSI_PIN_2
+    default "TLK_GPIO_PIN_3" if SPI1_MOSI_PIN_3
+    default "TLK_GPIO_PIN_4" if SPI1_MOSI_PIN_4
+    default "TLK_GPIO_PIN_5" if SPI1_MOSI_PIN_5
+    default "TLK_GPIO_PIN_6" if SPI1_MOSI_PIN_6
+endmenu
+
+#SPIXX MISO PORT PIN
+menu "MISO port pin"
+
+#PORT SELECT
+choice
+    prompt "MISO port"
+    default SPI1_MISO_PORT_E
+
+config SPI1_MISO_PORT_A
+    bool "MISO port A"
+config SPI1_MISO_PORT_B
+    bool "MISO port B"
+config SPI1_MISO_PORT_C
+    bool "MISO port C"
+config SPI1_MISO_PORT_D
+    bool "MISO port D"
+config SPI1_MISO_PORT_E
+    bool "MISO port E"
+config SPI1_MISO_PORT_F
+    bool "MISO port F"
+endchoice
+
+#PORT DEFINE
+config SPI1_MISO_PORT
+    string
+
+    default "TLK_GPIO_PORT_A" if SPI1_MISO_PORT_A
+    default "TLK_GPIO_PORT_B" if SPI1_MISO_PORT_B
+    default "TLK_GPIO_PORT_C" if SPI1_MISO_PORT_C
+    default "TLK_GPIO_PORT_D" if SPI1_MISO_PORT_D
+    default "TLK_GPIO_PORT_E" if SPI1_MISO_PORT_E
+    default "TLK_GPIO_PORT_F" if SPI1_MISO_PORT_F
+
+#PIN SELECT
+choice
+    prompt "MISO pin"
+    default SPI1_MISO_PIN_3
+
+config SPI1_MISO_PIN_0
+    bool "MISO pin 0"
+config SPI1_MISO_PIN_1
+    bool "MISO pin 1"
+config SPI1_MISO_PIN_2
+    bool "MISO pin 2"
+config SPI1_MISO_PIN_3
+    bool "MISO pin 3"
+config SPI1_MISO_PIN_4
+    bool "MISO pin 4"
+config SPI1_MISO_PIN_5
+    bool "MISO pin 5"
+config SPI1_MISO_PIN_6
+    bool "MISO pin 6"
+endchoice
+
+#PIN DEFINE
+config SPI1_MISO_PIN
+    string
+
+    default "TLK_GPIO_PIN_0" if SPI1_MISO_PIN_0
+    default "TLK_GPIO_PIN_1" if SPI1_MISO_PIN_1
+    default "TLK_GPIO_PIN_2" if SPI1_MISO_PIN_2
+    default "TLK_GPIO_PIN_3" if SPI1_MISO_PIN_3
+    default "TLK_GPIO_PIN_4" if SPI1_MISO_PIN_4
+    default "TLK_GPIO_PIN_5" if SPI1_MISO_PIN_5
+    default "TLK_GPIO_PIN_6" if SPI1_MISO_PIN_6
+endmenu
+
+#SPIXX ROLE SELECT & DEFINE
+choice 
+    prompt "Role"
+    default SPI1_ROLE_MASTER
+
+config SPI1_ROLE_MASTER
+    bool "Master"
+
+config SPI1_ROLE_SLAVE
+    bool "Slave"
+
+endchoice
+
+config SPI1_ROLE
+    string 
+    default "TLK_SPI_MASTER" if SPI1_ROLE_MASTER
+    default "TLK_SPI_SLAVE" if SPI1_ROLE_SLAVE
+
+#SPIXX MODE SELECT & DEFINE
+choice 
+    prompt "Mode"
+    default SPI1_MODE_0
+
+config SPI1_MODE_0
+    bool "Mode 0"
+config SPI1_MODE_1
+    bool "Mode 1"
+config SPI1_MODE_2
+    bool "Mode 2"
+endchoice
+
+config SPI1_MODE
+    string
+
+    default "SPI_MODE0" if SPI1_MODE_0
+    default "SPI_MODE1" if SPI1_MODE_1
+    default "SPI_MODE2" if SPI1_MODE_2
+
+#SPIXX IO MODE SELECT & DEFINE
+choice 
+    prompt "IO mode"
+    default SPI1_IO_MODE_SINGLE
+
+config SPI1_IO_MODE_SINGLE
+    bool "Single"
+
+config SPI1_IO_MODE_DUAL
+    bool "Dual"
+
+config SPI1_IO_MODE_QUAD
+    bool "Quad"
+
+config SPI1_IO_MODE_3LINE
+    bool "3 line"
+
+endchoice
+
+config SPI1_IO_MODE
+    string 
+    default "TLK_SPI_SINGLE_MODE" if SPI1_IO_MODE_SINGLE
+    default "TLK_SPI_DUAL_MODE" if SPI1_IO_MODE_DUAL
+    default "TLK_SPI_QUAD_MODE" if SPI1_IO_MODE_QUAD
+    default "TLK_SPI_3_LINE_MODE" if SPI1_IO_MODE_3LINE
+
+#SPIXX DIV CLOCK SELECT
+config SPI1_DIV_CLOCK
+    int "Div clock"
+    default 200
+
+endif #if-2
+endif #if-1
+
+endif

@@ -1,0 +1,83 @@
+osource "$(KCONFIG_BINARY_DIR)/Kconfig.debug" # TODO: Explore how we can script all Kconfig files where ${...} inserts or for are possible, which are currently processed via preprocess_kconfig.py
+osource "$(KCONFIG_BINARY_DIR)/Kconfig.task_planner" # TODO: Explore how we can script all Kconfig files where ${...} inserts or for are possible, which are currently processed via preprocess_kconfig.py
+
+
+menu "SoC configuration"
+
+# Stack size in retention memory
+config TLK_MEMORY_STACK_SIZE
+    int "Stack size in Kbytes"
+    default 4
+    range 1 16 if TLK_PM_RETENTION_MEMORY_SIZE_32K
+    range 1 32 if TLK_PM_RETENTION_MEMORY_SIZE_64K
+    range 1 64 if TLK_PM_RETENTION_MEMORY_SIZE_96K
+    range 1 96 if TLK_PM_RETENTION_MEMORY_SIZE_128K
+    range 1 128 if TLK_PM_RETENTION_MEMORY_SIZE_192K
+    range 1 192 if TLK_PM_RETENTION_MEMORY_SIZE_256K
+    range 1 96
+
+config ALLOW_DYNAMIC_MEMORY_ALLOCATION
+    bool "Allow dynamic memory allocation"
+    default n
+    help
+        If you want to use dynamic memory allocators in system predefined retention heap, 
+        you have to enable this config.
+
+endmenu
+
+
+menu "Other configuration"
+
+# Allow CPP wrappers for C++ builds
+config TLK_ALLOW_CPP_WRAPPERS
+    bool "Allow CPP wrappers"
+
+
+# Compiler optimization level selection
+choice
+    prompt "Optimization level"
+    default TLK_OPTIMIZATION_LEVEL_O2
+
+config TLK_OPTIMIZATION_LEVEL_O0
+    bool "O0"
+
+config TLK_OPTIMIZATION_LEVEL_O1
+    bool "O1"
+
+config TLK_OPTIMIZATION_LEVEL_O2
+    bool "O2"
+
+config TLK_OPTIMIZATION_LEVEL_O3
+    bool "O3"
+
+config TLK_OPTIMIZATION_LEVEL_OS
+    bool "Os"
+
+config TLK_OPTIMIZATION_LEVEL_OFAST
+    bool "Ofast"
+
+endchoice # Optimization level
+
+
+# Selected optimization level string
+config TLK_OPTIMIZATION_LEVEL
+    string
+    default "O0" if TLK_OPTIMIZATION_LEVEL_O0
+    default "O1" if TLK_OPTIMIZATION_LEVEL_O1
+    default "O2" if TLK_OPTIMIZATION_LEVEL_O2
+    default "O3" if TLK_OPTIMIZATION_LEVEL_O3
+    default "Os" if TLK_OPTIMIZATION_LEVEL_OS
+    default "Ofast" if TLK_OPTIMIZATION_LEVEL_OFAST
+
+endmenu
+
+
+menu "Subsystems"
+
+rsource "storage/Kconfig.nv_storage"
+
+if TLK_USB
+    rsource "Kconfig.tinyusb"
+endif
+
+endmenu

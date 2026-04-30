@@ -1,0 +1,72 @@
+#include "main.h"
+
+#if IS_ENABLED(CONFIG_TLK_RF_DEMO_EXCHANGE_STX_SRX)
+
+void transmitter_loop(void) 
+{
+    tlk_rf_set_tx_fifo(tx_buffer, TX_FIFO_DEPTH, TX_FIFO_SIZE);
+    tlk_rf_set_rx_fifo(rx_buffer, RX_FIFO_COUNT, RX_FIFO_SIZE);
+    
+    while (1) {
+        tlk_rf_prepare_tx_packet(tx_packet, TX_PDU_SIZE);
+        GET_PDU(tx_packet)->payload_size = PACKET_PAYLOAD_SIZE;
+        GET_PDU(tx_packet)->payload[0]++;
+
+        on_ping_sent();
+
+        tlk_rf_start_stx(tlk_rf_get_tick());
+
+        ping = tlk_api_micros();
+        
+        while (!tlk_rf_instance.tx_end) { }
+
+        tlk_rf_start_srx(tlk_rf_get_tick(), TLK_M2USEC(PING_TIMEOUT_MS));
+
+        while (!tlk_rf_instance.rx_end) { }
+
+        ping = tlk_api_micros() - ping;
+        
+        on_pong_received();
+
+#if IS_ENABLED(CONFIG_TLK_RF_DEMO_PM)
+        /* The delay just to see that chip is active. */
+        tlk_api_delay(TLK_M2USEC(250));
+
+        tlk_api_sleep(1000 + 500);
+#else
+        tlk_api_delay(TLK_M2USEC(1000));
+#endif
+    }
+}
+
+void receiver_loop(void)
+{
+    tlk_rf_set_tx_fifo(tx_buffer, TX_FIFO_DEPTH, TX_FIFO_SIZE);
+    tlk_rf_set_rx_fifo(rx_buffer, RX_FIFO_COUNT, RX_FIFO_SIZE);
+
+    while (1) {
+        do {
+            tlk_rf_start_srx(tlk_rf_get_tick(), UNISDK_RF_MAX_TIMEOUT_SRX);
+
+            while (!tlk_rf_instance.rx_end) { }
+        } while (!tlk_rf_instance.rx_ok);
+        
+        on_ping_received();
+
+        memcpy(tx_buffer, tlk_rf_instance.rx_packet, TX_PACKET_SIZE);
+        tlk_rf_prepare_tx_packet(tx_packet, TX_PDU_SIZE);
+        GET_PDU(tx_packet)->payload_size = PACKET_PAYLOAD_SIZE;
+
+        tlk_rf_start_stx(tlk_rf_get_tick());
+        
+        while (!tlk_rf_instance.tx_end) { }
+
+        on_pong_sent();
+
+#if IS_ENABLED(CONFIG_TLK_RF_DEMO_PM)
+        tlk_api_sleep(PING_TIMEOUT_MS);
+#endif
+    }
+}
+
+#endif

@@ -1,0 +1,23 @@
+choice
+    prompt "SoC"
+
+config TLK_SOC_TLSR9528A
+    bool "TLSR9528A"
+    select TLK_HAS_QFN88_CASE
+
+config TLK_SOC_TLSR9527B
+    bool "TLSR9527B"
+    select TLK_HAS_QFN40_CASE
+
+config TLK_SOC_TLSR9527C
+    bool "TLSR9527C"
+    select TLK_HAS_QFN56_CASE
+
+endchoice # SoC
+
+
+config TLK_SOC
+    string
+    default "TLSR9528A" if TLK_SOC_TLSR9528A
+    default "TLSR9527B" if TLK_SOC_TLSR9527B
+    default "TLSR9527C" if TLK_SOC_TLSR9527C

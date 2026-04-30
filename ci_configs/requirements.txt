@@ -1,0 +1,3 @@
+kconfiglib
+PyYAML
+python-benedict[all]

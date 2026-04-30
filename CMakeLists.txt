@@ -1,0 +1,99 @@
+cmake_minimum_required(VERSION 3.20.0)
+
+set(AUTOCONF_H "${CMAKE_BINARY_DIR}/autoconf.h")
+set(PINMUX_H "${CMAKE_BINARY_DIR}/pinmux.h")
+
+# Set TELINK_BASE if not already set
+if(NOT DEFINED TELINK_BASE)
+    set(TELINK_BASE ${CMAKE_CURRENT_SOURCE_DIR})
+endif()
+
+# Add cmake modules to path
+list(APPEND CMAKE_MODULE_PATH ${TELINK_BASE}/cmake/modules)
+
+set(TELINK_ROOT_INCLUDED TRUE)
+
+if(NOT DEFINED TELINK_PACKAGE_INCLUDED)
+    # Load Telink default modules
+    find_package(Telink REQUIRED HINTS $ENV{TELINK_BASE})
+endif()
+
+
+# Set project name
+project(${TARGET_NAME} LANGUAGES ASM C CXX)
+
+# Add extensions
+list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake")
+
+include(extensions)
+
+# Include the sources
+list(APPEND SOURCES "${CMAKE_CURRENT_SOURCE_DIR}/core/common/startup/cstartup_flash.S")
+
+if (CONFIG_TLK_PM_RAM_RETENTION_ENABLE)
+list(APPEND SOURCES "${CMAKE_CURRENT_SOURCE_DIR}/core/common/startup/tl_context.S")
+endif()
+
+
+# Executable target settings
+add_executable(${TARGET_NAME} ${SOURCES})
+
+set_target_properties(${TARGET_NAME} PROPERTIES 
+    SUFFIX ".elf"
+    RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}
+)
+
+# Ensure the target depends on preprocess_linker target defined in linker.cmake
+add_dependencies(${TARGET_NAME} preprocess_linker)
+
+# Apply compiler and linker options using the functions from respective modules
+telink_apply_compiler_options(${TARGET_NAME})
+telink_apply_linker_options(${TARGET_NAME})
+target_include_directories(${TARGET_NAME} PRIVATE .)
+
+# Add standard include paths
+# During development: manually written headers are located here (alongside .yaml files)
+# In the exported SDK: all generated headers are copied here, so these paths are sufficient
+target_include_directories(${TARGET_NAME} PRIVATE ./core/${CONFIG_TLK_CORE})      # Path to core header files from YAML files
+target_include_directories(${TARGET_NAME} PRIVATE ./soc/${CONFIG_TLK_SOC_SERIES}) # Path to soc series header files from YAML files
+target_include_directories(${TARGET_NAME} PRIVATE ./boards/${CONFIG_TLK_BOARD})   # Path to boards header files from YAML files
+
+# Development mode only: include the temporary directory with headers generated from .yaml files
+if (NOT IS_DIRECTORY ${TARGET_LIBRARY_DIR})
+    add_dependencies(${TARGET_NAME} generate_headers)
+
+    target_include_directories(${TARGET_NAME} PRIVATE ${GENERATED_BASE_DIR}/core/${CONFIG_TLK_CORE})      # Path to generated core header files from YAML files
+    target_include_directories(${TARGET_NAME} PRIVATE ${GENERATED_BASE_DIR}/soc/${CONFIG_TLK_SOC_SERIES}) # Path to generated soc series header files from YAML files
+    target_include_directories(${TARGET_NAME} PRIVATE ${GENERATED_BASE_DIR}/boards/${CONFIG_TLK_BOARD})   # Path to generated boards header files from YAML files
+
+endif()
+
+
+# Library target settings
+
+# Base name for all SOC libraries. Must follow the pattern "telink-unisdk-<SOC_SERIES>".
+# All additional SOC libraries (PM, RF, etc.) must be named with this as a prefix,
+# e.g. "${TARGET_SOC_LIBRARY}-pm", "${TARGET_SOC_LIBRARY}-rf".
+#
+# sdk_exporter.sh relies on this pattern to copy all SOC libraries at once:
+#   cp build/libraries/libtelink-unisdk-${soc_series}*.a ...
+set(TARGET_SOC_LIBRARY "telink-unisdk-${CONFIG_TLK_SOC_SERIES}")
+
+# Driver libs first (they depend on main SOC lib)
+telink_add_library("${TARGET_SOC_LIBRARY}-pm" CONDITION CONFIG_TLK_PM)
+telink_add_library("${TARGET_SOC_LIBRARY}-rf" CONDITION CONFIG_TLK_RF)
+
+#! Main SOC lib last — provides symbols for all driver libs above
+telink_add_library(${TARGET_SOC_LIBRARY})
+
+
+add_subdirectory(api)
+add_subdirectory(common)
+add_subdirectory(core)
+add_subdirectory(soc)
+add_subdirectory(system)
+add_subdirectory(modules)
+
+
+# Collect the sources from all registered SOC libraries
+telink_declare_libraries_target(${TARGET_SOC_LIBRARY})

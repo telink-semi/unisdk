@@ -1,0 +1,45 @@
+config TLK_IRQ_NESTING_DEMO
+    bool
+    default y
+    select TLK_PLIC
+    select TLK_PLIC_SW
+    select TLK_MTIMER
+    select TLK_MTIMER_ENABLE_IRQ
+    select TLK_GPIO
+    select TLK_API_PRINT # TODO: change to log
+    select TLK_API_TIME
+
+menu "IRQ Nesting Sample configuration"
+
+choice TLK_SOURCE_HOST
+    prompt "The Source into which it will be nested"
+    default TLK_NEST_INTO_EXT
+
+config TLK_NEST_INTO_SW
+    bool "Nest IRQs into software ISR"
+    select TLK_PLIC_SW_ENABLE_NESTING
+
+config TLK_NEST_INTO_EXT
+    bool "Nest IRQs into external (peripheral) ISR"
+    depends on !TLK_PLIC_VECTOR_MODE
+    select TLK_PLIC_ENABLE_NESTING
+
+config TLK_NEST_INTO_MTIMER
+    bool "Nest IRQs into mtimer ISR"
+    select TLK_MTIMER_ENABLE_NESTING
+
+endchoice
+
+config TLK_NEST_SW
+    bool "Nest software IRQ into SOURCE_HOST ISR"
+    depends on !TLK_NEST_INTO_SW
+
+config TLK_NEST_EXT
+    bool "Nest external (peripheral) IRQ into SOURCE_HOST ISR"
+    depends on !TLK_NEST_INTO_EXT
+
+config TLK_NEST_MTIMER
+    bool "Nest mtimer IRQ into SOURCE_HOST ISR"
+    depends on !TLK_NEST_INTO_MTIMER
+
+endmenu

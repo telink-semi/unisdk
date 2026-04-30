@@ -1,0 +1,101 @@
+pinmux:
+  function:
+    adc: 
+      in:
+        depends_on: TLK_ADC_AUTO_CONFIG
+      diff:
+        depends_on: TLK_ADC_DIFF_MODE
+
+    critical_print:
+      tx: 
+        depends_on: TLK_CRITICAL_PRINTOUT
+
+    gpio: 
+      output: 
+        depends_on: TLK_GPIO
+        optional: true
+        repeatable: true
+      input_pull_none: 
+        depends_on: TLK_GPIO
+        optional: true
+        repeatable: true
+      input_pull_down_100k: 
+        depends_on: TLK_GPIO
+        optional: true
+        repeatable: true
+      input_pull_up_1m: 
+        depends_on: TLK_GPIO
+        optional: true
+        repeatable: true
+      input_pull_up_10k: 
+        depends_on: TLK_GPIO
+        optional: true
+        repeatable: true
+        
+    #TODO: provide more specific dependencies
+    lspi:
+      chn:
+        depends_on: TLK_SPI
+      clk:
+        depends_on: TLK_SPI
+      mosi:
+        depends_on: TLK_SPI
+      miso:
+        depends_on: TLK_SPI
+      io2:
+        depends_on: TLK_SPI
+      io3:
+        depends_on: TLK_SPI
+
+    uart0:
+      rx: 
+        depends_on: TLK_UART0_AUTO_CONFIG
+        default: PC5
+      tx: 
+        depends_on: TLK_UART0_AUTO_CONFIG
+        default: PC4
+      rts:
+        depends_on: TLK_UART0_FLOW_CONTROL_RTS_ON
+      cts:
+        depends_on: TLK_UART0_FLOW_CONTROL_CTS_ON
+
+    uart1:
+      rx:
+        depends_on: TLK_UART1_AUTO_CONFIG
+        default: PC5
+      tx: 
+        depends_on: TLK_UART1_AUTO_CONFIG
+        default: PC4
+      rts:
+        depends_on: TLK_UART1_FLOW_CONTROL_RTS_ON
+      cts:
+        depends_on: TLK_UART1_FLOW_CONTROL_CTS_ON
+
+    usb:
+      dm:
+        depends_on: TLK_USB
+        default: PA5
+      dp:
+        depends_on: TLK_USB
+        default: PA6
+
+    jtag:
+      tdi:
+        depends_on: TLK_DEBUG_JTAG
+      tdo:
+        depends_on: TLK_DEBUG_JTAG
+      tms:
+        depends_on: TLK_DEBUG_JTAG
+      tck:
+        depends_on: TLK_DEBUG_JTAG
+
+    sdp:
+      tms:
+        depends_on: None # TODO
+      tck:
+        depends_on: None # TODO
+
+    sws:
+      pin:
+        depends_on: TLK_DEBUG_SWS
+        default: PA7

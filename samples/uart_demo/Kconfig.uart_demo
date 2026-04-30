@@ -1,0 +1,59 @@
+config TLK_UART_DEMO
+    def_bool y
+    select TLK_UART
+
+
+menu "UART Sample configuration"
+
+# UART Selection
+choice
+    prompt "UART number"
+
+for i in range 0 ${uart.count}
+config TLK_UART_DEMO_UART{i}
+    bool "UART{i}"
+    select TLK_UART{i}_ENABLED
+endfor
+
+endchoice # UART number
+
+
+# Selected UART 
+config TLK_UART_DEMO_UART
+    string
+for i in range 0 ${uart.count}
+    default TLK_UART{i} if TLK_UART_DEMO_UART{i}
+endfor
+
+
+# Selected UART autoconfig check
+config TLK_UART_DEMO_AUTO_CONFIG
+    bool
+for i in range 0 ${uart.count}
+    default y if (TLK_UART_DEMO_UART{i} && TLK_UART{i}_AUTO_CONFIG)
+endfor
+
+
+# Buffer size
+config TLK_UART_DEMO_BUFFER_SIZE
+    int "Buffer size"
+    default 15
+
+
+# Demo configs
+config TLK_UART_DEMO_SLEEP
+    bool "UART demo with sleep"
+    select TLK_API_SLEEP
+for i in range 0 ${uart.count}
+    imply TLK_UART{i}_PM_DEVICE if TLK_UART_DEMO_UART{i}
+endfor
+    
+config TLK_UART_DEMO_PREVENT
+    bool "UART demo with prevent"
+    select TLK_PM
+    select TLK_PM_SUSPEND
+for i in range 0 ${uart.count}
+    select TLK_UART{i}_PREVENT_SLEEP if TLK_UART_DEMO_UART{i}
+endfor
+
+endmenu

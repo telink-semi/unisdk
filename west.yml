@@ -1,0 +1,25 @@
+# The west manifest file for Telink.
+#
+# The per-installation west configuration file, .west/config, sets the
+# path to the project containing this file in the [manifest] section's
+# "path" variable.
+#
+# You are free to create your own manifest files and put them in any
+# repository you want.
+#
+# See the west documentation for more information.
+
+manifest:
+  remotes:
+    - name: zephyr
+      url-base: https://github.com/zephyrproject-rtos
+
+  projects:
+    - name: tinyusb
+      url: https://github.com/hathach/tinyusb.git
+      revision: 3af1bec1a9161ee8dec29487831f7ac7ade9e189
+      path: unisdk/modules/tinyUSB/repo
+
+  self:
+    path: unisdk
+    west-commands: scripts/west-commands.yml

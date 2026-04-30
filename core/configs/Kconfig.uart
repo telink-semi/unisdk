@@ -1,0 +1,270 @@
+menuconfig TLK_UART
+    bool "UART"
+    select TLK_GPIO
+    select TLK_API_TIME
+
+
+if TLK_UART
+
+# Global configs
+config TLK_UART_AUTO_CONFIG
+    bool
+
+config TLK_UART_PLIC_MODE_USED
+    bool
+
+config TLK_UART_DMA_MODE_USED
+    bool
+
+config TLK_UART_PM_DEVICE
+    bool 
+
+config TLK_UART_FLOW_CONTROL
+    bool
+    
+
+# For each UART controller
+for i in range 0 ${uart.count}
+
+# UART{i} global configs
+config TLK_UART{i}_PLIC_MODE_USED
+    bool
+    select TLK_UART_PLIC_MODE_USED
+
+config TLK_UART{i}_DMA_MODE_USED
+    bool
+    select TLK_UART_DMA_MODE_USED
+
+
+# UART{i} enable
+menuconfig TLK_UART{i}_ENABLED
+    bool "Enable UART{i}"
+
+if TLK_UART{i}_ENABLED
+
+# UART{i} autoconfig enable
+menuconfig TLK_UART{i}_AUTO_CONFIG
+    bool "Configure automatically"
+    select TLK_UART_AUTO_CONFIG
+
+if TLK_UART{i}_AUTO_CONFIG
+
+# UART{i} autoconfig baudrate
+config TLK_UART{i}_BAUDRATE
+    int "Baudrate"
+    default 115200
+
+
+# UART{i} autoconfig parity selection
+choice
+    prompt "Parity"
+    default TLK_UART{i}_PARITY_NONE
+
+config TLK_UART{i}_PARITY_NONE
+    bool "None"
+
+config TLK_UART{i}_PARITY_EVEN
+    bool "Even"
+
+config TLK_UART{i}_PARITY_ODD
+    bool "Odd"
+
+endchoice # Parity
+
+
+# Selected UART{i} autoconfig parity
+config TLK_UART{i}_PARITY
+    string
+    default "TLK_UART_PARITY_NONE" if TLK_UART{i}_PARITY_NONE
+    default "TLK_UART_PARITY_EVEN" if TLK_UART{i}_PARITY_EVEN
+    default "TLK_UART_PARITY_ODD" if TLK_UART{i}_PARITY_ODD
+
+
+# UART{i} autoconfig stop bit selection
+choice
+    prompt "Stop bit"
+    default TLK_UART{i}_STOP_BIT_ONE
+
+config TLK_UART{i}_STOP_BIT_ONE
+    bool "One"
+
+config TLK_UART{i}_STOP_BIT_ONE_DOT_FIVE
+    bool "One dot five"
+
+config TLK_UART{i}_STOP_BIT_TWO
+    bool "Two"
+
+endchoice # Stop bit
+
+
+# Selected UART{i} autoconfig stop bit
+config TLK_UART{i}_STOP_BIT
+    string
+    default "TLK_UART_STOP_BIT_ONE" if TLK_UART{i}_STOP_BIT_ONE
+    default "TLK_UART_STOP_BIT_ONE_DOT_FIVE" if TLK_UART{i}_STOP_BIT_ONE_DOT_FIVE
+    default "TLK_UART_STOP_BIT_TWO" if TLK_UART{i}_STOP_BIT_TWO
+
+
+if TLK_UART{i}_FLOW_CONTROL
+
+# UART{i} autoconfig global configs
+config TLK_UART{i}_FLOW_CONTROL_RTS_ON
+    bool
+
+config TLK_UART{i}_FLOW_CONTROL_CTS_ON
+    bool
+    
+
+# UART{i} autoconfig flow control selection
+choice
+    prompt "Flow control"
+    default TLK_UART{i}_FLOW_CONTROL_NONE
+
+config TLK_UART{i}_FLOW_CONTROL_NONE
+    bool "None"
+
+config TLK_UART{i}_FLOW_CONTROL_RTS
+    bool "RTS"
+    select TLK_UART{i}_FLOW_CONTROL_RTS_ON
+
+config TLK_UART{i}_FLOW_CONTROL_CTS
+    bool "CTS"
+    select TLK_UART{i}_FLOW_CONTROL_CTS_ON
+
+config TLK_UART{i}_FLOW_CONTROL_RTS_CTS
+    bool "RTS_CTS"
+    select TLK_UART{i}_FLOW_CONTROL_RTS_ON
+    select TLK_UART{i}_FLOW_CONTROL_CTS_ON
+
+endchoice # Flow control
+
+
+# Selected UART{i} autoconfig flow control
+config TLK_UART{i}_FLOW_CONTROL_TYPE
+    string
+    default "TLK_UART_FLOW_NONE" if TLK_UART{i}_FLOW_CONTROL_NONE
+    default "TLK_UART_FLOW_RTS" if TLK_UART{i}_FLOW_CONTROL_RTS
+    default "TLK_UART_FLOW_CTS" if TLK_UART{i}_FLOW_CONTROL_CTS
+    default "TLK_UART_FLOW_RTS_CTS" if TLK_UART{i}_FLOW_CONTROL_RTS_CTS
+
+
+# UART{i} autoconfig flow polarity selection
+choice
+    prompt "Flow polarity"
+    default TLK_UART{i}_FLOW_POLARITY_LOW
+
+config TLK_UART{i}_FLOW_POLARITY_LOW
+    bool "Low"
+
+config TLK_UART{i}_FLOW_POLARITY_HIGH
+    bool "High"
+
+endchoice # Flow polarity
+
+
+# Selected UART{i} autoconfig flow polarity
+config TLK_UART{i}_FLOW_POLARITY
+    string
+    default "TLK_UART_ACTIVE_LOW" if TLK_UART{i}_FLOW_POLARITY_LOW
+    default "TLK_UART_ACTIVE_HIGH" if TLK_UART{i}_FLOW_POLARITY_HIGH
+
+endif # TLK_UART{i}_FLOW_CONTROL
+
+endif # UART{i}_AUTO_CONFIG
+
+
+# UART{i} TX mode selection
+choice
+    prompt "TX mode"
+    default TLK_UART{i}_TX_BLOCKING
+
+config TLK_UART{i}_TX_BLOCKING
+    bool "Blocking"
+
+config TLK_UART{i}_TX_PLIC
+    bool "Interrupt"
+    select TLK_UART{i}_PLIC_MODE_USED
+    depends on TLK_PLIC
+
+config TLK_UART{i}_TX_DMA
+    bool "DMA"
+    select TLK_UART{i}_DMA_MODE_USED
+    select TLK_UART{i}_PLIC_MODE_USED
+    depends on TLK_DMA
+    depends on TLK_PLIC
+
+endchoice # TX mode
+
+
+# Selected UART{i} TX mode
+config TLK_UART{i}_TX_MODE
+    string
+    default "TLK_UART_XFER_BLOCKING" if TLK_UART{i}_TX_BLOCKING
+    default "TLK_UART_XFER_PLIC" if TLK_UART{i}_TX_PLIC
+    default "TLK_UART_XFER_DMA" if TLK_UART{i}_TX_DMA
+
+
+# UART{i} RX mode selection
+choice
+    prompt "RX mode"
+    default TLK_UART{i}_RX_BLOCKING
+
+config TLK_UART{i}_RX_BLOCKING
+    bool "Blocking"
+
+config TLK_UART{i}_RX_PLIC
+    bool "Interrupt"
+    select TLK_UART{i}_PLIC_MODE_USED
+    depends on TLK_PLIC
+
+config TLK_UART{i}_RX_DMA
+    bool "DMA"
+    select TLK_UART{i}_DMA_MODE_USED
+    select TLK_UART{i}_PLIC_MODE_USED
+    depends on TLK_DMA
+    depends on TLK_DMA_IRQ_HANDLER
+    depends on TLK_PLIC
+
+endchoice # RX mode
+
+
+# Selected UART{i} RX mode
+config TLK_UART{i}_RX_MODE
+    string
+    default "TLK_UART_XFER_BLOCKING" if TLK_UART{i}_RX_BLOCKING
+    default "TLK_UART_XFER_PLIC" if TLK_UART{i}_RX_PLIC
+    default "TLK_UART_XFER_DMA" if TLK_UART{i}_RX_DMA
+
+
+# UART{i} FLOW CONTROL
+config TLK_UART{i}_FLOW_CONTROL
+    bool "Use flow control"
+    select TLK_UART_FLOW_CONTROL
+
+
+# UART{i} config RTS TRIG LEVEL
+config TLK_RTS_TRIG_LEVEL
+   int "RTS trig level"
+   default 5
+   range 1 8
+   depends on TLK_UART{i}_FLOW_CONTROL
+
+
+# PM device configs
+if TLK_PM
+
+config TLK_UART{i}_PM_DEVICE
+    bool "Enable PM Support"
+    default y
+    select TLK_UART_PM_DEVICE
+
+config TLK_UART{i}_PREVENT_SLEEP
+    bool "Prevent sleep if busy"   
+
+endif # TLK_PM
+
+endif # TLK_UART{i}_ENABLED
+
+endfor
+
+endif # TLK_UART

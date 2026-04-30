@@ -1,0 +1,3 @@
+if(CONFIG_TLK_TASK_PLANNER_MODE_SCHEDULER OR CONFIG_TLK_SOFTWARE_TIMERS)
+    target_sources(Telink PRIVATE task_planner.c)
+endif()

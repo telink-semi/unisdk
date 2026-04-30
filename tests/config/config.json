@@ -1,0 +1,94 @@
+{
+  "timeout": 300,
+  "reports_dir": "reports",
+  "project_root": "../",
+  "python": {
+    "min_version": "3.8.0",
+    "requirements_file": "requirements.txt"
+  },
+  "toolchain": {
+    "riscv_gcc_prefix": "riscv32-elf-",
+    "required_tools": [
+      "gcc",
+      "g++",
+      "ar",
+      "objcopy",
+      "objdump",
+      "size"
+    ]
+  },
+  "environment": {
+    "required_vars": [
+      "TELINK_BASE",
+      "TELINK_TOOLCHAIN_PATH"
+    ],
+    "optional_vars": [
+      "BDT_PATH"
+    ]
+  },
+  "build_tools": {
+    "cmake": {
+      "min_version": "3.20.0"
+    },
+    "make": {
+      "min_version": "3.8",
+      "makefiles": [
+        "Makefile"
+      ]
+    },
+    "west": {
+      "min_version": "0.14.0",
+      "sample_projects": [
+          "tests/compilation/sample_test"
+      ]
+    }
+  },
+  "compilation": {
+    "basic_build": {
+      "required_dirs": [
+        "api",
+        "boards",
+        "cmake",
+        "common",
+        "core",
+        "docs",
+        "samples",
+        "scripts",
+        "soc",
+        "system"
+      ],
+      "required_files": [
+        "CMakeLists.txt",
+        "Kconfig.build",
+        "Kconfig.chip",
+        "Makefile",
+        "west.yml"
+      ],
+      "expected_artifacts": [
+        ".config",
+        ".pinmux",
+        "pinmux.h",
+        "autoconf.h",
+        "build.config",
+        "chip.config",
+        "CMakeCache.txt",
+        "flash_boot.ld",
+        "merge_config_files.cmake",
+        "Kconfig/Kconfig.dma",
+        "Kconfig/Kconfig.gpio",
+        "Kconfig/Kconfig.plic",
+        "Kconfig/Kconfig.pm",
+        "Kconfig/Kconfig.rf",
+        "Kconfig/Kconfig.spi",
+        "Kconfig/Kconfig.uart",
+        "Kconfig/Kconfig.wdt",
+        "Telink.elf",
+        "Telink.bin",
+        "Telink.lst",
+        "Telink.map",
+        "compile_commands.json"
+      ],
+      "test_sample_dir": "tests/compilation/sample_test"
+    }
+  }
+}

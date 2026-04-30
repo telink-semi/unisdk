@@ -1,0 +1,3 @@
+rsource "core/Kconfig"
+rsource "soc/Kconfig"
+rsource "boards/Kconfig"

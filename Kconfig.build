@@ -1,0 +1,4 @@
+osource "$(KCONFIG_APPLICATION_DIR)/Kconfig"
+rsource "api/Kconfig"
+rsource "core/configs/Kconfig"
+rsource "system/Kconfig"

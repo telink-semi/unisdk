@@ -1,0 +1,11 @@
+menuconfig TLK_NV_STORAGE
+    bool "NV storage subsystem"
+
+
+if TLK_NV_STORAGE
+
+config TLK_SOC_FLASH
+    bool "SOC flash NV storage back-end"
+    default y
+
+endif # TLK_NV_STORAGE

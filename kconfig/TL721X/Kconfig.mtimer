@@ -1,0 +1,14 @@
+menuconfig TLK_MTIMER
+    bool "MTIMER"
+
+
+if TLK_MTIMER
+
+config TLK_MTIMER_ENABLE_IRQ
+    bool "Enable interrupts"
+
+config TLK_MTIMER_ENABLE_NESTING
+    bool "Enable nesting into the machine timer interrupts"
+    depends on TLK_MTIMER_ENABLE_IRQ
+
+endif # TLK_MTIMER

@@ -1,0 +1,10 @@
+menuconfig TLK_PLIC_SW
+    bool "SW PLIC"
+    
+
+if TLK_PLIC_SW
+
+config TLK_PLIC_SW_ENABLE_NESTING
+    bool "Enable nesting into the software interrupt"
+
+endif # TLK_PLIC_SW

@@ -1,0 +1,15 @@
+menuconfig TLK_PLIC
+    bool "PLIC"
+
+
+if TLK_PLIC
+
+config TLK_PLIC_VECTOR_MODE
+    bool "Enable vector mode"
+    default y
+
+config TLK_PLIC_ENABLE_NESTING
+    bool "Enable nesting into the external interrupts"
+    depends on !TLK_PLIC_VECTOR_MODE
+
+endif # TLK_PLIC

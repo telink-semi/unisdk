@@ -1,0 +1,100 @@
+config TLK_HAS_BGA56_CASE
+    bool
+
+config TLK_HAS_BGA94_CASE
+    bool
+
+config TLK_HAS_LGA42_CASE
+    bool
+
+config TLK_HAS_QFN28_CASE
+    bool
+
+config TLK_HAS_QFN32_CASE
+    bool
+
+config TLK_HAS_QFN38_CASE
+    bool
+
+config TLK_HAS_QFN40_CASE
+    bool
+
+config TLK_HAS_QFN48_CASE
+    bool
+
+config TLK_HAS_QFN52_CASE
+    bool
+
+config TLK_HAS_QFN56_CASE
+    bool
+
+config TLK_HAS_QFN64_CASE
+    bool
+
+config TLK_HAS_QFN68_CASE
+    bool
+
+config TLK_HAS_QFN88_CASE
+    bool
+
+config TLK_CASE
+    string 
+    default "BGA56" if TLK_HAS_BGA56_CASE
+    default "BGA94" if TLK_HAS_BGA94_CASE
+    default "LGA42" if TLK_HAS_LGA42_CASE
+    default "QFN28" if TLK_HAS_QFN28_CASE
+    default "QFN32" if TLK_HAS_QFN32_CASE
+    default "QFN38" if TLK_HAS_QFN38_CASE
+    default "QFN40" if TLK_HAS_QFN40_CASE
+    default "QFN48" if TLK_HAS_QFN48_CASE
+    default "QFN52" if TLK_HAS_QFN52_CASE
+    default "QFN56" if TLK_HAS_QFN56_CASE
+    default "QFN64" if TLK_HAS_QFN64_CASE
+    default "QFN68" if TLK_HAS_QFN68_CASE
+    default "QFN88" if TLK_HAS_QFN88_CASE
+
+
+choice
+    prompt "SoC Series"
+
+config TLK_SOC_SERIES_TL321X
+    bool "TL321X"
+    select TLK_CORE_TL321X
+
+config TLK_SOC_SERIES_TL721X
+    bool "TL721X"
+    select TLK_CORE_TL721X
+
+config TLK_SOC_SERIES_TLSR922X
+    bool "TLSR922X"
+    select TLK_CORE_B92
+
+config TLK_SOC_SERIES_TLSR952X
+    bool "TLSR952X"
+    select TLK_CORE_B92
+
+endchoice # SoC Series
+
+config TLK_SOC_SERIES
+    string
+    default "TL321X" if TLK_SOC_SERIES_TL321X
+    default "TL721X" if TLK_SOC_SERIES_TL721X
+    default "TLSR922X" if TLK_SOC_SERIES_TLSR922X
+    default "TLSR952X" if TLK_SOC_SERIES_TLSR952X
+
+
+if TLK_SOC_SERIES_TL321X
+    rsource "TL321X/Kconfig"
+endif # TLK_SOC_SERIES_TL321X
+
+if TLK_SOC_SERIES_TL721X
+    rsource "TL721X/Kconfig"
+endif # TLK_SOC_SERIES_TL721X
+
+if TLK_SOC_SERIES_TLSR922X
+    rsource "TLSR922X/Kconfig"
+endif # TLK_SOC_SERIES_TLSR922X
+
+if TLK_SOC_SERIES_TLSR952X
+    rsource "TLSR952X/Kconfig"
+endif # TLK_SOC_SERIES_TLSR952X

@@ -1,0 +1,1 @@
+osource "$(KCONFIG_BINARY_DIR)/Kconfig.uart_demo" # TODO: Explore how we can script all Kconfig files where ${...} inserts or for are possible, which are currently processed via preprocess_kconfig.py

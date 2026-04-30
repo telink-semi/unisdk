@@ -1,0 +1,16 @@
+menu "API configuration"
+
+config TLK_API_TIME
+    bool "Enable time API"
+
+
+if !TLK_TASK_PLANNER && !TLK_SOFTWARE_TIMERS
+
+config TLK_API_SLEEP
+    bool "Enable sleep API"
+    select TLK_MTIMER
+    select TLK_MTIMER_ENABLE_IRQ
+
+endif # !TLK_TASK_PLANNER && !TLK_SOFTWARE_TIMERS
+
+endmenu

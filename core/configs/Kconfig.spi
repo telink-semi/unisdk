@@ -1,0 +1,277 @@
+#TODO: update this Kconfig
+
+config SPI_COUNT
+    int
+    default ${spi.count}
+
+
+menuconfig TLK_SPI
+    bool "SPI"
+    select TLK_GPIO
+    select TLK_PLIC
+
+
+if TLK_SPI
+
+config TLK_SPI_AUTO_CONFIG
+    bool "Configure SPI automatically"
+
+#AUTO_CONFIG
+if TLK_SPI_AUTO_CONFIG #if-1
+
+for i in range 0 ${spi.count} #for-1
+config SPI{i}_AUTO_CONFIG
+    bool "Configure SPI{i} automatically"
+
+#SPIXX AUTO_CONFIG
+if SPI{i}_AUTO_CONFIG #if-2
+
+#SPIXX CS PORT PIN
+menu "CS port pin"
+
+#PORT SELECT
+choice
+    prompt "CS port"
+    default SPI{i}_CS_PORT_E
+
+for j in [A,B,C,D,E,F]
+config SPI{i}_CS_PORT_{j}
+    bool "CS port {j}"
+
+endfor
+endchoice
+
+#PORT DEFINE
+config SPI{i}_CS_PORT
+    string
+
+for j in [A,B,C,D,E,F]
+    default "TLK_GPIO_PORT_{j}" if SPI{i}_CS_PORT_{j}
+endfor
+
+#PIN SELECT
+choice
+    prompt "CS pin"
+    default SPI{i}_CS_PIN_0
+
+for j in range 0 7
+config SPI{i}_CS_PIN_{j}
+    bool "CS pin {j}"
+
+endfor
+endchoice
+
+#PIN DEFINE
+config SPI{i}_CS_PIN
+    string
+
+for j in range 0 7
+    default "TLK_GPIO_PIN_{j}" if SPI{i}_CS_PIN_{j}
+endfor
+endmenu
+
+#SPIXX SCK PORT PIN
+menu "SCK port pin"
+
+#PORT SELECT
+choice
+    prompt "SCK port"
+    default SPI{i}_SCK_PORT_E
+
+for j in [A,B,C,D,E,F]
+config SPI{i}_SCK_PORT_{j}
+    bool "SCK port {j}"
+
+endfor
+endchoice
+
+#PORT DEFINE
+config SPI{i}_SCK_PORT
+    string
+
+for j in [A,B,C,D,E,F]
+    default "TLK_GPIO_PORT_{j}" if SPI{i}_SCK_PORT_{j}
+endfor
+
+#PIN SELECT
+choice
+    prompt "SCK pin"
+    default SPI{i}_SCK_PIN_1
+
+for j in range 0 7
+config SPI{i}_SCK_PIN_{j}
+    bool "SCK pin {j}"
+
+endfor
+endchoice
+
+#PIN DEFINE
+config SPI{i}_SCK_PIN
+    string
+
+for j in range 0 7
+    default "TLK_GPIO_PIN_{j}" if SPI{i}_SCK_PIN_{j}
+endfor
+endmenu
+
+#SPIXX MOSI PORT PIN
+menu "MOSI port pin"
+
+#PORT SELECT
+choice
+    prompt "MOSI port"
+    default SPI{i}_MOSI_PORT_E
+
+for j in [A,B,C,D,E,F]
+config SPI{i}_MOSI_PORT_{j}
+    bool "MOSI port {j}"
+
+endfor
+endchoice
+
+#PORT DEFINE
+config SPI{i}_MOSI_PORT
+    string
+
+for j in [A,B,C,D,E,F]
+    default "TLK_GPIO_PORT_{j}" if SPI{i}_MOSI_PORT_{j}
+endfor
+
+#PIN SELECT
+choice
+    prompt "MOSI pin"
+    default SPI{i}_MOSI_PIN_2
+
+for j in range 0 7
+config SPI{i}_MOSI_PIN_{j}
+    bool "MOSI pin {j}"
+
+endfor
+endchoice
+
+#PIN DEFINE
+config SPI{i}_MOSI_PIN
+    string
+
+for j in range 0 7
+    default "TLK_GPIO_PIN_{j}" if SPI{i}_MOSI_PIN_{j}
+endfor
+endmenu
+
+#SPIXX MISO PORT PIN
+menu "MISO port pin"
+
+#PORT SELECT
+choice
+    prompt "MISO port"
+    default SPI{i}_MISO_PORT_E
+
+for j in [A,B,C,D,E,F]
+config SPI{i}_MISO_PORT_{j}
+    bool "MISO port {j}"
+
+endfor
+endchoice
+
+#PORT DEFINE
+config SPI{i}_MISO_PORT
+    string
+
+for j in [A,B,C,D,E,F]
+    default "TLK_GPIO_PORT_{j}" if SPI{i}_MISO_PORT_{j}
+endfor
+
+#PIN SELECT
+choice
+    prompt "MISO pin"
+    default SPI{i}_MISO_PIN_3
+
+for j in range 0 7
+config SPI{i}_MISO_PIN_{j}
+    bool "MISO pin {j}"
+
+endfor
+endchoice
+
+#PIN DEFINE
+config SPI{i}_MISO_PIN
+    string
+
+for j in range 0 7
+    default "TLK_GPIO_PIN_{j}" if SPI{i}_MISO_PIN_{j}
+endfor
+endmenu
+
+#SPIXX ROLE SELECT & DEFINE
+choice 
+    prompt "Role"
+    default SPI{i}_ROLE_MASTER
+
+config SPI{i}_ROLE_MASTER
+    bool "Master"
+
+config SPI{i}_ROLE_SLAVE
+    bool "Slave"
+
+endchoice
+
+config SPI{i}_ROLE
+    string 
+    default "TLK_SPI_MASTER" if SPI{i}_ROLE_MASTER
+    default "TLK_SPI_SLAVE" if SPI{i}_ROLE_SLAVE
+
+#SPIXX MODE SELECT & DEFINE
+choice 
+    prompt "Mode"
+    default SPI{i}_MODE_0
+
+for j in range 0 3
+config SPI{i}_MODE_{j}
+    bool "Mode {j}"
+
+endfor
+endchoice
+
+config SPI{i}_MODE
+    string
+
+for j in range 0 3
+    default "SPI_MODE{j}" if SPI{i}_MODE_{j}
+endfor
+
+#SPIXX IO MODE SELECT & DEFINE
+choice 
+    prompt "IO mode"
+    default SPI{i}_IO_MODE_SINGLE
+
+config SPI{i}_IO_MODE_SINGLE
+    bool "Single"
+
+config SPI{i}_IO_MODE_DUAL
+    bool "Dual"
+
+config SPI{i}_IO_MODE_QUAD
+    bool "Quad"
+
+config SPI{i}_IO_MODE_3LINE
+    bool "3 line"
+
+endchoice
+
+config SPI{i}_IO_MODE
+    string 
+    default "TLK_SPI_SINGLE_MODE" if SPI{i}_IO_MODE_SINGLE
+    default "TLK_SPI_DUAL_MODE" if SPI{i}_IO_MODE_DUAL
+    default "TLK_SPI_QUAD_MODE" if SPI{i}_IO_MODE_QUAD
+    default "TLK_SPI_3_LINE_MODE" if SPI{i}_IO_MODE_3LINE
+
+#SPIXX DIV CLOCK SELECT
+config SPI{i}_DIV_CLOCK
+    int "Div clock"
+    default 200
+
+endif #if-2
+endfor #for-1
+endif #if-1
+
+endif

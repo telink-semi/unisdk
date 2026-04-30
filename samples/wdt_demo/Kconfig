@@ -1,0 +1,15 @@
+config TLK_WDT_DEMO
+    def_bool y
+    select TLK_WDT
+
+menu "WDT Sample configuration"
+
+config TLK_WDT_SAMPLE_GPIO_INDICATION
+    bool "WDT GPIO indication"
+    select TLK_GPIO
+
+config TLK_WDT_SAMPLE_PM
+    bool "WDT with PM sample"
+    select TLK_PM
+
+endmenu

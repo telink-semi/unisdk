@@ -1,0 +1,3 @@
+config TLK_SPI_DEMO
+    def_bool y
+    select TLK_SPI

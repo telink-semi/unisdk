@@ -1,0 +1,110 @@
+pinmux:
+  port:
+    pa:
+      exclude: [adc0, jtag, sws, sdp]
+      pins:
+        p0:
+        p1:
+        p2:
+        p3:
+        p4:
+        p5:
+        p6:
+        p7:
+          exclude: all
+          include: sws
+    pb:
+      exclude: [jtag, sws, sdp]
+      pins:
+        p0:
+        p1:
+        p2:
+        p3:
+        p4:
+        p5:
+        p6:
+        p7:
+    pc:
+      exclude: [adc0, jtag, sws, sdp]
+      pins:
+        p0:
+        p1:
+        p2:
+        p3:
+        p4:
+          include: jtag_tdi
+        p5:
+          include: jtag_tdo
+        p6:
+          include: [jtag_tms, sdp_tms]
+        p7:
+          include: [jtag_tck, sdp_tck]
+    pd:
+      exclude: [adc0, jtag, sws, sdp]
+      pins:
+        p0:
+          include: [adc]
+        p1:
+          include: [adc]
+        p2:
+        p3:
+        p4:
+        p5:
+        p6:
+        p7:
+    pe:
+      exclude: [adc0, jtag, sws, sdp]
+      pins:
+        p0:
+        p1:
+        p2:
+        p3:
+        p4:
+        p5:
+        p6:
+        p7:
+
+  all:
+    shared:
+      gpio_output: 0
+      gpio_input_pull_none: 0
+      gpio_input_pull_down_100k: 0
+      gpio_input_pull_up_1m: 0
+      gpio_input_pull_up_10k: 0
+
+    unique:
+      adc0_in: 0
+      adc0_diff: 0
+
+      jtag_tdi: 0
+      jtag_tdo: 0
+      jtag_tms: 0
+      jtag_tck: 0
+      sdp_tms: 0
+      sdp_tck: 0
+      sws: 0
+
+      jtag_tdi: 0
+      jtag_tdo: 0
+      jtag_tms: 0
+      jtag_tck: 0
+      sdp_tms: 0
+      sdp_tck: 0
+      sws: 0
+
+      uart0_rx: 32
+      uart0_tx: 31
+      uart0_rts: 30
+      uart0_cts: 29
+
+      uart1_rx: 36
+      uart1_tx: 35
+      uart1_rts: 34
+      uart1_cts: 33
+
+      uart2_rx: 40
+      uart2_tx: 39
+      uart2_rts: 38
+      uart2_cts: 37
+
+      critical_print_tx: 0

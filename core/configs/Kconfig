@@ -1,0 +1,22 @@
+menu "Common configuration"
+    source "$(KCONFIG_BINARY_DIR)/Kconfig.common"
+endmenu
+
+
+menu "Drivers selection"
+
+source "$(KCONFIG_BINARY_DIR)/Kconfig.adc"
+source "$(KCONFIG_BINARY_DIR)/Kconfig.dma"
+source "$(KCONFIG_BINARY_DIR)/Kconfig.gpio"
+source "$(KCONFIG_BINARY_DIR)/Kconfig.mtimer"
+source "$(KCONFIG_BINARY_DIR)/Kconfig.plic"
+source "$(KCONFIG_BINARY_DIR)/Kconfig.plicsw"
+source "$(KCONFIG_BINARY_DIR)/Kconfig.pm"
+source "$(KCONFIG_BINARY_DIR)/Kconfig.rf"
+source "$(KCONFIG_BINARY_DIR)/Kconfig.spi"
+source "$(KCONFIG_BINARY_DIR)/Kconfig.stimer"
+source "$(KCONFIG_BINARY_DIR)/Kconfig.uart"
+source "$(KCONFIG_BINARY_DIR)/Kconfig.wdt"
+source "$(KCONFIG_BINARY_DIR)/Kconfig.usb"
+
+endmenu
