@@ -1,0 +1,63 @@
+config TLK_UART_DEMO
+    def_bool y
+    select TLK_UART
+
+
+menu "UART Sample configuration"
+
+choice
+    prompt "UART number"
+
+
+config TLK_UART_DEMO_UART0
+    bool "UART0"
+    select TLK_UART0_ENABLED
+
+config TLK_UART_DEMO_UART1
+    bool "UART1"
+    select TLK_UART1_ENABLED
+
+config TLK_UART_DEMO_UART2
+    bool "UART2"
+    select TLK_UART2_ENABLED
+
+endchoice # UART number
+
+
+config TLK_UART_DEMO_UART
+    string
+    default TLK_UART0 if TLK_UART_DEMO_UART0
+    default TLK_UART1 if TLK_UART_DEMO_UART1
+    default TLK_UART2 if TLK_UART_DEMO_UART2
+
+
+# UART autoconfig check
+config TLK_UART_DEMO_AUTO_CONFIG
+    bool
+    default y if (TLK_UART_DEMO_UART0 && TLK_UART0_AUTO_CONFIG)
+    default y if (TLK_UART_DEMO_UART1 && TLK_UART1_AUTO_CONFIG)
+    default y if (TLK_UART_DEMO_UART2 && TLK_UART2_AUTO_CONFIG)
+
+
+config TLK_UART_DEMO_BUFFER_SIZE
+    int "Buffer size"
+    default 15
+
+
+config TLK_UART_DEMO_SLEEP
+    bool "UART demo with sleep"
+    select TLK_API_SLEEP
+    imply TLK_UART0_PM_DEVICE if TLK_UART_DEMO_UART0
+    imply TLK_UART1_PM_DEVICE if TLK_UART_DEMO_UART1
+    imply TLK_UART2_PM_DEVICE if TLK_UART_DEMO_UART2
+
+
+config TLK_UART_DEMO_PREVENT
+    bool "UART demo with prevent"
+    select TLK_PM
+    select TLK_PM_SUSPEND
+    select TLK_UART0_PREVENT_SLEEP if TLK_UART_DEMO_UART0
+    select TLK_UART1_PREVENT_SLEEP if TLK_UART_DEMO_UART1
+    select TLK_UART2_PREVENT_SLEEP if TLK_UART_DEMO_UART2
+
+endmenu

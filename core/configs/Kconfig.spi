@@ -1,0 +1,93 @@
+menuconfig TLK_SPI
+    bool "SPI"
+    select TLK_GPIO
+    select TLK_PLIC
+
+if TLK_SPI
+
+config TLK_SPI_AUTO_CONFIG
+    bool
+
+for i in range 0 ${spi.count}
+
+menuconfig TLK_SPI{i}
+    bool "SPI{i}"
+
+if TLK_SPI{i}
+
+config TLK_SPI{i}_AUTO_CONFIG
+    bool "Configure automatically"
+    select TLK_SPI_AUTO_CONFIG
+
+if TLK_SPI{i}_AUTO_CONFIG
+
+choice
+    prompt "Role"
+
+config TLK_SPI{i}_AC_ROLE_MASTER
+    depends on ${spi.{i}.supports.master.role}
+    bool "Master"
+
+config TLK_SPI{i}_AC_ROLE_SLAVE
+    depends on ${spi.{i}.supports.slave.role}
+    bool "Slave"
+
+endchoice
+
+choice
+    prompt "Mode"
+
+for j in range 0 4
+
+config TLK_SPI{i}_AC_MODE_{j}
+    bool "Mode {j}"
+
+endfor
+
+endchoice
+
+config TLK_SPI{i}_AC_MODE
+    string
+
+for j in range 0 4
+
+    default "TLK_SPI_MODE{j}" if TLK_SPI{i}_AC_MODE_{j}
+
+endfor
+
+choice
+    prompt "IO mode"
+    default TLK_SPI{i}_AC_IO_MODE_SINGLE
+
+config TLK_SPI{i}_AC_IO_MODE_SINGLE
+    bool "Single"
+
+config TLK_SPI{i}_AC_IO_MODE_DUAL
+    bool "Dual"
+
+config TLK_SPI{i}_AC_IO_MODE_QUAD
+    bool "Quad"
+
+config TLK_SPI{i}_AC_IO_MODE_3LINE
+    bool "3 line"
+
+endchoice
+
+config TLK_SPI{i}_AC_IO_MODE
+    string
+    default "TLK_SPI_SINGLE_MODE" if TLK_SPI{i}_AC_IO_MODE_SINGLE
+    default "TLK_SPI_DUAL_MODE" if TLK_SPI{i}_AC_IO_MODE_DUAL
+    default "TLK_SPI_QUAD_MODE" if TLK_SPI{i}_AC_IO_MODE_QUAD
+    default "TLK_SPI_3_LINE_MODE" if TLK_SPI{i}_AC_IO_MODE_3LINE
+
+config TLK_SPI{i}_AC_FREQUENCY
+    int "Clock frequency"
+    default 2000000
+
+endif # TLK_SPI{i}_AUTO_CONFIG
+
+endif # TLK_SPI{i}
+
+endfor
+
+endif # TLK_SPI

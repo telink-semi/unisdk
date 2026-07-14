@@ -1,0 +1,28 @@
+menuconfig TLK_PLIC_SW
+    bool "SW PLIC"
+
+
+if TLK_PLIC_SW
+
+config TLK_PLIC_SW_NEST_SELECTED
+    bool
+    default n
+
+
+config TLK_PLIC_SW_NEST_PLIC_SW
+    bool "Nest machine software interrupt (MSIE)"
+    select TLK_PLIC_SW_NEST_SELECTED
+
+
+config TLK_PLIC_SW_NEST_MTIMER
+    bool "Nest machine timer interrupt (MTIE)"
+    select TLK_PLIC_SW_NEST_SELECTED
+    depends on TLK_MTIMER_IRQ_ENABLE
+
+
+config TLK_PLIC_SW_NEST_PLIC
+    bool "Nest external interrupts (MEIE)"
+    select TLK_PLIC_SW_NEST_SELECTED
+    depends on TLK_PLIC
+
+endif # TLK_PLIC_SW

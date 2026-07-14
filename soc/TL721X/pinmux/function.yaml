@@ -1,0 +1,146 @@
+pinmux:
+  function:
+    adc:
+      in:
+        depends_on: TLK_ADC_AUTO_CONFIG
+      diff:
+        depends_on: TLK_ADC_DIFF_MODE
+
+    critical_print:
+      tx:
+        depends_on: TLK_CRITICAL_PRINTOUT
+
+    gpio:
+      output:
+        depends_on: TLK_GPIO
+        optional: true
+        repeatable: true
+      input_pull_none:
+        depends_on: TLK_GPIO
+        optional: true
+        repeatable: true
+      input_pull_down_100k:
+        depends_on: TLK_GPIO
+        optional: true
+        repeatable: true
+      input_pull_up_1m:
+        depends_on: TLK_GPIO
+        optional: true
+        repeatable: true
+      input_pull_up_10k:
+        depends_on: TLK_GPIO
+        optional: true
+        repeatable: true
+
+    i2c0:
+      sda:
+        depends_on: TLK_I2C0_AUTO_CONFIG
+      scl:
+        depends_on: TLK_I2C0_AUTO_CONFIG
+
+    i2c1:
+      sda:
+        depends_on: TLK_I2C1_AUTO_CONFIG
+      scl:
+        depends_on: TLK_I2C1_AUTO_CONFIG
+
+    # aka lspi
+    spi0:
+      cs:
+        depends_on: TLK_SPI0_AUTO_CONFIG
+        default: PE0
+      sck:
+        depends_on: TLK_SPI0_AUTO_CONFIG
+        default: PE1
+      mosi:
+        depends_on: TLK_SPI0_AUTO_CONFIG
+        default: PE2
+      miso:
+        depends_on: TLK_SPI0_AUTO_CONFIG
+        default: PE3
+      io2:
+        depends_on: TLK_SPI0_AC_QUAD_MODE
+        default: PE4
+      io3:
+        depends_on: TLK_SPI0_AC_QUAD_MODE
+        default: PE5
+
+    # aka gspi
+    spi1:
+      cs:
+        depends_on: TLK_SPI1_AUTO_CONFIG
+      sck:
+        depends_on: TLK_SPI1_AUTO_CONFIG
+      mosi:
+        depends_on: TLK_SPI1_AUTO_CONFIG
+      miso:
+        depends_on: TLK_SPI1_AUTO_CONFIG
+      io2:
+        depends_on: TLK_SPI1_AC_QUAD_MODE
+      io3:
+        depends_on: TLK_SPI1_AC_QUAD_MODE
+
+    uart0:
+      rx:
+        depends_on: TLK_UART0_AUTO_CONFIG
+        default: PC5
+      tx:
+        depends_on: TLK_UART0_AUTO_CONFIG
+        default: PC4
+      rts:
+        depends_on: TLK_UART0_FLOW_CONTROL_RTS_ON
+      cts:
+        depends_on: TLK_UART0_FLOW_CONTROL_CTS_ON
+
+    uart1:
+      rx:
+        depends_on: TLK_UART1_AUTO_CONFIG
+        default: PC5
+      tx:
+        depends_on: TLK_UART1_AUTO_CONFIG
+        default: PC4
+      rts:
+        depends_on: TLK_UART1_FLOW_CONTROL_RTS_ON
+      cts:
+        depends_on: TLK_UART1_FLOW_CONTROL_CTS_ON
+
+    uart2:
+      rx:
+        depends_on: TLK_UART2_AUTO_CONFIG
+        default: PC5
+      tx:
+        depends_on: TLK_UART2_AUTO_CONFIG
+        default: PC4
+      rts:
+        depends_on: TLK_UART2_FLOW_CONTROL_RTS_ON
+      cts:
+        depends_on: TLK_UART2_FLOW_CONTROL_CTS_ON
+
+    usb:
+      dm:
+        depends_on: TLK_USB
+        default: PA5
+      dp:
+        depends_on: TLK_USB
+        default: PA6
+
+    jtag:
+      tdi:
+        depends_on: TLK_DEBUG_JTAG
+      tdo:
+        depends_on: TLK_DEBUG_JTAG
+      tms:
+        depends_on: TLK_DEBUG_JTAG
+      tck:
+        depends_on: TLK_DEBUG_JTAG
+
+    sdp:
+      tms:
+        depends_on: None # TODO
+      tck:
+        depends_on: None # TODO
+
+    sws:
+      pin:
+        depends_on: TLK_DEBUG_SWS
+        default: PA7

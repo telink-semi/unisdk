@@ -1,0 +1,4 @@
+config TLK_MBEDTLS_DEMO
+    def_bool y
+    select TLK_MBEDTLS
+    select TLK_API_PRINT # TODO: change to log

@@ -1,0 +1,21 @@
+config TLK_WDT_DEMO
+    def_bool y
+    select TLK_WDT
+    select TLK_API_TIME
+
+menu "WDT Sample configuration"
+
+config TLK_WDT_DEMO_GPIO_INDICATION
+    bool "WDT GPIO indication"
+    select TLK_GPIO
+
+config TLK_WDT_DEMO_PM
+    bool "WDT with PM"
+    select TLK_API_SLEEP
+    select TLK_PM
+
+config TLK_WDT_DEMO_STARTUP
+    bool "Start WDT from startup code"
+    select TLK_WDT_STARTUP_ENABLE
+
+endmenu

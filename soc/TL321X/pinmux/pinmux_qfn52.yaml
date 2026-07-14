@@ -1,0 +1,6 @@
+pinmux:
+  port:
+    pc:
+      pins:
+        p6: delete
+        p7: delete

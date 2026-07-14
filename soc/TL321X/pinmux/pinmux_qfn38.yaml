@@ -1,0 +1,26 @@
+pinmux:
+  port:
+    pb:
+      pins:
+        p2: delete
+        p3: delete
+        p4: delete
+    pc:
+      pins:
+        p3: delete
+        p4: delete
+        p5: delete
+        p6: delete
+        p7: delete
+    pd:
+      pins:
+        p0: delete
+        p2: delete
+        p3: delete
+        p5: delete
+        p7: delete
+    pe:
+      pins:
+        p0: delete
+        p1: delete
+        p3: delete

@@ -1,0 +1,104 @@
+osource "$(KCONFIG_BINARY_DIR)/Kconfig.debug" # TODO: Explore how we can script all Kconfig files where ${...} inserts or for are possible, which are currently processed via preprocess_kconfig.py
+osource "$(KCONFIG_BINARY_DIR)/Kconfig.task_planner" # TODO: Explore how we can script all Kconfig files where ${...} inserts or for are possible, which are currently processed via preprocess_kconfig.py
+
+menu "SoC configuration"
+
+# Stack size in retention memory
+config TLK_MEMORY_STACK_SIZE
+    int "Stack size in Kbytes"
+    default 4
+    range 1 16 if TLK_PM_RETENTION_MEMORY_SIZE_32K
+    range 1 32 if TLK_PM_RETENTION_MEMORY_SIZE_64K
+    range 1 64 if TLK_PM_RETENTION_MEMORY_SIZE_96K
+    range 1 96 if TLK_PM_RETENTION_MEMORY_SIZE_128K
+    range 1 128 if TLK_PM_RETENTION_MEMORY_SIZE_192K
+    range 1 192 if TLK_PM_RETENTION_MEMORY_SIZE_256K
+    range 1 96
+
+config ALLOW_DYNAMIC_MEMORY_ALLOCATION
+    bool "Allow dynamic memory allocation"
+    default n
+    help
+        If you want to use dynamic memory allocators in system predefined retention heap,
+        you have to enable this config.
+
+endmenu
+
+
+menu "Other configuration"
+
+# Allow CPP wrappers for C++ builds
+config TLK_ALLOW_CPP_WRAPPERS
+    bool "Allow CPP wrappers"
+
+
+# Compiler optimization level selection
+choice
+    prompt "Optimization level"
+    default TLK_OPTIMIZATION_LEVEL_O2
+
+config TLK_OPTIMIZATION_LEVEL_O0
+    bool "O0"
+
+config TLK_OPTIMIZATION_LEVEL_O1
+    bool "O1"
+
+config TLK_OPTIMIZATION_LEVEL_O2
+    bool "O2"
+
+config TLK_OPTIMIZATION_LEVEL_O3
+    bool "O3"
+
+config TLK_OPTIMIZATION_LEVEL_OS
+    bool "Os"
+
+config TLK_OPTIMIZATION_LEVEL_OFAST
+    bool "Ofast"
+
+endchoice # Optimization level
+
+
+# Selected optimization level string
+config TLK_OPTIMIZATION_LEVEL
+    string
+    default "O0" if TLK_OPTIMIZATION_LEVEL_O0
+    default "O1" if TLK_OPTIMIZATION_LEVEL_O1
+    default "O2" if TLK_OPTIMIZATION_LEVEL_O2
+    default "O3" if TLK_OPTIMIZATION_LEVEL_O3
+    default "Os" if TLK_OPTIMIZATION_LEVEL_OS
+    default "Ofast" if TLK_OPTIMIZATION_LEVEL_OFAST
+
+# Application binary output name configuration
+config TLK_USE_CUSTOM_ARTIFACT_NAME
+    bool "Use custom artifact binary name"
+    default n
+    help
+        Enable to use the sample/project directory name as the artifact
+        output name, or specify a custom name. When disabled, the artifact
+        name defaults to "Telink", making it convenient for BDT tool to
+        locate the firmware without reconfiguration when switching samples.
+
+if TLK_USE_CUSTOM_ARTIFACT_NAME
+
+config TLK_CUSTOM_ARTIFACT_NAME
+    string "Custom artifact binary name"
+    default ""
+    help
+        Set a custom name for the output binary file (e.g., "my_firmware").
+        Leave empty to use the sample/project directory name (e.g., "gpio_demo").
+
+endif # TLK_USE_CUSTOM_ARTIFACT_NAME
+
+endmenu
+
+
+menu "Subsystems"
+
+rsource "storage/Kconfig.nv_storage"
+rsource "Kconfig.mbedtls"
+
+if TLK_USB
+    rsource "Kconfig.tinyusb"
+endif
+
+endmenu

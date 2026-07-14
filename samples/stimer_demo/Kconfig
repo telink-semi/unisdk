@@ -1,0 +1,15 @@
+config TLK_STIMER_DEMO
+    def_bool y
+    select TLK_STIMER
+    select TLK_API_TIME
+    select TLK_API_SLEEP
+
+
+menu "Stimer Sample configuration"
+
+config TLK_STIMER_INTERRUPT
+    bool "Stimer demo with interrupt"
+    select TLK_SYSTEM_TIMER_IRQ_ENABLE
+    def_bool y
+
+endmenu

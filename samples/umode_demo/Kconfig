@@ -1,0 +1,23 @@
+config TLK_UMODE_DEMO
+    def_bool y
+    select TLK_PMP
+    select TLK_UART
+    select TLK_UART0_ENABLED
+    select TLK_UART0_AUTO_CONFIG
+    select TLK_API_SLEEP
+    select TLK_TRAP_ECALL_NESTING
+
+
+menu "UMODE Sample configuration"
+
+config TLK_UMODE_DEMO_ENABLE_UART
+    bool "Enable UART for user task"
+
+config TLK_UMODE_DEMO_ENABLE_SLEEP
+    bool "Enable sleep req in user task"
+
+config TLK_UMODE_DEMO_ENABLE_MMODE
+    bool "Enable M-mode after user task"
+
+
+endmenu

@@ -1,0 +1,38 @@
+menuconfig TLK_GPIO
+    bool "GPIO"
+
+
+if TLK_GPIO
+
+menu "Select enabled ports"
+
+for i in range 0 ${gpio.port.names.count}
+
+config TLK_GPIO_PORT_{i}_ENABLED
+    bool
+
+config TLK_GPIO_PORT_${gpio.port.names[{i}]}_ENABLED
+    select TLK_GPIO_PORT_{i}_ENABLED
+    bool "Enable GPIO port ${gpio.port.names[{i}]}"
+    default y
+
+endfor
+
+endmenu
+
+
+if TLK_PM
+
+# Enable PM Support
+config TLK_GPIO_PM_DEVICE
+    bool "Enable PM Support"
+    default y
+
+
+# Prevent sleep if some pin out is enabled
+config TLK_GPIO_PREVENT_SLEEP
+    bool "Prevent sleep if some output pin is enabled"
+
+endif # TLK_PM
+
+endif # TLK_GPIO

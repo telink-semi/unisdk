@@ -1,0 +1,26 @@
+config TLK_I2C_DEMO
+    def_bool y
+    select TLK_I2C
+    select TLK_I2C0
+
+menu "I2C Sample configuration"
+
+choice
+    prompt "Device role"
+
+config TLK_I2C_DEMO_ROLE_MASTER
+    bool "Master"
+    select TLK_I2C0_MASTER
+
+config TLK_I2C_DEMO_ROLE_SLAVE
+    bool "Slave"
+    select TLK_I2C0_SLAVE
+
+endchoice
+
+config TLK_I2C_DEMO_PM
+    bool "I2C Demo with PM"
+    select TLK_API_SLEEP
+    imply TLK_I2C0_PM_DEVICE
+
+endmenu

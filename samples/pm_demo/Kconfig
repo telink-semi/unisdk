@@ -1,0 +1,25 @@
+config TLK_PM_DEMO
+    def_bool y
+    select TLK_API_TIME
+    select TLK_API_SLEEP
+    select TLK_PM
+    select TLK_PM_DEEP_SLEEP
+    select TLK_PM_RAM_RETENTION_ENABLE
+    select TLK_PM_DEMO_ENABLE_LED
+
+
+menu "PM Demo Configuration"
+
+config TLK_PM_DEMO_ENABLE_GPIO_INPUT
+    bool "PM demo with GPIO input"
+    select TLK_GPIO
+
+config TLK_PM_DEMO_ENABLE_LED
+    bool "PM demo with LED"
+    select TLK_GPIO
+
+config TLK_PM_DEMO_DISABLE_LED_BEFORE_SLEEP
+    bool "Disable LED before sleep"
+    depends on TLK_PM_DEMO_ENABLE_LED
+
+endmenu

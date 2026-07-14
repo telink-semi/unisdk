@@ -1,0 +1,32 @@
+menu "STIMER"
+
+config TLK_SYSTEM_TIMER_AUTO_MODE
+    bool "Enable system timer auto mode"
+    default y
+
+config TLK_SYSTEM_TIMER_IRQ_ENABLE
+    bool "Enable system timer interrupt"
+    default n
+    select TLK_PLIC
+
+if TLK_PM
+
+# Enable PM Support
+config TLK_STIMER_PM_DEVICE
+    bool "Enable PM Support"
+    default y
+
+endif # TLK_PM
+
+# STIMER advanced modes
+config TLK_SYSTEM_TIMER_ADVANCED_MODE
+    bool "Enable system timer advanced modes"
+
+
+# STIMER advanced mode 32K tick analog readout
+config TLK_SYSTEM_TIMER_ADVANCED_USE_32K_TICK_ANALOG_READOUT
+    bool "Enable 32K tick analog readout"
+    depends on TLK_SYSTEM_TIMER_ADVANCED_MODE
+    default y
+
+endmenu

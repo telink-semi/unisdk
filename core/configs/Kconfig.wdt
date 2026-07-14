@@ -1,0 +1,15 @@
+menuconfig TLK_WDT
+    bool "WDT"
+
+
+if TLK_WDT
+
+config TLK_WDT_STARTUP_ENABLE
+    bool "Enable WDT at startup"
+
+config TLK_WDT_STARTUP_TIMEOUT
+    int "WDT startup timeout (ms)"
+    depends on TLK_WDT_STARTUP_ENABLE
+    default 5000
+
+endif # TLK_WDT

@@ -1,0 +1,43 @@
+config TLK_HAS_BOARD_SELECTED
+    bool
+
+
+choice
+    prompt "Board"
+    optional
+
+config TLK_BOARD_TL3218X_EVK
+    depends on TLK_SOC_TL3218X
+    bool "TL3218X_EVK"
+    select TLK_HAS_BOARD_SELECTED
+
+config TLK_BOARD_TL7218X_EVK
+    depends on TLK_SOC_TL7218X
+    bool "TL7218X_EVK"
+    select TLK_HAS_BOARD_SELECTED
+
+config TLK_BOARD_TLSR9228A_EVK
+    depends on TLK_SOC_TLSR9228A
+    bool "TLSR9228A_EVK"
+    select TLK_HAS_BOARD_SELECTED
+
+config TLK_BOARD_TLSR9528A_DONGLE
+    depends on TLK_SOC_TLSR9528A
+    bool "TLSR9528A_DONGLE"
+    select TLK_HAS_BOARD_SELECTED
+
+config TLK_BOARD_TLSR9528A_EVK
+    depends on TLK_SOC_TLSR9528A
+    bool "TLSR9528A_EVK"
+    select TLK_HAS_BOARD_SELECTED
+
+endchoice # Board
+
+
+config TLK_BOARD
+    string
+    default "TL3218X_EVK" if TLK_BOARD_TL3218X_EVK
+    default "TL7218X_EVK" if TLK_BOARD_TL7218X_EVK
+    default "TLSR9228A_EVK" if TLK_BOARD_TLSR9228A_EVK
+    default "TLSR9528A_DONGLE" if TLK_BOARD_TLSR9528A_DONGLE
+    default "TLSR9528A_EVK" if TLK_BOARD_TLSR9528A_EVK

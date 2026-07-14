@@ -1,0 +1,14 @@
+config TLK_CORE_B92
+    bool
+
+config TLK_CORE_TL321X
+    bool
+
+config TLK_CORE_TL721X
+    bool
+
+config TLK_CORE
+    string
+    default "B92" if TLK_CORE_B92
+    default "TL321X" if TLK_CORE_TL321X
+    default "TL721X" if TLK_CORE_TL721X

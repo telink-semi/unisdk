@@ -1,0 +1,20 @@
+board:
+  led:
+  - port: TLK_GPIO_PORT_D
+    pin: TLK_GPIO_PIN_0
+  - port: TLK_GPIO_PORT_D
+    pin: TLK_GPIO_PIN_1
+  - port: TLK_GPIO_PORT_E
+    pin: TLK_GPIO_PIN_6
+  - port: TLK_GPIO_PORT_E
+    pin: TLK_GPIO_PIN_7
+
+  key:
+  - port: TLK_GPIO_PORT_D
+    pin: TLK_GPIO_PIN_2
+  - port: TLK_GPIO_PORT_D
+    pin: TLK_GPIO_PIN_7
+  - port: TLK_GPIO_PORT_D
+    pin: TLK_GPIO_PIN_6
+  - port: TLK_GPIO_PORT_F
+    pin: TLK_GPIO_PIN_6

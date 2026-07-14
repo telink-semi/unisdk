@@ -1,0 +1,50 @@
+# SoC series definitions for UniSDK
+# This file provides metadata about supported SoC series, including
+# the toolchain version required for each series.
+# Additional fields can be added later to describe core dependencies,
+# peripherals, etc.
+
+soc_series:
+  TL321X:
+    toolchain: andes-riscv32-v5-gcc14.2
+    toolchain_zephyr: zephyr-riscv64
+    description: "TL321X series"
+  TL721X:
+    toolchain: andes-riscv32-v5f-gcc14.2
+    toolchain_zephyr: zephyr-riscv64
+    description: "TL721X series"
+  TLSR922X:
+    toolchain: andes-riscv32-v5f-gcc14.2
+    toolchain_zephyr: zephyr-riscv64
+    description: "TLSR922X series"
+  TLSR952X:
+    toolchain: andes-riscv32-v5f-gcc14.2
+    toolchain_zephyr: zephyr-riscv64
+    description: "TLSR952X series"
+
+# Toolchain version definitions
+toolchain_versions:
+  andes-riscv32-v5-gcc14.2:
+    prefix: "riscv32-elf-"
+    subdir: "nds32le-elf-mculib-v5"
+    description: "TL32 ELF MCULIB V5 GCC14.2"
+    download_url:
+      windows: "https://doc.telink-semi.cn/tools/vsc/windows/toolchains/toolchain_v54x_v5_win.tar.xz"
+      linux: "https://doc.telink-semi.cn/tools/vsc/linux/toolchains/toolchain_v5_v54x.tar.xz"
+      mac_x64: "https://doc.telink-semi.cn/tools/vsc/MacX64/toolchains/toolchain_v541_v5_mac_x64.txz"
+      mac_aarch64: "https://doc.telink-semi.cn/tools/vsc/MacAArch64/toolchains/toolchain_v541_v5_mac_aarch64.txz"
+
+  andes-riscv32-v5f-gcc14.2:
+    prefix: "riscv32-elf-"
+    subdir: "nds32le-elf-mculib-v5f"
+    description: "TL32 ELF MCULIB V5F GCC14.2"
+    download_url:
+      windows: "https://doc.telink-semi.cn/tools/vsc/windows/toolchains/toolchain_v54x_v5f_win.tar.xz"
+      linux: "https://doc.telink-semi.cn/tools/vsc/linux/toolchains/toolchain_v5f_v54x.tar.xz"
+      mac_x64: "https://doc.telink-semi.cn/tools/vsc/MacX64/toolchains/toolchain_v541_v5f_mac_x64.txz"
+      mac_aarch64: "https://doc.telink-semi.cn/tools/vsc/MacAArch64/toolchains/toolchain_v541_v5f_mac_aarch64.txz"
+
+  zephyr-riscv64:
+    prefix: "riscv64-zephyr-elf-"
+    subdir: ""
+    description: "Zephyr RISC64"

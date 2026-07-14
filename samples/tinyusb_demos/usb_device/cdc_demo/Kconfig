@@ -1,0 +1,3 @@
+config TLK_USB_CDC_DEMO
+    select TLK_USB
+    def_bool y

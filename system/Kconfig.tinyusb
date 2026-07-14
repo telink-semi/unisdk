@@ -1,0 +1,119 @@
+menu "TinyUSB configurations"
+
+# --------------------------------------------------------------------------
+# Device classes
+# --------------------------------------------------------------------------
+
+choice
+    prompt "USB Device Class"
+    default TLK_USB_CLASS_CDC
+
+config TLK_USB_CLASS_CDC
+    bool "Enable CDC ACM"
+
+endchoice # USB Device Class
+
+
+# --------------------------------------------------------------------------
+# Device settings
+# --------------------------------------------------------------------------
+menu "Device parameters"
+
+config TLK_USB_VENDOR_ID
+    hex "Vendor Identifier for USB device descriptor"
+    default 0x248A
+
+config TLK_USB_PRODUCT_ID
+    hex "Product Identifier for USB device descriptor"
+    default 0x0100
+
+config TLK_USB_DEVICE_VERSION
+    hex "Firmware version for the USB host"
+    default 0x0100 # Decode to 01.00
+
+config TLK_USB_DEVICE_MANUFACTURER
+    string "Device manufacturer name"
+    default "Telink Semiconductors"
+
+config TLK_USB_DEVICE_PRODUCT_NAME
+    string "Device product name"
+    default "Telink Semi CDC Device" if TLK_USB_CLASS_CDC
+
+config TLK_USB_DEVICE_SERIAL_NUMBER
+    string "Device serial number in string"
+    default "123456789012"
+
+config TLK_USB_DEVICE_INTERFACE_NAME
+    string "Device interface name"
+    default "COM Port"
+
+endmenu
+
+
+# --------------------------------------------------------------------------
+# Debug settings
+# --------------------------------------------------------------------------
+
+choice
+    prompt "TinyUSB Log Level"
+    default TLK_USB_NO_LOG
+
+config TLK_USB_NO_LOG
+    bool "Disable TinyUSB logs"
+
+config TLK_USB_ERROR_LOG
+    bool "Enable TinyUSB error logs"
+
+config TLK_USB_WARNING_LOG
+    bool "Enable TinyUSB warning and error logs"
+
+config TLK_USB_INFO_LOG
+    bool "Enable TinyUSB error, warning and info logs"
+
+endchoice # TinyUSB Log Level
+
+config TLK_USB_LOG_LEVEL
+    int
+    default 0 if TLK_USB_NO_LOG
+    default 1 if TLK_USB_ERROR_LOG
+    default 2 if TLK_USB_WARNING_LOG
+    default 3 if TLK_USB_INFO_LOG
+
+config TLK_USB_LOG_PHY
+    def_bool y
+    depends on TLK_USB_LOG_LEVEL > 0
+    select TLK_CRITICAL_PRINTOUT
+
+
+# --------------------------------------------------------------------------
+# СDC settings
+# --------------------------------------------------------------------------
+if TLK_USB_CLASS_CDC
+menu "CDC ACM settings"
+
+config TLK_USB_CDC_RX_BUF_SIZE
+    int "Size of the receive buffer for CDC ACM"
+    default 64
+
+config TLK_USB_CDC_TX_BUF_SIZE
+    int "Size of the transmit buffer for CDC ACM"
+    default 64
+
+
+config TLK_USB_CDC_NOTIF_EP
+    hex "Endpoint address for notification channel"
+    default 0x81
+
+config TLK_USB_CDC_OUT_EP
+    hex "Endpoint address for OUT transfers"
+    default 0x05
+
+config TLK_USB_CDC_IN_EP
+    hex "Endpoint address for IN transfers"
+    default 0x82
+
+endmenu
+endif # TLK_USB_CLASS_CDC
+
+
+endmenu

@@ -1,0 +1,70 @@
+# UniSDK GitHub Sync Manifest
+# One file path or glob pattern per line (relative to repo root)
+# Supports * and ** wildcards
+# .a library files are always synced automatically from ci_libs/
+# Lines starting with # are ignored
+
+# ========= Root files =========
+west.yml
+Makefile
+CMakeLists.txt
+Kconfig.*
+readme.md
+requirements.txt
+.gitignore
+
+# ========= API files =========
+api/**
+
+# ========= Boards files =========
+boards/**
+
+# ========= Boards files =========
+cmake/**
+
+# ========= Common files =========
+common/**
+
+# ========= Core files =========
+core/**/tlk_*.c
+core/**/*.h
+core/**/CMakeLists.txt
+core/**/Kconfig
+core/**/Kconfig.*
+core/**/*.cmake
+core/*.cmake
+core/CMakeLists.txt
+core/Kconfig*
+core/**/*.S
+core/**/*.link
+
+# ========= Module code =========
+modules/**
+
+# ========= Sample code =========
+samples/**
+
+# ========= Scripts =========
+scripts/**
+
+# ========= Soc files =========
+soc/**/tlk_*.c
+soc/**/*.h
+soc/**/CMakeLists.txt
+soc/**/Kconfig
+soc/**/Kconfig.*
+soc/**/*.cmake
+soc/soc.yaml
+soc/Kconfig
+soc/CMakeLists.txt
+soc/*.cmake
+soc/**/pinmux/*
+
+# ========= Subsystem code =========
+subsystem/**
+
+# ========= System code =========
+system/**
+
+# ========= Zephyr files =========
+zephyr/**
