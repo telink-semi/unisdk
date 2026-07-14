@@ -31,7 +31,7 @@ include(extensions)
 list(APPEND SOURCES "${CMAKE_CURRENT_SOURCE_DIR}/core/common/startup/cstartup_flash.S")
 
 if (CONFIG_TLK_PM_RAM_RETENTION_ENABLE)
-list(APPEND SOURCES "${CMAKE_CURRENT_SOURCE_DIR}/core/common/startup/tl_context.S")
+    list(APPEND SOURCES "${CMAKE_CURRENT_SOURCE_DIR}/core/common/startup/tl_context.S")
 endif()
 
 
@@ -102,6 +102,18 @@ target_link_libraries(${TARGET_NAME} PRIVATE "-Wl,--start-group")
 #! Main SOC lib last — provides symbols for all driver libs above
 telink_add_library(${TARGET_SOC_LIBRARY})
 
+# Set the include directories to the libraries
+if (NOT IS_DIRECTORY ${TARGET_LIBRARY_DIR})
+    telink_libraries_include_directories(PRIVATE .)
+
+    telink_libraries_include_directories(PRIVATE ./core/${CONFIG_TLK_CORE})      # Path to core header files from YAML files
+    telink_libraries_include_directories(PRIVATE ./soc/${CONFIG_TLK_SOC_SERIES}) # Path to soc series header files from YAML files
+    telink_libraries_include_directories(PRIVATE ./boards/${CONFIG_TLK_BOARD})   # Path to boards header files from YAML files
+
+    telink_libraries_include_directories(PRIVATE ${GENERATED_BASE_DIR}/core/${CONFIG_TLK_CORE})      # Path to generated core header files from YAML files
+    telink_libraries_include_directories(PRIVATE ${GENERATED_BASE_DIR}/soc/${CONFIG_TLK_SOC_SERIES}) # Path to generated soc series header files from YAML files
+    telink_libraries_include_directories(PRIVATE ${GENERATED_BASE_DIR}/boards/${CONFIG_TLK_BOARD})   # Path to generated boards header files from YAML files
+endif()
 
 add_subdirectory(api)
 add_subdirectory(common)

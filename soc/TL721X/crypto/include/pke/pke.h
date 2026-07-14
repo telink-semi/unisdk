@@ -31,7 +31,7 @@ extern "C"
 
 #include "registers/tlk_pke_reg.h"
 // #include "pke_common.h"
-#include "crypto_common/eccp_curve.h"
+#include "crypto/include/crypto_common/eccp_curve.h"
 
 // #define SUPPORT_SM2
 #define SUPPORT_C25519

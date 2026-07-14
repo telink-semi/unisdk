@@ -21,7 +21,7 @@
  *          limitations under the License.
  *
  *******************************************************************************************************/
-#include "tlk_mspi.h"
+#include "drivers/include/tlk_mspi.h"
 
 /**
  * @brief       This function servers to write mspi fifo.

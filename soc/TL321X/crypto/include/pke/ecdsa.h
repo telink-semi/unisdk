@@ -29,7 +29,7 @@ extern "C"
 {
 #endif
 
-#include "pke/pke.h"
+#include "pke.h"
 
 // ECDSA return code
 #define ECDSA_SUCCESS         PKE_SUCCESS

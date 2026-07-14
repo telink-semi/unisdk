@@ -29,7 +29,7 @@ extern "C"
 {
 #endif
 
-#include "crypto_common/eccp_curve.h"
+#include "crypto/include/crypto_common/eccp_curve.h"
 #include "pke_common.h"
 
 #ifdef SUPPORT_SM2

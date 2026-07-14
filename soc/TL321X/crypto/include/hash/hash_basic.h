@@ -25,7 +25,7 @@
 #define HASH_BASIC_H
 
 #include "core/include/tlk_dma.h"
-#include "hash/hash_config.h"
+#include "hash_config.h"
 #include "registers/tlk_hash_reg.h"
 
 #ifdef __cplusplus

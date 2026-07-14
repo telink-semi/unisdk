@@ -24,12 +24,12 @@
 #ifndef PKE_ALGORITHM_H
 #define PKE_ALGORITHM_H
 
-#include "crypto_common/eccp_curve.h"
-#include "crypto_common/utility.h"
+#include "crypto/include/crypto_common/eccp_curve.h"
+#include "crypto/include/crypto_common/utility.h"
 #include "ecdh.h"
 #include "ecdsa.h"
 #include "pke.h"
-#include "pke/pke_portable.h"
+#include "pke_portable.h"
 #include "pke_prime.h"
 #include "rsa.h"
 

@@ -24,7 +24,7 @@
 #ifndef PKE_COMMON_H
 #define PKE_COMMON_H
 
-#include "pke/pke_config.h"
+#include "pke_config.h"
 #include "registers/tlk_pke_reg.h"
 
 // ECC point conversion form

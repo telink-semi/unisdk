@@ -9,9 +9,6 @@
 
 if(CONFIG_TLK_CRYPTO)
 
-# Include paths
-zephyr_include_directories(${SOC_CHIP_BASE}/crypto/include)
-
 # Source globs — matching the native CMakeLists.txt patterns
 file(GLOB CRYPTO_COMMON_SRC    "${SOC_CHIP_BASE}/crypto/src/crypto_common/*.c")
 file(GLOB CRYPTO_TRNG_SRC     "${SOC_CHIP_BASE}/crypto/src/trng/*.c")

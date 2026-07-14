@@ -29,7 +29,7 @@ extern "C"
 {
 #endif
 
-#include "pke/pke.h"
+#include "pke.h"
 
 // extern mont_curve_t c25519[1];
 

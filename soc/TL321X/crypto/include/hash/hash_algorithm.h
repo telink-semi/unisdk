@@ -24,10 +24,10 @@
 #ifndef HASH_ALGORITHM_H
 #define HASH_ALGORITHM_H
 
-#include "crypto_common/utility.h"
+#include "crypto/include/crypto_common/utility.h"
 #include "hash.h"
-#include "hash/hash_kdf.h"
 #include "hash_basic.h"
+#include "hash_kdf.h"
 #include "hash_portable.h"
 #include "hmac.h"
 #include "hmac_md5.h"

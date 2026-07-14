@@ -29,8 +29,8 @@ extern "C"
 {
 #endif
 
-#include "hash/hash.h"
-#include "pke/pke.h"
+#include "crypto/include/hash/hash.h"
+#include "pke.h"
 
 #define JPAKE_MAX_WORD_LEN (2048 / 32)
 

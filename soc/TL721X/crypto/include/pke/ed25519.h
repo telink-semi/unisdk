@@ -29,7 +29,7 @@ extern "C"
 {
 #endif
 
-#include "pke/pke.h"
+#include "pke.h"
 
     // Ed25519 mode
     typedef enum

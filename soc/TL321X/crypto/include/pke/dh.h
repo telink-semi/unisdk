@@ -29,7 +29,7 @@ extern "C"
 {
 #endif
 
-#include "pke/pke.h"
+#include "pke.h"
 
 // DH return code
 #define DH_SUCCESS         PKE_SUCCESS
