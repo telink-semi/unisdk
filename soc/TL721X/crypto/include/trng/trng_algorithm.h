@@ -24,7 +24,7 @@
 #ifndef TRNG_ALGORITHM_H
 #define TRNG_ALGORITHM_H
 
-#include "crypto_common/utility.h"
+#include "crypto/include/crypto_common/utility.h"
 #include "trng.h"
 #include "trng_portable.h"
 

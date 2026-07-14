@@ -24,10 +24,10 @@
 #ifndef TRNG_ALGORITHM_H
 #define TRNG_ALGORITHM_H
 
-#include "crypto_common/utility.h"
-#include "trng/trng.h"
-#include "trng/trng_basic.h"
-#include "trng/trng_config.h"
+#include "crypto/include/crypto_common/utility.h"
+#include "trng.h"
+#include "trng_basic.h"
+#include "trng_config.h"
 #include "trng_portable.h"
 
 #endif

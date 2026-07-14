@@ -30,7 +30,7 @@ extern "C"
 #endif
 
 #include "common_config.h"
-#include "pke/pke_common.h"
+#include "crypto/include/pke/pke_common.h"
 
 // sample ecc GF(p) curve
 #if (COMPATIBLE_WITH_TL321X_AND_TL323X == 0)

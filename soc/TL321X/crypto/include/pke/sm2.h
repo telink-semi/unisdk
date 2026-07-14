@@ -29,8 +29,8 @@ extern "C"
 {
 #endif
 
-#include "hash/hash.h"
-#include "pke/pke.h"
+#include "crypto/include/hash/hash.h"
+#include "pke.h"
 
 #if (defined(PKE_HP) || defined(PKE_UHP))
 #define SM2_HIGH_SPEED // only available for PKE_HP, PKE_UHP

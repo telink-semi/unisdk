@@ -29,7 +29,7 @@ extern "C"
 {
 #endif
 
-#include "pke/pke.h"
+#include "pke.h"
 
 // ECDH return code
 #define ECDH_SUCCESS         PKE_SUCCESS

@@ -29,9 +29,9 @@ extern "C"
 {
 #endif
 
-#include "hash/hash.h"
-#include "pke/pke.h"
-#include "ske/ske.h"
+#include "crypto/include/hash/hash.h"
+#include "crypto/include/ske/ske.h"
+#include "pke.h"
 
 #define SM9_MAX_MSG_BYTE_LEN (0xFFFFFF9FU) //(0xFFFFFFFF-0x40-0x20)
 #define SM9_MAX_ENC_K2_BYTE_LEN                                                                    \

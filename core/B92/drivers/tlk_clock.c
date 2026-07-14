@@ -3,9 +3,9 @@
 #include "core/include/tlk_core.h"
 #include "core/include/tlk_stimer.h"
 #include "core/include/tlk_sys.h"
+#include "drivers/include/tlk_mspi.h"
 #include "registers/tlk_analog.h"
 #include "registers/tlk_clock.h"
-#include "tlk_mspi.h"
 
 #define TLK_CLOCK_24M_XTAL_STABLE_LOOP_COUNT 10
 #define TLK_CLOCK_24M_XTAL_STABLE_TIME_US    40

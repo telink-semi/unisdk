@@ -30,10 +30,10 @@ extern "C"
 {
 #endif
 
+#include "crypto/include/trng.h"
 #include "eccp_curve.h"
 #include "pke_utility.h"
 #include "registers/tlk_pke_reg.h"
-#include "trng.h"
 
 #define pke_clr_irq_status    pke_clear_interrupt
 #define pke_get_irq_status    pke_wait_till_done

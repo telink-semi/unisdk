@@ -24,7 +24,7 @@
 #ifndef TRNG_BASIC_H
 #define TRNG_BASIC_H
 
-#include "trng/trng_config.h"
+#include "trng_config.h"
 
 #ifdef __cplusplus
 extern "C"

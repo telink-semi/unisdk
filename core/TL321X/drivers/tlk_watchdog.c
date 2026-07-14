@@ -2,9 +2,9 @@
 #include "common/include/tlk_init.h"
 #include "core/include/tlk_analog.h"
 #include "core/include/tlk_clock.h"
+#include "drivers/include/tlk_advanced_stimer.h"
 #include "registers/tlk_analog.h"
 #include "registers/tlk_timer.h"
-#include "tlk_advanced_stimer.h"
 
 static struct tlk_wdt_device
 {

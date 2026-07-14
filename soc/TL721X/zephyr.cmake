@@ -15,10 +15,7 @@ set(SOC_CHIP_BASE ${UNISDK_BASE}/soc/${CONFIG_TLK_SOC_SERIES})
 # ============================================================================
 # 2. Include paths
 # ============================================================================
-zephyr_include_directories(
-    ${SOC_CHIP_BASE}
-    ${SOC_CHIP_BASE}/drivers/include
-)
+zephyr_include_directories(${SOC_CHIP_BASE})
 
 # ============================================================================
 # 3. Always-compiled sources (mirroring add_sources outside SDK check)

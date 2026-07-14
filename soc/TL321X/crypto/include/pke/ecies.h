@@ -29,8 +29,8 @@ extern "C"
 {
 #endif
 
-#include "hash/hash.h"
-#include "pke/pke.h"
+#include "crypto/include/hash/hash.h"
+#include "pke.h"
 
     // #define ECIES_SUPPORT_EC_POINT_COMPRESSED
 

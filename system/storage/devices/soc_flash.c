@@ -1,7 +1,7 @@
 #include "common/include/tlk_init.h"
+#include "drivers/include/tlk_mspi.h"
 #include "properties/tlk_chip.h"
 #include "storage_device.h"
-#include "tlk_mspi.h"
 #include <errno.h>
 
 #define SOC_FLASH_START_ADDR UNISDK_CHIP_MEMORY_ROM_STARTADDR

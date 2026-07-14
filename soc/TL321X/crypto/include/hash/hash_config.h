@@ -31,7 +31,7 @@
 //  #define HASH_BASE_ADDR            (0x80000000U)//(0x43C00000U)  //HASH register base address
 
 // supported hash algorithms.
-#include "crypto_common/common_config.h"
+#include "crypto/include/crypto_common/common_config.h"
 // #define SUPPORT_HASH_SM3//hw not support
 #if (COMPATIBLE_WITH_TL321X_AND_TL323X == 0)
 #define SUPPORT_HASH_MD5

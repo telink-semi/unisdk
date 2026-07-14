@@ -29,10 +29,10 @@ extern "C"
 {
 #endif
 
-#include "pke/pke.h"
+#include "pke.h"
 
 #if defined(SUPPORT_RSASSA_PSS)
-#include "hash/hash.h"
+#include "crypto/include/hash/hash.h"
 #endif
 
 // RSA return code

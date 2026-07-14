@@ -25,7 +25,7 @@
  *          file under Mutual Non-Disclosure Agreement. NO WARRANTY of ANY KIND is provided.
  *
  *******************************************************************************************************/
-#include "tlk_mspi.h"
+#include "drivers/include/tlk_mspi.h"
 
 /**
  * @brief       This function servers to write mspi fifo.

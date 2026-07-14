@@ -25,8 +25,8 @@
 #define CHACHA20_POLY1305_ALGORITHM_H
 
 #include "chacha20_poly1305.h"
-#include "chacha20_poly1305/chacha20_poly1305_portable.h"
 #include "chacha20_poly1305_basic.h"
-#include "crypto_common/utility.h"
+#include "chacha20_poly1305_portable.h"
+#include "crypto/include/crypto_common/utility.h"
 
 #endif

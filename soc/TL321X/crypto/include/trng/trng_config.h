@@ -24,7 +24,7 @@
 #ifndef TRNG_CONFIG_H
 #define TRNG_CONFIG_H
 
-#include "crypto_common/common_config.h"
+#include "crypto/include/crypto_common/common_config.h"
 
 #include <stdio.h>
 

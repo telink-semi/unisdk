@@ -24,9 +24,8 @@
 #ifndef SKE_ALGORITHM_H
 #define SKE_ALGORITHM_H
 
-#include "crypto_common/utility.h"
+#include "crypto/include/crypto_common/utility.h"
 #include "ske.h"
-#include "ske/ske_portable.h"
 #include "ske_basic.h"
 #include "ske_cbc.h"
 #include "ske_cbc_mac.h"
@@ -37,6 +36,7 @@
 #include "ske_ecb.h"
 #include "ske_gcm_gmac.h"
 #include "ske_ofb.h"
+#include "ske_portable.h"
 #include "ske_xts.h"
 
 #endif

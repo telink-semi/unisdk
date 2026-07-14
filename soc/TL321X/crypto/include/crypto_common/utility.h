@@ -24,7 +24,7 @@
 #ifndef UTILITY_H
 #define UTILITY_H
 
-#include "crypto_common/common_config.h"
+#include "common_config.h"
 
 #ifdef __cplusplus
 extern "C"

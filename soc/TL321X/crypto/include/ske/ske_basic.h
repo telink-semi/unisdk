@@ -25,7 +25,7 @@
 #define SKE_BASIC_H
 
 #include "core/include/tlk_dma.h"
-#include "crypto_common/common_config.h"
+#include "crypto/include/crypto_common/common_config.h"
 #include "registers/tlk_ske_reg.h"
 
 #ifdef __cplusplus

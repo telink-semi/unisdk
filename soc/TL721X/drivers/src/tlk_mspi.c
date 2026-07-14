@@ -25,7 +25,7 @@
  *          file under Mutual Non-Disclosure Agreement. NO WARRANTY of ANY KIND is provided.
  *
  *******************************************************************************************************/
-#include "tlk_mspi.h"
+#include "drivers/include/tlk_mspi.h"
 
 unsigned int tlk_g_slave_base_addr[4] = {0x00000000, 0x00000000, 0x00000000, 0x00000000};
 

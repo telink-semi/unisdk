@@ -18,15 +18,6 @@ macro(telink_add_library LIB_NAME)
         )
 
         add_dependencies(${LIB_NAME} generate_headers)
-        target_include_directories(${LIB_NAME} PRIVATE ${TELINK_BASE})
-
-        target_include_directories(${LIB_NAME} PRIVATE ${TELINK_BASE}/core/${CONFIG_TLK_CORE})
-        target_include_directories(${LIB_NAME} PRIVATE ${TELINK_BASE}/soc/${CONFIG_TLK_SOC_SERIES})
-        target_include_directories(${LIB_NAME} PRIVATE ${TELINK_BASE}/boards/${CONFIG_TLK_BOARD})
-
-        target_include_directories(${LIB_NAME} PRIVATE ${GENERATED_BASE_DIR}/core/${CONFIG_TLK_CORE})
-        target_include_directories(${LIB_NAME} PRIVATE ${GENERATED_BASE_DIR}/soc/${CONFIG_TLK_SOC_SERIES})
-        target_include_directories(${LIB_NAME} PRIVATE ${GENERATED_BASE_DIR}/boards/${CONFIG_TLK_BOARD})
 
         add_custom_command(TARGET ${LIB_NAME} POST_BUILD
             COMMAND ${CMAKE_STRIP} -g $<TARGET_FILE:${LIB_NAME}>
