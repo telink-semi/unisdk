@@ -13,6 +13,8 @@ manifest:
   remotes:
     - name: zephyr
       url-base: https://github.com/zephyrproject-rtos
+    - name: telink
+      url-base: https://github.com/telink-semi
 
   projects:
     - name: tinyusb
@@ -27,9 +29,10 @@ manifest:
       path: unisdk/modules/mbedtls/repo
 
     - name: ble_controller
-      url: http://192.168.48.36/sdk_app/unisdk/unisdk_component/subsystem/ble_controller
-      revision: 36a4f99c1a85d6fb5b416429aeab854d3a058915
+      remote: telink
+      repo-path: unisdk-ble_controller
       path: unisdk/subsystem/ble/controller
+      revision: v0.2.0
   self:
     path: unisdk
     west-commands: scripts/west-commands.yml
