@@ -270,6 +270,14 @@ git commit -F "$COMMIT_MSG_FILE"
 echo "[6] Pushing to $SDK_REPO_URL ($SDK_REPO_BRANCH)..."
 git push origin "$SDK_REPO_BRANCH"
 
+# If triggered by a tag, create the corresponding tag in the SDK repo
+if [ -n "${CI_COMMIT_TAG:-}" ]; then
+    echo "[7] Creating tag '$CI_COMMIT_TAG' in GitLab SDK repo..."
+    git tag "$CI_COMMIT_TAG"
+    git push origin "$CI_COMMIT_TAG"
+    echo "  Tag '$CI_COMMIT_TAG' created and pushed."
+fi
+
 echo "============================================"
 echo " Sync complete! Pushed to GitLab SDK repo."
 echo "============================================"
