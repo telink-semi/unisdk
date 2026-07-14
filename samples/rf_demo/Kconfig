@@ -1,0 +1,192 @@
+menu "RF Demo Configuration"
+
+config TLK_RF_DEMO
+    bool
+    select TLK_RF
+    select TLK_GPIO
+    select TLK_API_PRINT # TODO: change to log
+    select TLK_API_TIME
+    default y
+
+config TLK_RF_DEMO_PM
+    bool "RF Demo with PM"
+    select TLK_API_SLEEP
+    imply TLK_RF_PM_DEVICE
+
+
+choice
+    prompt "Mode"
+
+config TLK_RF_DEMO_MODE_BLE
+    bool "BLE"
+
+config TLK_RF_DEMO_MODE_ZIGBEE
+    bool "Zigbee"
+
+config TLK_RF_DEMO_MODE_PRIVATE
+    bool "Private"
+
+config TLK_RF_DEMO_MODE_HYBEE
+    bool "Hybee"
+
+endchoice # Mode
+
+config TLK_RF_DEMO_MODE
+    string
+    default "TLK_RF_MODE_BLE" if TLK_RF_DEMO_MODE_BLE
+    default "TLK_RF_MODE_ZIGBEE" if TLK_RF_DEMO_MODE_ZIGBEE
+    default "TLK_RF_MODE_PRIVATE" if TLK_RF_DEMO_MODE_PRIVATE
+    default "TLK_RF_MODE_HYBEE" if TLK_RF_DEMO_MODE_HYBEE
+
+
+choice
+    prompt "Bitrate"
+
+config TLK_RF_DEMO_BITRATE_125K
+    bool "125K"
+    depends on TLK_RF_DEMO_MODE_BLE
+
+config TLK_RF_DEMO_BITRATE_250K
+    bool "250K"
+    depends on TLK_RF_DEMO_MODE_PRIVATE || TLK_RF_DEMO_MODE_ZIGBEE
+
+config TLK_RF_DEMO_BITRATE_500K
+    bool "500K"
+    depends on TLK_RF_DEMO_MODE_BLE || TLK_RF_DEMO_MODE_PRIVATE || TLK_RF_DEMO_MODE_HYBEE
+
+config TLK_RF_DEMO_BITRATE_1M
+    bool "1M"
+    depends on TLK_RF_DEMO_MODE_BLE || TLK_RF_DEMO_MODE_PRIVATE || TLK_RF_DEMO_MODE_HYBEE
+
+config TLK_RF_DEMO_BITRATE_2M
+    bool "2M"
+    depends on TLK_RF_DEMO_MODE_BLE || TLK_RF_DEMO_MODE_PRIVATE || TLK_RF_DEMO_MODE_HYBEE
+
+endchoice # Bitrate
+
+config TLK_RF_DEMO_BITRATE
+    string
+    default "TLK_RF_BITRATE_125K" if TLK_RF_DEMO_BITRATE_125K
+    default "TLK_RF_BITRATE_250K" if TLK_RF_DEMO_BITRATE_250K
+    default "TLK_RF_BITRATE_500K" if TLK_RF_DEMO_BITRATE_500K
+    default "TLK_RF_BITRATE_1M" if TLK_RF_DEMO_BITRATE_1M
+    default "TLK_RF_BITRATE_2M" if TLK_RF_DEMO_BITRATE_2M
+
+
+choice
+    prompt "Device role"
+
+config TLK_RF_DEMO_ROLE_TRANSMITTER
+    bool "Transmitter"
+    help
+        Sends the ping signals, listening for pong answers
+
+config TLK_RF_DEMO_ROLE_RECEIVER
+    bool "Receiver"
+    help
+        Listens for ping signals and sends a pong answer
+
+endchoice # Device role
+
+
+choice
+    prompt "Exchange API"
+
+config TLK_RF_DEMO_EXCHANGE_MANUAL
+    bool "Manual"
+
+config TLK_RF_DEMO_EXCHANGE_STX_SRX
+    bool "STX & SRX"
+
+config TLK_RF_DEMO_EXCHANGE_STR_SRT
+    bool "STR & SRT"
+
+config TLK_RF_DEMO_EXCHANGE_BTX_BRX
+    bool "BTX & BRX"
+
+config TLK_RF_DEMO_EXCHANGE_PTX_PRX
+    bool "PTX & PRX"
+
+endchoice # Exchange API
+
+
+if TLK_RF_DEMO_EXCHANGE_MANUAL
+
+config TLK_RF_DEMO_POLLING_MODE
+    bool "Use polling mode"
+
+config TLK_RF_DEMO_MODE_SWITCHING
+    bool "Switch between selected modes"
+
+if TLK_RF_DEMO_MODE_SWITCHING
+
+choice
+    prompt "The second mode"
+
+config TLK_RF_DEMO_SECOND_MODE_BLE
+    bool "BLE"
+
+config TLK_RF_DEMO_SECOND_MODE_ZIGBEE
+    bool "Zigbee"
+
+config TLK_RF_DEMO_SECOND_MODE_PRIVATE
+    bool "Private"
+
+config TLK_RF_DEMO_SECOND_MODE_HYBEE
+    bool "Hybee"
+
+endchoice # Mode
+
+config TLK_RF_DEMO_SECOND_MODE
+    string
+    default "TLK_RF_MODE_BLE" if TLK_RF_DEMO_SECOND_MODE_BLE
+    default "TLK_RF_MODE_ZIGBEE" if TLK_RF_DEMO_SECOND_MODE_ZIGBEE
+    default "TLK_RF_MODE_PRIVATE" if TLK_RF_DEMO_SECOND_MODE_PRIVATE
+    default "TLK_RF_MODE_HYBEE" if TLK_RF_DEMO_SECOND_MODE_HYBEE
+
+
+choice
+    prompt "Bitrate of the second mode"
+
+config TLK_RF_DEMO_SECOND_BITRATE_125K
+    bool "125K"
+    depends on TLK_RF_DEMO_SECOND_MODE_BLE
+
+config TLK_RF_DEMO_SECOND_BITRATE_250K
+    bool "250K"
+    depends on TLK_RF_DEMO_SECOND_MODE_PRIVATE || TLK_RF_DEMO_SECOND_MODE_ZIGBEE
+
+config TLK_RF_DEMO_SECOND_BITRATE_500K
+    bool "500K"
+    depends on TLK_RF_DEMO_SECOND_MODE_BLE || TLK_RF_DEMO_SECOND_MODE_PRIVATE || TLK_RF_DEMO_SECOND_MODE_HYBEE
+
+config TLK_RF_DEMO_SECOND_BITRATE_1M
+    bool "1M"
+    depends on TLK_RF_DEMO_SECOND_MODE_BLE || TLK_RF_DEMO_SECOND_MODE_PRIVATE || TLK_RF_DEMO_SECOND_MODE_HYBEE
+
+config TLK_RF_DEMO_SECOND_BITRATE_2M
+    bool "2M"
+    depends on TLK_RF_DEMO_SECOND_MODE_BLE || TLK_RF_DEMO_SECOND_MODE_PRIVATE || TLK_RF_DEMO_SECOND_MODE_HYBEE
+
+endchoice # Bitrate
+
+config TLK_RF_DEMO_SECOND_BITRATE
+    string
+    default "TLK_RF_BITRATE_125K" if TLK_RF_DEMO_SECOND_BITRATE_125K
+    default "TLK_RF_BITRATE_250K" if TLK_RF_DEMO_SECOND_BITRATE_250K
+    default "TLK_RF_BITRATE_500K" if TLK_RF_DEMO_SECOND_BITRATE_500K
+    default "TLK_RF_BITRATE_1M" if TLK_RF_DEMO_SECOND_BITRATE_1M
+    default "TLK_RF_BITRATE_2M" if TLK_RF_DEMO_SECOND_BITRATE_2M
+
+
+endif # TLK_RF_DEMO_MODE_SWITCHING
+
+
+config TLK_RF_DEMO_CHANNEL_SWITCHING
+    bool "Switch between channels"
+    depends on TLK_RF_DEMO_MODE_BLE
+    depends on !TLK_RF_DEMO_MODE_SWITCHING
+
+endif # TLK_RF_DEMO_EXCHANGE_MANUAL
+
+endmenu

@@ -1,0 +1,19 @@
+choice
+    prompt "SoC"
+
+config TLK_SOC_TLSR9228A
+    bool "TLSR9228A"
+    #TODO: clarify the packaging of this SoC
+    select TLK_HAS_QFN88_CASE
+
+config TLK_SOC_TLSR9228H
+    bool "TLSR9228H"
+    select TLK_HAS_QFN48_CASE
+
+endchoice # SoC
+
+
+config TLK_SOC
+    string
+    default "TLSR9228A" if TLK_SOC_TLSR9228A
+    default "TLSR9228H" if TLK_SOC_TLSR9228H

@@ -1,0 +1,4 @@
+config TLK_NV_STORAGE_DEMO
+    def_bool y
+    select TLK_NV_STORAGE
+    select TLK_DEBUG_LOG_CONSOLE

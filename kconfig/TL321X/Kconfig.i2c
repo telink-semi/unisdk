@@ -1,0 +1,187 @@
+menuconfig TLK_I2C
+    bool "I2C"
+    select TLK_GPIO
+
+if TLK_I2C
+
+config TLK_I2C_AUTO_CONFIG
+    bool
+
+config TLK_I2C_DMA
+    bool
+    select TLK_DMA
+    select TLK_PLIC
+
+config TLK_I2C_PM_DEVICE
+    bool
+
+
+menuconfig TLK_I2C0
+    bool "I2C0"
+
+if TLK_I2C0
+
+menuconfig TLK_I2C0_AUTO_CONFIG
+    bool "Configure automatically"
+    select TLK_I2C_AUTO_CONFIG
+
+if TLK_I2C0_AUTO_CONFIG
+
+choice
+    prompt "Mode"
+
+config TLK_I2C0_AC_MODE_MASTER
+    bool "Master"
+    depends on y
+    select TLK_I2C0_MASTER
+
+config TLK_I2C0_AC_MODE_SLAVE
+    bool "Slave"
+    depends on y
+    select TLK_I2C0_SLAVE
+
+endchoice
+
+config TLK_I2C0_AC_STRETCH
+    bool "Stretch"
+    default y
+
+if TLK_I2C0_AC_MODE_MASTER
+
+config TLK_I2C0_AC_CLOCK_SPEED
+    int "Clock speed"
+    default 400000
+
+endif # TLK_I2C0_AC_MODE_MASTER
+
+if TLK_I2C0_AC_MODE_SLAVE
+
+config TLK_I2C0_AC_ADDRESS
+    hex "Address"
+    default 0x5A
+
+endif # TLK_I2C0_AC_MODE_SLAVE
+
+endif # TLK_I2C0_AUTO_CONFIG
+
+config TLK_I2C0_DMA
+    bool
+    select TLK_I2C_DMA
+
+menuconfig TLK_I2C0_MASTER
+    bool "Master"
+    depends on y
+
+config TLK_I2C0_MASTER_DMA
+    bool "Use DMA"
+    depends on TLK_I2C0_MASTER
+    depends on y
+    select TLK_I2C0_DMA
+
+menuconfig TLK_I2C0_SLAVE
+    bool "Slave"
+    depends on y
+    select TLK_PLIC
+
+config TLK_I2C0_SLAVE_DMA
+    bool "Use DMA"
+    depends on TLK_I2C0_SLAVE
+    depends on n
+    select TLK_I2C0_DMA
+
+if TLK_PM
+
+config TLK_I2C0_PM_DEVICE
+    bool "Enable PM Support"
+    default y
+    select TLK_I2C_PM_DEVICE
+
+endif # TLK_PM
+
+endif # TLK_I2C0
+
+menuconfig TLK_I2C1
+    bool "I2C1"
+
+if TLK_I2C1
+
+menuconfig TLK_I2C1_AUTO_CONFIG
+    bool "Configure automatically"
+    select TLK_I2C_AUTO_CONFIG
+
+if TLK_I2C1_AUTO_CONFIG
+
+choice
+    prompt "Mode"
+
+config TLK_I2C1_AC_MODE_MASTER
+    bool "Master"
+    depends on y
+    select TLK_I2C1_MASTER
+
+config TLK_I2C1_AC_MODE_SLAVE
+    bool "Slave"
+    depends on n
+    select TLK_I2C1_SLAVE
+
+endchoice
+
+config TLK_I2C1_AC_STRETCH
+    bool "Stretch"
+    default y
+
+if TLK_I2C1_AC_MODE_MASTER
+
+config TLK_I2C1_AC_CLOCK_SPEED
+    int "Clock speed"
+    default 400000
+
+endif # TLK_I2C1_AC_MODE_MASTER
+
+if TLK_I2C1_AC_MODE_SLAVE
+
+config TLK_I2C1_AC_ADDRESS
+    hex "Address"
+    default 0x5A
+
+endif # TLK_I2C1_AC_MODE_SLAVE
+
+endif # TLK_I2C1_AUTO_CONFIG
+
+config TLK_I2C1_DMA
+    bool
+    select TLK_I2C_DMA
+
+menuconfig TLK_I2C1_MASTER
+    bool "Master"
+    depends on y
+
+config TLK_I2C1_MASTER_DMA
+    bool "Use DMA"
+    depends on TLK_I2C1_MASTER
+    depends on n
+    select TLK_I2C1_DMA
+
+menuconfig TLK_I2C1_SLAVE
+    bool "Slave"
+    depends on n
+    select TLK_PLIC
+
+config TLK_I2C1_SLAVE_DMA
+    bool "Use DMA"
+    depends on TLK_I2C1_SLAVE
+    depends on n
+    select TLK_I2C1_DMA
+
+if TLK_PM
+
+config TLK_I2C1_PM_DEVICE
+    bool "Enable PM Support"
+    default y
+    select TLK_I2C_PM_DEVICE
+
+endif # TLK_PM
+
+endif # TLK_I2C1
+
+endif # TLK_I2C

@@ -1,0 +1,51 @@
+# SPDX-License-Identifier: Apache-2.0
+#
+# UniSDK common configuration for Zephyr builds
+#
+# Common/configurations that don't belong to a specific module:
+#   - TLK_CRITICAL_PRINTOUT    critical printout via UART
+#   - TLK_DEBUG_PRINT          debug print support
+#   - STIMER                   system timer configuration
+
+menu "UniSDK Common Configuration"
+
+config TLK_CRITICAL_PRINTOUT
+    bool "Critical printout via UART"
+    select TLK_UART
+    help
+        Enable critical printout using a dedicated UART.
+
+config TLK_DEBUG_PRINT
+    bool "Debug print support"
+    help
+        Enable debug print output.
+
+# =============================================================================
+# STIMER configuration (always compiled, not user-selectable)
+# =============================================================================
+
+config TLK_SYSTEM_TIMER_AUTO_MODE
+    bool
+    default y
+    help
+        Enable system timer auto mode.
+
+config TLK_SYSTEM_TIMER_IRQ_ENABLE
+    bool "System timer interrupt"
+    select TLK_PLIC
+    help
+        Enable system timer interrupt.
+
+config TLK_SYSTEM_TIMER_ADVANCED_MODE
+    bool "System timer advanced modes"
+    help
+        Enable system timer advanced modes.
+
+config TLK_SYSTEM_TIMER_ADVANCED_USE_32K_TICK_ANALOG_READOUT
+    bool "32K tick analog readout"
+    depends on TLK_SYSTEM_TIMER_ADVANCED_MODE
+    default y
+    help
+        Enable 32K tick analog readout for advanced timer modes.
+
+endmenu # UniSDK Common Configuration

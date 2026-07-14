@@ -1,0 +1,12 @@
+menuconfig TLK_PMP
+    bool "PMP"
+
+
+if TLK_PMP
+
+config TLK_PMP_PM_DEVICE
+    bool "Enable PM Support"
+    depends on TLK_PM
+    default y
+
+endif # TLK_PMP

@@ -1,0 +1,43 @@
+choice
+    prompt "SoC"
+
+config TLK_SOC_TL7218X
+    bool "TL7218X"
+    select TLK_HAS_QFN88_CASE
+
+config TLK_SOC_TL7218A
+    bool "TL7218A"
+    select TLK_HAS_QFN68_CASE
+
+config TLK_SOC_TL7218D
+    bool "TL7218D"
+    select TLK_HAS_QFN38_CASE
+
+config TLK_SOC_TL7218H
+    bool "TL7218H"
+    select TLK_HAS_BGA94_CASE
+
+config TLK_SOC_TL7218J
+    bool "TL7218J"
+    select TLK_HAS_BGA56_CASE
+
+config TLK_SOC_TL7215A
+    bool "TL7215A"
+    select TLK_HAS_QFN68_CASE
+
+config TLK_SOC_TL7215D
+    bool "TL7215D"
+    select TLK_HAS_QFN38_CASE
+
+endchoice # SoC
+
+
+config TLK_SOC
+    string
+    default "TL7218X" if TLK_SOC_TL7218X
+    default "TL7218A" if TLK_SOC_TL7218A
+    default "TL7218D" if TLK_SOC_TL7218D
+    default "TL7218H" if TLK_SOC_TL7218H
+    default "TL7218J" if TLK_SOC_TL7218J
+    default "TL7215A" if TLK_SOC_TL7215A
+    default "TL7215D" if TLK_SOC_TL7215D

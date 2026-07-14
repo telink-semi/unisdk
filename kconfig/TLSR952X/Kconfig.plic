@@ -1,0 +1,37 @@
+menuconfig TLK_PLIC
+    bool "PLIC"
+
+
+if TLK_PLIC
+
+config TLK_PLIC_VECTOR_MODE
+    bool "Enable vector mode"
+    default y
+
+
+menu "Interrupts nesting"
+
+config TLK_PLIC_NEST_SELECTED
+    bool
+    default n
+
+
+config TLK_PLIC_NEST_PLIC_SW
+    bool "Nest machine software interrupt (MSIE)"
+    select TLK_PLIC_NEST_SELECTED
+    depends on TLK_PLIC_SW
+
+
+config TLK_PLIC_NEST_MTIMER
+    bool "Nest machine timer interrupt (MTIE)"
+    select TLK_PLIC_NEST_SELECTED
+    depends on TLK_MTIMER_IRQ_ENABLE
+
+
+config TLK_PLIC_NEST_PLIC
+    bool "Nest external interrupts (MEIE)"
+    select TLK_PLIC_NEST_SELECTED
+
+endmenu
+
+endif # TLK_PLIC

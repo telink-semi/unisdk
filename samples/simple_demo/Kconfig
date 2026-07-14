@@ -1,0 +1,2 @@
+config TLK_SIMPLE_DEMO
+    def_bool y

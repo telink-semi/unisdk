@@ -1,0 +1,90 @@
+pinmux:
+  port:
+    pa:
+      exclude: [adc, spi0, jtag, sws, sdp]
+      pins:
+        p0:
+        p1:
+        p2:
+        p3:
+        p4:
+        p5:
+        p6:
+        p7:
+          exclude: all
+          include: sws
+    pb:
+      exclude: [spi0, jtag, sws, sdp]
+      pins:
+        p0:
+        p1:
+        p2:
+        p3:
+        p4:
+        p5:
+        p6:
+        p7:
+    pc:
+      exclude: [adc, spi0, jtag, sws, sdp]
+      pins:
+        p0:
+        p1:
+        p2:
+        p3:
+        p4:
+          include: jtag_tdi
+        p5:
+          include: jtag_tdo
+        p6:
+          include: [jtag_tms, sdp_tms]
+        p7:
+          include: [jtag_tck, sdp_tck]
+    pd:
+      exclude: [adc, spi0, jtag, sws, sdp]
+      pins:
+        p0:
+          include: [adc]
+        p1:
+          include: [adc]
+        p2:
+        p3:
+        p4:
+        p5:
+        p6:
+        p7:
+    pe:
+      exclude: [adc, jtag, sws, sdp]
+      pins:
+        p0:
+          exclude: all
+          include: spi0_cs
+        p1:
+          exclude: all
+          include: spi0_sck
+        p2:
+          exclude: all
+          include: spi0_mosi
+        p3:
+          exclude: all
+          include: spi0_miso
+        p4:
+          exclude: all
+          include: spi0_io2
+        p5:
+          exclude: all
+          include: spi0_io3
+        p6:
+          exclude: spi0
+        p7:
+          exclude: spi0
+    pf:
+      exclude: [adc, spi0, jtag, sws, sdp]
+      pins:
+        p0:
+        p1:
+        p2:
+        p3:
+        p4:
+        p5:
+        p6:
+        p7:

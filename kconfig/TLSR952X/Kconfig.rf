@@ -1,0 +1,18 @@
+menuconfig TLK_RF
+    bool "RF"
+    select TLK_DMA
+    select TLK_PLIC
+
+
+if TLK_RF
+
+config TLK_RF_RX_SHORT_MODE
+    bool "RX short mode"
+    default y
+
+config TLK_RF_PM_DEVICE
+    bool "Enable PM support"
+    depends on TLK_PM
+    default y
+
+endif # TLK_RF

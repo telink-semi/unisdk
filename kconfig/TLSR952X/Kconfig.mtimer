@@ -1,0 +1,31 @@
+menuconfig TLK_MTIMER
+    bool "MTIMER"
+
+
+if TLK_MTIMER
+
+menuconfig TLK_MTIMER_IRQ_ENABLE
+    bool "Enable interrupts"
+
+
+if TLK_MTIMER_IRQ_ENABLE
+
+config TLK_MTIMER_IRQ_NEST_SELECTED
+    bool
+    default n
+
+
+config TLK_MTIMER_IRQ_NEST_PLIC_SW
+    bool "Nest machine software interrupt (MSIE)"
+    select TLK_MTIMER_IRQ_NEST_SELECTED
+    depends on TLK_PLIC_SW
+
+
+config TLK_MTIMER_IRQ_NEST_PLIC
+    bool "Nest external interrupts (MEIE)"
+    select TLK_MTIMER_IRQ_NEST_SELECTED
+    depends on TLK_PLIC
+
+endif # TLK_MTIMER_IRQ_ENABLE
+
+endif # TLK_MTIMER

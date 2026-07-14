@@ -1,0 +1,6 @@
+if (CONFIG_TLK_NV_STORAGE)
+add_subdirectory(storage)
+endif()
+add_subdirectory(debug)
+add_subdirectory(task_planner)
+add_subdirectory(mem)

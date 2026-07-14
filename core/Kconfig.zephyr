@@ -1,0 +1,395 @@
+# SPDX-License-Identifier: Apache-2.0
+#
+# UniSDK Core driver configuration for Zephyr builds
+#
+# This file exposes UniSDK core driver toggles for use in Zephyr builds.
+# It mirrors the dependency chains from the native core/configs/Kconfig.*
+# files so that configuration errors (e.g., enabling TLK_UART without
+# TLK_GPIO) are caught at Kconfig time.
+#
+# When the native Kconfig preprocessor (preprocess_kconfig.py) is integrated
+# into the CMake build, some of these definitions may be replaced by
+# preprocessor-generated equivalents.
+
+menu "UniSDK Core Drivers"
+
+# =============================================================================
+# GPIO
+# =============================================================================
+
+config TLK_GPIO
+    bool "GPIO driver"
+    help
+        Enable the UniSDK GPIO driver.
+
+if TLK_GPIO
+
+config TLK_GPIO_PORT_A_ENABLED
+    bool "GPIO Port A"
+    default y
+config TLK_GPIO_PORT_B_ENABLED
+    bool "GPIO Port B"
+    default y
+config TLK_GPIO_PORT_C_ENABLED
+    bool "GPIO Port C"
+    default y
+config TLK_GPIO_PORT_D_ENABLED
+    bool "GPIO Port D"
+    default y
+config TLK_GPIO_PORT_E_ENABLED
+    bool "GPIO Port E"
+    default y
+
+endif # TLK_GPIO
+
+# =============================================================================
+# UART
+# =============================================================================
+
+config TLK_UART
+    bool "UART driver"
+    select TLK_GPIO
+    select TLK_API_TIME
+    help
+        Enable the UniSDK UART driver.
+
+if TLK_UART
+
+config TLK_UART_AUTO_CONFIG
+    bool "Auto-configure UART"
+    default y
+    help
+        Enable automatic UART configuration from Kconfig settings.
+
+config TLK_UART_PLIC_MODE_USED
+    bool
+    help
+        Hidden: set automatically when any UART uses PLIC mode.
+
+config TLK_UART_DMA_MODE_USED
+    bool
+    help
+        Hidden: set automatically when any UART uses DMA mode.
+
+config TLK_UART_FLOW_CONTROL
+    bool
+    help
+        Hidden: set automatically when any UART enables flow control.
+
+config TLK_UART_PM_DEVICE
+    bool
+    help
+        Hidden: set automatically when any UART enables PM.
+
+config TLK_UART0_ENABLED
+    bool "UART0"
+    default y
+    help
+        Enable UART0 instance.
+
+config TLK_UART1_ENABLED
+    bool "UART1"
+    help
+        Enable UART1 instance.
+
+config TLK_UART2_ENABLED
+    bool "UART2"
+    help
+        Enable UART2 instance.
+
+endif # TLK_UART
+
+# =============================================================================
+# I2C
+# =============================================================================
+
+config TLK_I2C
+    bool "I2C driver"
+    help
+        Enable the UniSDK I2C driver.
+
+if TLK_I2C
+
+config TLK_I2C0
+    bool "I2C0"
+    default y
+    help
+        Enable I2C0 instance.
+
+config TLK_I2C1
+    bool "I2C1"
+    help
+        Enable I2C1 instance.
+
+endif # TLK_I2C
+
+# =============================================================================
+# SPI
+# =============================================================================
+
+config TLK_SPI
+    bool "SPI driver"
+    help
+        Enable the UniSDK SPI driver.
+
+if TLK_SPI
+
+config TLK_SPI0
+    bool "SPI0"
+    default y
+    help
+        Enable SPI0 instance.
+
+endif # TLK_SPI
+
+# =============================================================================
+# PWM
+# =============================================================================
+
+config TLK_PWM
+    bool "PWM driver"
+    help
+        Enable the UniSDK PWM driver.
+
+# =============================================================================
+# DMA
+# =============================================================================
+
+config TLK_DMA
+    bool "DMA driver"
+    help
+        Enable the UniSDK DMA driver.
+
+if TLK_DMA
+
+config TLK_DMA_IRQ_HANDLER
+    bool "DMA interrupt handler"
+    help
+        Enable interrupt-driven DMA transfers.
+
+endif # TLK_DMA
+
+# =============================================================================
+# ADC
+# =============================================================================
+
+config TLK_ADC
+    bool "ADC driver"
+    help
+        Enable the UniSDK ADC driver.
+
+# =============================================================================
+# Power Management
+# =============================================================================
+
+config TLK_PM
+    bool "Power Management driver"
+    select TLK_PLIC
+    help
+        Enable the UniSDK Power Management driver.
+
+if TLK_PM
+
+config TLK_PM_SUSPEND
+    bool "Suspend mode"
+    default y
+    help
+        Enable suspend (light sleep) mode. At least one of Suspend or
+        Deep Sleep must be enabled when the PM driver is active.
+
+config TLK_PM_DEEP_SLEEP
+    bool "Deep sleep mode"
+    help
+        Enable deep sleep mode.
+
+config TLK_PM_RAM_RETENTION_ENABLE
+    bool "RAM retention for deep sleep"
+    depends on TLK_PM_DEEP_SLEEP
+    help
+        Enable RAM retention during deep sleep.
+
+config TLK_STIMER_PM_DEVICE
+    bool "STIMER PM device support"
+    default y
+    help
+        Enable power management for the system timer.
+
+config TLK_GPIO_PM_DEVICE
+    bool "GPIO PM device support"
+    depends on TLK_GPIO
+    default y
+    help
+        Enable power management for GPIO ports.
+
+config TLK_GPIO_PREVENT_SLEEP
+    bool "Prevent sleep if output pin is enabled"
+    depends on TLK_GPIO
+    help
+        Prevent entering sleep mode when any GPIO output pin is active.
+
+config TLK_DMA_PM_DEVICE
+    bool "DMA PM device support"
+    depends on TLK_DMA
+    help
+        Enable power management for DMA.
+
+endif # TLK_PM
+
+# =============================================================================
+# RF
+# =============================================================================
+
+config TLK_RF
+    bool "RF driver"
+    help
+        Enable the UniSDK RF driver.
+
+if TLK_RF
+
+config TLK_RF_RX_SHORT_MODE
+    bool "RF RX short mode"
+    default y
+    help
+        Enable RX short mode for the RF driver.
+
+endif # TLK_RF
+
+# =============================================================================
+# USB
+# =============================================================================
+
+config TLK_USB
+    bool "USB driver"
+    help
+        Enable the UniSDK USB driver.
+
+# =============================================================================
+# Watchdog
+# =============================================================================
+
+config TLK_WDT
+    bool "Watchdog driver"
+    help
+        Enable the UniSDK Watchdog driver.
+
+# =============================================================================
+# Machine Timer
+# =============================================================================
+
+config TLK_MTIMER
+    bool "Machine Timer driver"
+    default y
+    help
+        Enable the UniSDK machine timer driver.
+
+if TLK_MTIMER
+
+config TLK_MTIMER_ENABLE_IRQ
+    bool "MTIMER interrupt support"
+    help
+        Enable interrupt support for the machine timer.
+
+config TLK_MTIMER_ENABLE_NESTING
+    bool "MTIMER interrupt nesting"
+    depends on TLK_MTIMER_ENABLE_IRQ
+    help
+        Enable nested interrupt handling for the machine timer.
+
+endif # TLK_MTIMER
+
+# =============================================================================
+# PLIC (interrupt controller)
+# =============================================================================
+
+config TLK_PLIC
+    bool "PLIC interrupt controller driver"
+    default y
+    help
+        Enable the UniSDK PLIC driver.
+
+if TLK_PLIC
+
+config TLK_PLIC_ENABLE_NESTING
+    bool "PLIC interrupt nesting"
+    help
+        Enable nested interrupt handling in the PLIC driver.
+
+config TLK_PLIC_VECTOR_MODE
+    bool "PLIC vector mode"
+    default y
+    help
+        Enable vectored interrupt mode in the PLIC driver.
+
+endif # TLK_PLIC
+
+# =============================================================================
+# PLIC SW (software interrupt)
+# =============================================================================
+
+config TLK_PLIC_SW
+    bool "PLIC software interrupt driver"
+    help
+        Enable the UniSDK PLIC software interrupt driver.
+
+if TLK_PLIC_SW
+
+config TLK_PLIC_SW_ENABLE_NESTING
+    bool "PLIC SW interrupt nesting"
+    help
+        Enable nested interrupt handling for software interrupts.
+
+endif # TLK_PLIC_SW
+
+# =============================================================================
+# Debug interfaces
+# =============================================================================
+
+config TLK_DEBUG_INTERFACES
+    bool "Debug interfaces (JTAG/SWS)"
+    help
+        Enable UniSDK debug interface drivers (JTAG and SWS).
+
+if TLK_DEBUG_INTERFACES
+
+config TLK_DEBUG_JTAG
+    bool "JTAG debug"
+    help
+        Enable JTAG debug interface.
+
+config TLK_DEBUG_SWS
+    bool "SWS debug"
+    help
+        Enable Single Wire debug interface.
+
+endif # TLK_DEBUG_INTERFACES
+
+menuconfig TLK_CRYPTO
+    bool "Crypto functionality"
+
+
+if TLK_CRYPTO
+
+config TLK_CRYPTO_DMA_SUPPORT
+    bool "Support DMA functionality for cryptography"
+    select TLK_DMA
+
+config TLK_CRYPTO_TRNG
+    bool "Support random functionality"
+
+config TLK_CRYPTO_HASH
+    bool "Support hash functionality"
+
+config TLK_CRYPTO_CHACHA20
+    bool "Support chacha20 functionality"
+
+config TLK_CRYPTO_PKE
+    bool "Support public key engine functionality"
+    select TLK_CRYPTO_TRNG
+    select TLK_CRYPTO_HASH
+
+config TLK_CRYPTO_SKE
+    bool "Support symmetric key engine functionality"
+
+endif # TLK_CRYPTO
+
+endmenu # UniSDK Core Drivers

@@ -1,0 +1,5 @@
+// Auto-generated from YAML
+
+#define UNISDK_SPI_COUNT 1
+#define UNISDK_SPI_0_SUPPORTS_MASTER_ROLE true
+#define UNISDK_SPI_0_SUPPORTS_SLAVE_ROLE true

@@ -1,0 +1,23 @@
+set(USE_SHARED_MBEDTLS_LIBRARY OFF CACHE INTERNAL "" FORCE)
+set(ENABLE_TESTING OFF CACHE INTERNAL "" FORCE)
+set(ENABLE_PROGRAMS OFF CACHE INTERNAL "" FORCE)
+
+set(MBEDTLS_USER_CONFIG_FILE "tlk_mbedtls_config.h" CACHE STRING "" FORCE)
+set(TF_PSA_CRYPTO_USER_CONFIG_FILE "tlk_mbedtls_config.h" CACHE STRING "" FORCE)
+
+include_directories("${CMAKE_CURRENT_SOURCE_DIR}")
+
+add_subdirectory(repo)
+
+get_target_property(MBEDTLS_INC mbedtls INTERFACE_INCLUDE_DIRECTORIES)
+
+target_include_directories(${TARGET_NAME} PRIVATE
+	${MBEDTLS_INC}
+	${CMAKE_CURRENT_SOURCE_DIR}
+)
+
+target_link_libraries(${TARGET_NAME} PRIVATE
+	mbedtls
+)
+
+set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wno-error=redundant-decls" CACHE STRING "" FORCE)

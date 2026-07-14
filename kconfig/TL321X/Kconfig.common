@@ -1,0 +1,38 @@
+menuconfig TLK_CRITICAL_PRINTOUT
+    bool "Enable critical printout"
+    select TLK_UART
+
+
+if TLK_CRITICAL_PRINTOUT
+
+# UART Selection
+choice
+    prompt "UART number"
+
+config TLK_CRITICAL_UART0_ENABLED
+    bool "UART0"
+    select TLK_UART0_ENABLED
+config TLK_CRITICAL_UART1_ENABLED
+    bool "UART1"
+    select TLK_UART1_ENABLED
+config TLK_CRITICAL_UART2_ENABLED
+    bool "UART2"
+    select TLK_UART2_ENABLED
+
+endchoice # UART number
+
+
+# Selected UART
+config TLK_CRITICAL_UART
+    string
+    default TLK_UART0 if TLK_CRITICAL_UART0_ENABLED
+    default TLK_UART1 if TLK_CRITICAL_UART1_ENABLED
+    default TLK_UART2 if TLK_CRITICAL_UART2_ENABLED
+
+
+# Baudrate
+config TLK_CRITICAL_UART_BAUDRATE
+    int "Baudrate"
+    default 115200
+
+endif # TLK_CRITICAL_PRINTOUT

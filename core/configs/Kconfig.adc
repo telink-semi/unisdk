@@ -1,0 +1,16 @@
+
+menuconfig TLK_ADC
+    bool "ADC"
+    select TLK_GPIO
+
+if TLK_ADC
+
+if TLK_PM
+
+config TLK_ADC_PM_DEVICE
+    bool "Enable PM Support"
+    default y
+
+endif
+
+endif

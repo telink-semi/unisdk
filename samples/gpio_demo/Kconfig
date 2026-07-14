@@ -1,0 +1,14 @@
+config TLK_GPIO_DEMO
+    def_bool y
+    select TLK_GPIO
+    select TLK_API_TIME
+    select TLK_API_SLEEP
+
+
+menu "GPIO Sample configuration"
+
+config TLK_GPIO_DEMO_INTERRUPT
+    bool "GPIO demo with interrupt"
+    select TLK_PLIC
+
+endmenu

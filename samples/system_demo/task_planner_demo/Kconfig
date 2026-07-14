@@ -1,0 +1,6 @@
+config TLK_GPIO
+    def_bool y
+
+config TLK_TASK_PLANNER_DEMO
+    def_bool y
+    select TLK_TASK_PLANNER

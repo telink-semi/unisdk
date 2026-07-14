@@ -1,0 +1,9 @@
+kconfiglib
+PyYAML
+west
+windows-curses; sys_platform == "win32"
+python-benedict[all]
+textual
+pre-commit
+jsonschema
+Jinja2
