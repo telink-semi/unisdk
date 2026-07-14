@@ -58,6 +58,7 @@ void rf_configure(void)
         .power        = 4,
         .channel_type = TLK_RF_CHANNEL_BLE,
         .channel      = 37,
+        .irq_mask     = TLK_RF_IRQ_ALL,
     };
 
     union tlk_rf_mode_config rf_mode_config = {.ble_config = {.access_code = 0xd6be898e}};
