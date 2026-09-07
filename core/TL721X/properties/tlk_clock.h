@@ -1,0 +1,4 @@
+// Auto-generated from YAML
+
+#define UNISDK_CLOCK_32K_RC_FREQ 32000
+#define UNISDK_CLOCK_32K_XTAL_FREQ 32768

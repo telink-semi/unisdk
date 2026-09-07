@@ -1,0 +1,29 @@
+menu "Common configuration"
+    source "$(KCONFIG_BINARY_DIR)/core/configs/Kconfig.common"
+endmenu
+
+
+menu "Drivers selection"
+
+source "$(KCONFIG_BINARY_DIR)/core/configs/Kconfig.adc"
+source "$(KCONFIG_BINARY_DIR)/core/configs/Kconfig.audio"
+source "$(KCONFIG_BINARY_DIR)/core/configs/Kconfig.crypto"
+source "$(KCONFIG_BINARY_DIR)/core/configs/Kconfig.dma"
+source "$(KCONFIG_BINARY_DIR)/core/configs/Kconfig.gpio"
+source "$(KCONFIG_BINARY_DIR)/core/configs/Kconfig.i2c"
+source "$(KCONFIG_BINARY_DIR)/core/configs/Kconfig.i2s"
+source "$(KCONFIG_BINARY_DIR)/core/configs/Kconfig.mtimer"
+source "$(KCONFIG_BINARY_DIR)/core/configs/Kconfig.plic"
+source "$(KCONFIG_BINARY_DIR)/core/configs/Kconfig.plicsw"
+source "$(KCONFIG_BINARY_DIR)/core/configs/Kconfig.pm"
+source "$(KCONFIG_BINARY_DIR)/core/configs/Kconfig.pmp"
+source "$(KCONFIG_BINARY_DIR)/core/configs/Kconfig.random"
+source "$(KCONFIG_BINARY_DIR)/core/configs/Kconfig.rf"
+source "$(KCONFIG_BINARY_DIR)/core/configs/Kconfig.spi"
+source "$(KCONFIG_BINARY_DIR)/core/configs/Kconfig.stimer"
+source "$(KCONFIG_BINARY_DIR)/core/configs/Kconfig.trap"
+source "$(KCONFIG_BINARY_DIR)/core/configs/Kconfig.uart"
+source "$(KCONFIG_BINARY_DIR)/core/configs/Kconfig.usb"
+source "$(KCONFIG_BINARY_DIR)/core/configs/Kconfig.wdt"
+
+endmenu

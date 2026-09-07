@@ -1,0 +1,134 @@
+# SPDX-License-Identifier: Apache-2.0
+#
+# UniSDK Zephyr module Kconfig (bridge layer)
+#
+# This Kconfig provides the mapping between Zephyr's SoC/board selection
+# and UniSDK's internal SoC/core/board configuration, and sources
+# per-module Kconfig.zephyr files for driver and feature toggles.
+#
+# Module Kconfig fragments are maintained close to their respective
+# source code in each module's Kconfig.zephyr file.
+
+menu "UniSDK Configuration"
+
+config HAS_UNISDK
+    bool "UniSDK support"
+    default y
+    help
+        This option enables support for the Telink Unified SDK (UniSDK).
+        UniSDK provides low-level drivers (GPIO, UART, PM, RF, etc.)
+        and hardware abstraction for Telink SoCs.
+
+if HAS_UNISDK
+
+# =============================================================================
+# SoC / Core mapping
+#
+# These hidden bools are set automatically based on the Zephyr SoC selection.
+# They drive the UniSDK internal CONFIG_TLK_CORE and CONFIG_TLK_SOC_SERIES
+# string values used in CMake to locate source and include paths.
+# =============================================================================
+
+config TLK_CORE_TL321X
+    bool
+    default y if SOC_SERIES_TELINK_TL321X
+
+config TLK_CORE_TL721X
+    bool
+    default y if SOC_SERIES_TELINK_TL721X
+
+config TLK_CORE
+    string
+    default "TL321X" if TLK_CORE_TL321X
+    default "TL721X" if TLK_CORE_TL721X
+
+config TLK_SOC_SERIES_TL321X
+    bool
+    default y if SOC_SERIES_TELINK_TL321X
+
+config TLK_SOC_SERIES_TL721X
+    bool
+    default y if SOC_SERIES_TELINK_TL721X
+
+config TLK_SOC_SERIES
+    string
+    default "TL321X" if TLK_SOC_SERIES_TL321X
+    default "TL721X" if TLK_SOC_SERIES_TL721X
+
+# =============================================================================
+# SoC selection (maps Zephyr SOC to UniSDK SOC string)
+# =============================================================================
+
+config TLK_SOC_TL3218X
+    bool
+    default y if SOC_TELINK_TL3218X
+
+config TLK_SOC_TL7218X
+    bool
+    default y if SOC_TELINK_TL7218X
+
+config TLK_SOC
+    string
+    default "TL3218X" if TLK_SOC_TL3218X
+    default "TL7218X" if TLK_SOC_TL7218X
+
+# =============================================================================
+# Board selection (maps Zephyr BOARD to UniSDK board string)
+# =============================================================================
+
+config TLK_BOARD_TL3218X_EVK
+    bool
+    default y if BOARD_TL3218X_EVK
+
+config TLK_BOARD_TL7218X_EVK
+    bool
+    default y if BOARD_TL7218X_EVK
+
+config TLK_HAS_BOARD_SELECTED
+    bool
+    default y if TLK_BOARD_TL3218X_EVK
+    default y if TLK_BOARD_TL7218X_EVK
+
+config TLK_BOARD
+    string
+    default "TL3218X_EVK" if TLK_BOARD_TL3218X_EVK
+    default "TL7218X_EVK" if TLK_BOARD_TL7218X_EVK
+
+# =============================================================================
+# Pin package / case selection
+# =============================================================================
+
+config TLK_HAS_QFN64_CASE
+    bool
+    default y if TLK_SOC_TL3218X
+
+config TLK_HAS_QFN88_CASE
+    bool
+    default y if TLK_SOC_TL7218X
+
+config TLK_CASE
+    string
+    default "QFN64" if TLK_HAS_QFN64_CASE
+    default "QFN88" if TLK_HAS_QFN88_CASE
+
+# =============================================================================
+# Module Kconfig fragments
+#
+# Each module maintains its own Kconfig.zephyr file so that configuration
+# symbols live close to the source code they control.
+# =============================================================================
+
+rsource "../common/Kconfig.zephyr"
+rsource "../core/Kconfig.zephyr"
+rsource "../api/Kconfig.zephyr"
+
+if BT_TLX
+# Source the BLE controller Kconfig tree so that all controller config
+# symbols (TLK_BLE_ACL_*, TLK_BLE_HCI_*, etc.) are visible in Zephyr
+# builds when BT_TLX selects TLK_BLE_CONTROLLER.
+orsource "../subsystem/ble/controller/Kconfig"
+endif # BT_TLX
+
+endif # HAS_UNISDK
+
+endmenu # UniSDK Configuration

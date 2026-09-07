@@ -1,0 +1,65 @@
+pinmux:
+  port:
+    pa:
+      exclude: [adc0, jtag, sws, sdp]
+      pins:
+        p0:
+        p1:
+        p2:
+        p3:
+        p4:
+        p5:
+        p6:
+        p7:
+          exclude: all
+          include: sws
+    pb:
+      exclude: [jtag, sws, sdp]
+      pins:
+        p0:
+        p1:
+        p2:
+        p3:
+        p4:
+        p5:
+        p6:
+        p7:
+    pc:
+      exclude: [adc0, jtag, sws, sdp]
+      pins:
+        p0:
+        p1:
+        p2:
+        p3:
+        p4:
+          include: jtag_tdi
+        p5:
+          include: jtag_tdo
+        p6:
+          include: [jtag_tms, sdp_tms]
+        p7:
+          include: [jtag_tck, sdp_tck]
+    pd:
+      exclude: [adc0, jtag, sws, sdp]
+      pins:
+        p0:
+          include: [adc]
+        p1:
+          include: [adc]
+        p2:
+        p3:
+        p4:
+        p5:
+        p6:
+        p7:
+    pe:
+      exclude: [adc0, jtag, sws, sdp]
+      pins:
+        p0:
+        p1:
+        p2:
+        p3:
+        p4:
+        p5:
+        p6:
+        p7:

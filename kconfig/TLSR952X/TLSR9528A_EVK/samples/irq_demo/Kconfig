@@ -1,0 +1,34 @@
+config TLK_IRQ_DEMO
+    bool
+    default y
+    select TLK_PLIC
+    select TLK_PLIC_SW
+    select TLK_MTIMER
+    select TLK_MTIMER_IRQ_ENABLE
+    select TLK_UART
+    select TLK_UART0_ENABLED
+    select TLK_UART0_AUTO_CONFIG
+
+
+menu "IRQ Sample configuration"
+
+choice TLK_IRQ_DEMO_IRQ_BASE
+    prompt "Interrupt nesting base"
+    default TLK_IRQ_DEMO_IRQ_BASE_PLIC_SW
+
+config TLK_IRQ_DEMO_IRQ_BASE_PLIC_SW
+    bool "PLIC_SW (MSI)"
+
+config TLK_IRQ_DEMO_IRQ_BASE_MTIMER
+    bool "MTIMER (MTI)"
+
+config TLK_IRQ_DEMO_IRQ_BASE_PLIC
+    bool "PLIC (MEI)"
+endchoice
+
+
+config TLK_IRQ_DEMO_PLIC_PREEMPT
+    bool "PLIC with PREEMPT"
+    depends on TLK_IRQ_DEMO_IRQ_BASE_PLIC
+
+endmenu

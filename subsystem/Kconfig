@@ -1,0 +1,14 @@
+# SPDX-License-Identifier: Apache-2.0
+
+menu "Subsystem Configuration"
+
+    # BLE Controller subsystem
+    orsource "ble/controller/Kconfig"
+
+    # MCUBoot subsystem
+    orsource "mcuboot/Kconfig"
+
+    # BLE Host v2 subsystem
+    orsource "ble/host/prj/unisdk/Kconfig"
+
+endmenu

@@ -1,0 +1,10 @@
+menu "Audio Demo Configuration"
+
+config TLK_AUDIO_DEMO
+    bool
+    select TLK_AUDIO
+    select TLK_NV_STORAGE
+    select TLK_DMA_IRQ_HANDLER
+    default y
+
+endmenu

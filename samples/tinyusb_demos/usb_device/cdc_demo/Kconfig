@@ -1,0 +1,5 @@
+config TLK_USB_CDC_DEMO
+    select TLK_USB
+    def_bool y
+config TLK_BLE_CONTROLLER
+    default n

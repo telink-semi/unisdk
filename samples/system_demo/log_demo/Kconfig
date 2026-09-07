@@ -1,0 +1,7 @@
+config TLK_GPIO
+    def_bool y
+
+config TLK_DEBUG_LOG_CONSOLE
+    def_bool y
+config TLK_BLE_CONTROLLER
+    default n

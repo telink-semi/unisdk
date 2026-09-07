@@ -1,0 +1,99 @@
+
+Screen {
+    align: center middle;
+    background: #202020;
+
+    #body {
+        overflow: auto;
+    }
+
+    PortWidget {
+        border: round white;
+        margin: 1 2;
+        height: auto;
+        width: auto;
+
+        PinWidget {
+            margin: 0 1;
+            background: gray;
+            width: 1fr;
+            max-width: 13%;
+
+            &:focus {
+                text-style: bold;
+                background-tint: white 50%;
+            }
+
+            &.pin_selected {
+                background: $success;
+            }
+
+            &.pin_conflict {
+                background: $error;
+            }
+        }
+
+        .pin_stub {
+            margin: 0 1;
+            width: 1fr;
+            height: auto;
+        }
+    }
+}
+FunctionSelectScreen {
+    OptionList {
+        height: 100%;
+
+        &:focus {
+            border: round $border;
+        }
+    }
+}
+
+/* --- QuitScreen --- */
+
+QuitScreen {
+    align: center middle;
+    background: $background 50%;
+}
+
+#dialog {
+    width: 62;
+    height: 10;
+    align: center middle;
+
+    border: thick $background 80%;
+    background: $surface;
+}
+
+#text-container {
+    height: auto;
+    margin-bottom: 2;
+    align: center middle;
+    text-style: bold;
+}
+
+#buttons-container {
+    height: auto;
+    align: center middle;
+}
+
+QuitScreen Button {
+    width: 16;
+    height: 3;
+    margin: 0 1;
+    align: center middle;
+
+    background: $background 90%;
+    border: tall black;
+}
+
+QuitScreen Button:hover {
+    background: $background 50%;
+    border: tall black;
+}
+
+QuitScreen Button:focus {
+    text-style: bold;
+    border: tall $accent;
+}

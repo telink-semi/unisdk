@@ -1,0 +1,42 @@
+*.o
+*.a
+*.d
+*.log
+*.pyc
+*.swp
+*.swo
+*~
+build
+__pycache__
+.venv
+.vscode
+toolchain
+test_report_*
+.cache
+!libraries/
+!libraries/*.a
+**/repo/
+compile_commands.json
+jtag-burn-config.json
+
+# In-tree CMake/Kconfig artifacts (produced when cmake is run with -B . or an
+# out-of-tree build dir other than build/)
+build_*/
+CMakeCache.txt
+CMakeFiles/
+autoconf.h
+pinmux.h
+.config
+build.config
+chip.config
+flash_boot.ld
+.chip_cache/
+ci_logs/
+
+# west-managed project checkouts (see west.yml)
+subsystem/ble/controller/
+
+# Signing keys and signed images must never be committed -- release signing keys
+# live outside the repo, see samples/mcuboot_bootloader/README.md
+*.pem
+signed_*.bin

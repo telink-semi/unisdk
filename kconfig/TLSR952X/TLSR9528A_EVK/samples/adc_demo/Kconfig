@@ -1,0 +1,14 @@
+config TLK_ADC_DEMO
+    def_bool y
+    select TLK_ADC
+    select TLK_DEBUG_LOG_CONSOLE
+    select TLK_API_TIME
+
+menu "ADC Sample configuration"
+
+config TLK_ADC_DEMO_PM
+    bool "ADC Demo with PM"
+    select TLK_API_SLEEP
+    imply TLK_ADC_PM_DEVICE
+
+endmenu

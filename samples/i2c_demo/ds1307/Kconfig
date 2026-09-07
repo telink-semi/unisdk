@@ -1,0 +1,9 @@
+config TLK_I2C_DEMO
+    def_bool y
+    select TLK_I2C
+    select TLK_I2C0
+    select TLK_I2C0_MASTER
+    select TLK_GPIO
+    select TLK_PLIC
+config TLK_BLE_CONTROLLER
+    default n

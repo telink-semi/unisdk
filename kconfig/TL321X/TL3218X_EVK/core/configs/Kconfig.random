@@ -1,0 +1,384 @@
+menuconfig TLK_RANDOM
+    bool "RANDOM"
+    select TLK_CRYPTO
+    select TLK_CRYPTO_TRNG
+
+
+if TLK_RANDOM
+
+# Global configs
+config TLK_RANDOM_USED_PRNG
+    bool
+
+config TLK_RANDOM_USED_TRNG
+    bool
+
+
+choice
+    prompt "Mode"
+    default TLK_RANDOM_PRNG
+
+config TLK_RANDOM_PRNG
+    bool "PRNG"
+    select TLK_RANDOM_USED_PRNG
+
+config TLK_RANDOM_PRNG_TRNG
+    bool "TRNG + PRNG"
+    select TLK_RANDOM_USED_TRNG
+    select TLK_RANDOM_USED_PRNG
+
+config TLK_RANDOM_TRNG
+    bool "TRNG"
+    select TLK_RANDOM_USED_TRNG
+
+config TLK_RANDOM_TRNG_DRBG
+    bool "TRNG + DRBG"
+    select TLK_RANDOM_USED_TRNG
+
+endchoice # Mode
+
+
+if TLK_RANDOM_USED_TRNG
+
+menu "Entropy sources"
+
+
+menuconfig TLK_RANDOM_TRNG_SOURCE0
+    bool "SORCE 0"
+    default y
+
+
+if TLK_RANDOM_TRNG_SOURCE0
+
+
+config TLK_RANDOM_TRNG_SOURCE0_RO0
+    bool "RO 0"
+    default y
+
+config TLK_RANDOM_TRNG_SOURCE0_RO1
+    bool "RO 1"
+    default y
+
+config TLK_RANDOM_TRNG_SOURCE0_RO2
+    bool "RO 2"
+    default y
+
+config TLK_RANDOM_TRNG_SOURCE0_RO3
+    bool "RO 3"
+    default y
+
+config TLK_RANDOM_TRNG_SOURCE0_RO4
+    bool "RO 4"
+    default y
+
+config TLK_RANDOM_TRNG_SOURCE0_RO5
+    bool "RO 5"
+    default y
+
+config TLK_RANDOM_TRNG_SOURCE0_RO6
+    bool "RO 6"
+    default y
+
+config TLK_RANDOM_TRNG_SOURCE0_RO7
+    bool "RO 7"
+    default y
+
+config TLK_RANDOM_TRNG_SOURCE0_RO8
+    bool "RO 8"
+    default y
+
+config TLK_RANDOM_TRNG_SOURCE0_RO9
+    bool "RO 9"
+    default y
+
+config TLK_RANDOM_TRNG_SOURCE0_RO10
+    bool "RO 10"
+    default y
+
+config TLK_RANDOM_TRNG_SOURCE0_RO11
+    bool "RO 11"
+    default y
+
+config TLK_RANDOM_TRNG_SOURCE0_RO12
+    bool "RO 12"
+    default y
+
+config TLK_RANDOM_TRNG_SOURCE0_RO13
+    bool "RO 13"
+    default y
+
+config TLK_RANDOM_TRNG_SOURCE0_RO14
+    bool "RO 14"
+    default y
+
+config TLK_RANDOM_TRNG_SOURCE0_RO15
+    bool "RO 15"
+    default y
+
+endif # TLK_RANDOM_SOURCE0
+
+menuconfig TLK_RANDOM_TRNG_SOURCE1
+    bool "SORCE 1"
+    default y
+
+
+if TLK_RANDOM_TRNG_SOURCE1
+
+
+config TLK_RANDOM_TRNG_SOURCE1_RO0
+    bool "RO 0"
+    default y
+
+config TLK_RANDOM_TRNG_SOURCE1_RO1
+    bool "RO 1"
+    default y
+
+config TLK_RANDOM_TRNG_SOURCE1_RO2
+    bool "RO 2"
+    default y
+
+config TLK_RANDOM_TRNG_SOURCE1_RO3
+    bool "RO 3"
+    default y
+
+config TLK_RANDOM_TRNG_SOURCE1_RO4
+    bool "RO 4"
+    default y
+
+config TLK_RANDOM_TRNG_SOURCE1_RO5
+    bool "RO 5"
+    default y
+
+config TLK_RANDOM_TRNG_SOURCE1_RO6
+    bool "RO 6"
+    default y
+
+config TLK_RANDOM_TRNG_SOURCE1_RO7
+    bool "RO 7"
+    default y
+
+config TLK_RANDOM_TRNG_SOURCE1_RO8
+    bool "RO 8"
+    default y
+
+config TLK_RANDOM_TRNG_SOURCE1_RO9
+    bool "RO 9"
+    default y
+
+config TLK_RANDOM_TRNG_SOURCE1_RO10
+    bool "RO 10"
+    default y
+
+config TLK_RANDOM_TRNG_SOURCE1_RO11
+    bool "RO 11"
+    default y
+
+config TLK_RANDOM_TRNG_SOURCE1_RO12
+    bool "RO 12"
+    default y
+
+config TLK_RANDOM_TRNG_SOURCE1_RO13
+    bool "RO 13"
+    default y
+
+config TLK_RANDOM_TRNG_SOURCE1_RO14
+    bool "RO 14"
+    default y
+
+config TLK_RANDOM_TRNG_SOURCE1_RO15
+    bool "RO 15"
+    default y
+
+endif # TLK_RANDOM_SOURCE1
+
+menuconfig TLK_RANDOM_TRNG_SOURCE2
+    bool "SORCE 2"
+    default y
+
+
+if TLK_RANDOM_TRNG_SOURCE2
+
+
+config TLK_RANDOM_TRNG_SOURCE2_RO0
+    bool "RO 0"
+    default y
+
+config TLK_RANDOM_TRNG_SOURCE2_RO1
+    bool "RO 1"
+    default y
+
+config TLK_RANDOM_TRNG_SOURCE2_RO2
+    bool "RO 2"
+    default y
+
+config TLK_RANDOM_TRNG_SOURCE2_RO3
+    bool "RO 3"
+    default y
+
+config TLK_RANDOM_TRNG_SOURCE2_RO4
+    bool "RO 4"
+    default y
+
+config TLK_RANDOM_TRNG_SOURCE2_RO5
+    bool "RO 5"
+    default y
+
+config TLK_RANDOM_TRNG_SOURCE2_RO6
+    bool "RO 6"
+    default y
+
+config TLK_RANDOM_TRNG_SOURCE2_RO7
+    bool "RO 7"
+    default y
+
+config TLK_RANDOM_TRNG_SOURCE2_RO8
+    bool "RO 8"
+    default y
+
+config TLK_RANDOM_TRNG_SOURCE2_RO9
+    bool "RO 9"
+    default y
+
+config TLK_RANDOM_TRNG_SOURCE2_RO10
+    bool "RO 10"
+    default y
+
+config TLK_RANDOM_TRNG_SOURCE2_RO11
+    bool "RO 11"
+    default y
+
+config TLK_RANDOM_TRNG_SOURCE2_RO12
+    bool "RO 12"
+    default y
+
+config TLK_RANDOM_TRNG_SOURCE2_RO13
+    bool "RO 13"
+    default y
+
+config TLK_RANDOM_TRNG_SOURCE2_RO14
+    bool "RO 14"
+    default y
+
+config TLK_RANDOM_TRNG_SOURCE2_RO15
+    bool "RO 15"
+    default y
+
+endif # TLK_RANDOM_SOURCE2
+
+menuconfig TLK_RANDOM_TRNG_SOURCE3
+    bool "SORCE 3"
+    default y
+
+
+if TLK_RANDOM_TRNG_SOURCE3
+
+
+config TLK_RANDOM_TRNG_SOURCE3_RO0
+    bool "RO 0"
+    default y
+
+config TLK_RANDOM_TRNG_SOURCE3_RO1
+    bool "RO 1"
+    default y
+
+config TLK_RANDOM_TRNG_SOURCE3_RO2
+    bool "RO 2"
+    default y
+
+config TLK_RANDOM_TRNG_SOURCE3_RO3
+    bool "RO 3"
+    default y
+
+config TLK_RANDOM_TRNG_SOURCE3_RO4
+    bool "RO 4"
+    default y
+
+config TLK_RANDOM_TRNG_SOURCE3_RO5
+    bool "RO 5"
+    default y
+
+config TLK_RANDOM_TRNG_SOURCE3_RO6
+    bool "RO 6"
+    default y
+
+config TLK_RANDOM_TRNG_SOURCE3_RO7
+    bool "RO 7"
+    default y
+
+config TLK_RANDOM_TRNG_SOURCE3_RO8
+    bool "RO 8"
+    default y
+
+config TLK_RANDOM_TRNG_SOURCE3_RO9
+    bool "RO 9"
+    default y
+
+config TLK_RANDOM_TRNG_SOURCE3_RO10
+    bool "RO 10"
+    default y
+
+config TLK_RANDOM_TRNG_SOURCE3_RO11
+    bool "RO 11"
+    default y
+
+config TLK_RANDOM_TRNG_SOURCE3_RO12
+    bool "RO 12"
+    default y
+
+config TLK_RANDOM_TRNG_SOURCE3_RO13
+    bool "RO 13"
+    default y
+
+config TLK_RANDOM_TRNG_SOURCE3_RO14
+    bool "RO 14"
+    default y
+
+config TLK_RANDOM_TRNG_SOURCE3_RO15
+    bool "RO 15"
+    default y
+
+endif # TLK_RANDOM_SOURCE3
+
+endmenu
+
+
+choice
+    prompt "TRNG clock divider"
+    default TLK_RANDOM_TRNG_FSEL_32
+
+config TLK_RANDOM_TRNG_FSEL_4
+    bool "4"
+
+config TLK_RANDOM_TRNG_FSEL_8
+    bool "8"
+
+config TLK_RANDOM_TRNG_FSEL_16
+    bool "16"
+
+config TLK_RANDOM_TRNG_FSEL_32
+    bool "32"
+
+endchoice # TRNG clock divider
+
+
+config TLK_RANDOM_TRNG_FSEL
+    int
+    default 0 if TLK_RANDOM_TRNG_FSEL_4
+    default 1 if TLK_RANDOM_TRNG_FSEL_8
+    default 2 if TLK_RANDOM_TRNG_FSEL_16
+    default 3 if TLK_RANDOM_TRNG_FSEL_32
+
+
+config TLK_RANDOM_TRNG_TIMEOUT
+    int "TRNG waiting timeout (ms)"
+    default 2000
+
+
+config TLK_RANDOM_PM
+    bool "Enable PM Support"
+    depends on TLK_PM
+    default y
+
+endif # TLK_RANDOM_USED_TRNG
+
+endif # TLK_RANDOM

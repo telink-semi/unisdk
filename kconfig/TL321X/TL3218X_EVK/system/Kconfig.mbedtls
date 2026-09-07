@@ -1,0 +1,8 @@
+menuconfig TLK_MBEDTLS
+    bool "Enable mbedtls library"
+    imply TLK_CRYPTO
+    imply TLK_CRYPTO_DMA_SUPPORT
+    imply TLK_CRYPTO_TRNG
+    imply TLK_CRYPTO_HASH
+    imply TLK_CRYPTO_PKE
+    imply TLK_CRYPTO_SKE

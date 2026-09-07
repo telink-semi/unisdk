@@ -1,0 +1,23 @@
+config TLK_SPI_DEMO
+    def_bool y
+    select TLK_SPI
+    select TLK_SPI0
+    select TLK_API_TIME
+
+menu "SPI Sample configuration"
+
+choice
+    prompt "Device role"
+
+config TLK_SPI_DEMO_ROLE_MASTER
+    bool "Master"
+
+config TLK_SPI_DEMO_ROLE_SLAVE
+    bool "Slave"
+
+endchoice
+
+endmenu
+
+config TLK_BLE_CONTROLLER
+    default n

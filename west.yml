@@ -1,0 +1,49 @@
+# The west manifest file for Telink.
+#
+# The per-installation west configuration file, .west/config, sets the
+# path to the project containing this file in the [manifest] section's
+# "path" variable.
+#
+# You are free to create your own manifest files and put them in any
+# repository you want.
+#
+# See the west documentation for more information.
+
+manifest:
+  remotes:
+    - name: zephyr
+      url-base: https://github.com/zephyrproject-rtos
+    - name: telink
+      url-base: https://github.com/telink-semi
+
+  projects:
+    - name: tinyusb
+      url: https://github.com/hathach/tinyusb.git
+      revision: 3af1bec1a9161ee8dec29487831f7ac7ade9e189
+      path: unisdk/modules/tinyUSB/repo
+
+    - name: mbedtls
+      url: https://github.com/Mbed-TLS/mbedtls.git
+      revision: ece41aa84d7879d7e55c59e955a5884b541f7f3b
+      submodules: true
+      path: unisdk/modules/mbedtls/repo
+
+    - name: ble_controller
+      remote: telink
+      repo-path: unisdk-ble_controller
+      path: unisdk/subsystem/ble/controller
+      revision: 182c607d6199a456ddee337b849ad7a2d433481a
+
+    - name: mcuboot
+      url: https://github.com/telink-semi/mcuboot.git
+      revision: 346f7374ff4467e40b5594658f8ac67a5e9813c9
+      path: unisdk/modules/mcuboot/repo
+
+    - name: ble_host
+      repo-path: unisdk-ble_host
+      path: unisdk/subsystem/ble/host
+      revision: 59872a43047bc30d706eb326ffbacf7bc5a1b6f6
+
+  self:
+    path: unisdk
+    west-commands: scripts/west-commands.yml

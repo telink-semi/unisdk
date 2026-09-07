@@ -1,0 +1,27 @@
+# Keep the help strings in sync with the values in the .py files!
+west-commands:
+  - file: scripts/west_commands/build.py
+    commands:
+      - name: tl-build
+        class: Build
+        help: compile a Telink application
+  - file: scripts/west_commands/boards.py
+    commands:
+      - name: tl-boards
+        class: Boards
+        help: display information about supported Telink boards
+  - file: scripts/west_commands/socs.py
+    commands:
+      - name: tl-socs
+        class: Socs
+        help: display information about supported Telink socs
+  - file: scripts/west_commands/config.py
+    commands:
+      - name: tl-config
+        class: Config
+        help: configure a Telink application
+  - file: scripts/west_commands/bdt.py
+    commands:
+      - name: tl-bdt
+        class: Bdt
+        help: use BDT tool to configure and flash a Telink chip

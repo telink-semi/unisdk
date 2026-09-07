@@ -1,0 +1,206 @@
+menu "Debug configuration"
+
+# Stack painting for debug purposes
+config TLK_STACK_STATISTIC
+    bool "Stack painting for debug"
+
+
+# Debug interfaces top-level enable
+menuconfig TLK_DEBUG_INTERFACES
+    bool "Enable debug interfaces"
+
+if TLK_DEBUG_INTERFACES
+
+# SWS debug interface
+config TLK_DEBUG_SWS
+    bool "Enable SWS interface"
+    select TLK_GPIO
+
+# JTAG debug interface
+config TLK_DEBUG_JTAG
+    bool "Enable JTAG interface"
+    select TLK_GPIO
+
+# GPIO debug interface
+config TLK_DEBUG_GPIO
+    bool "Enable GPIO debug interface"
+
+endif # TLK_DEBUG_INTERFACES
+
+
+# Log console top-level enable
+menuconfig TLK_DEBUG_LOG_CONSOLE
+    bool "Enable console debug interface"
+    select TLK_MTIMER
+
+if TLK_DEBUG_LOG_CONSOLE
+
+# Enable ctrl command reception from host
+config TLK_DEBUG_LOG_CONSOLE_ENABLE_CTRL_CALLBACK
+    bool "Enable ctrl command reception from host"
+
+
+# Enable ANSI color codes on the log level tag; disable for receivers that don't support ANSI escapes
+config TLK_DEBUG_LOG_COLOR
+    bool "Enable log coloring"
+    default y
+
+
+# Debug log ring buffer size
+config TLK_DEBUG_LOG_BUFFER_SIZE
+    int "Debug log buffer size"
+    default 256
+
+# Allow logging from ISR context
+config TLK_DEBUG_LOG_FROM_ISR
+    bool "Print log from ISR"
+    depends on TLK_PLIC
+
+
+# Log output interface selection
+choice
+    prompt "Debug Log interface"
+    default TLK_DEBUG_LOG_INTERFACE_NONE
+
+config TLK_DEBUG_LOG_INTERFACE_UART
+    bool "UART"
+    select TLK_UART
+
+config TLK_DEBUG_LOG_INTERFACE_USB_CDC
+    bool "USB CDC"
+    select TLK_USB
+
+config TLK_DEBUG_LOG_INTERFACE_NONE
+    bool "None"
+
+endchoice # Debug Log interface
+
+
+if TLK_DEBUG_LOG_INTERFACE_UART
+
+# UART instance selection for log output
+choice
+    prompt "Debug UART number"
+
+config TLK_DEBUG_LOG_UART0
+    bool "UART0"
+    select TLK_UART0_ENABLED
+    select TLK_UART0_AUTO_CONFIG
+    imply TLK_UART0_PM_DEVICE
+config TLK_DEBUG_LOG_UART1
+    bool "UART1"
+    select TLK_UART1_ENABLED
+    select TLK_UART1_AUTO_CONFIG
+    imply TLK_UART1_PM_DEVICE
+config TLK_DEBUG_LOG_UART2
+    bool "UART2"
+    select TLK_UART2_ENABLED
+    select TLK_UART2_AUTO_CONFIG
+    imply TLK_UART2_PM_DEVICE
+
+endchoice # UART number
+
+
+# Selected UART instance
+config TLK_DEBUG_UART
+    string
+    default "TLK_UART0" if TLK_DEBUG_LOG_UART0
+    default "TLK_UART1" if TLK_DEBUG_LOG_UART1
+    default "TLK_UART2" if TLK_DEBUG_LOG_UART2
+
+endif # TLK_DEBUG_LOG_INTERFACE_UART
+
+
+# Log verbosity level selection
+choice
+    prompt "Debug Log Level"
+    default TLK_DEBUG_LOG_LEVEL_NONE
+
+config TLK_DEBUG_LOG_LEVEL_NONE
+    bool "None"
+
+config TLK_DEBUG_LOG_LEVEL_ERROR
+    bool "Error"
+
+config TLK_DEBUG_LOG_LEVEL_WARN
+    bool "Warn"
+
+config TLK_DEBUG_LOG_LEVEL_INFO
+    bool "Info"
+
+config TLK_DEBUG_LOG_LEVEL_DEBUG
+    bool "Debug"
+
+endchoice # Debug Log Level
+
+
+# Selected log level numeric value
+config TLK_DEBUG_LOG_LEVEL
+    int
+    default 0 if TLK_DEBUG_LOG_LEVEL_NONE
+    default 1 if TLK_DEBUG_LOG_LEVEL_ERROR
+    default 2 if TLK_DEBUG_LOG_LEVEL_WARN
+    default 3 if TLK_DEBUG_LOG_LEVEL_INFO
+    default 4 if TLK_DEBUG_LOG_LEVEL_DEBUG
+
+
+# Log output priority selection
+choice
+    prompt "Debug Log Priority"
+    default TLK_DEBUG_LOG_PRIO_IMMEDIATE
+
+config TLK_DEBUG_LOG_PRIO_HIGH
+    bool "High priority (ring buffer + timer)"
+    depends on TLK_SOFTWARE_TIMERS
+    depends on TLK_PLIC
+
+config TLK_DEBUG_LOG_PRIO_LOW
+    bool "Low priority (ring buffer)"
+
+config TLK_DEBUG_LOG_PRIO_IMMEDIATE
+    bool "Immediate (blocking mode)"
+
+endchoice # Debug Log Priority
+
+
+# Ring buffer queue depth for buffered modes
+config TLK_DEBUG_LOG_QUEUE_SIZE
+    int "Debug Log Queue size"
+    default 50
+    depends on TLK_DEBUG_LOG_PRIO_LOW || TLK_DEBUG_LOG_PRIO_HIGH
+
+# Periodic pump interval for high priority mode
+config TLK_DEBUG_LOG_PERIODIC_PUMP_PERIOD
+    int "Debug Log Pump period [ms]"
+    default 200
+    depends on TLK_DEBUG_LOG_PRIO_HIGH || TLK_TASK_PLANNER_MODE_SCHEDULER
+
+endif # TLK_DEBUG_LOG_CONSOLE
+
+
+# Assert top-level enable
+menuconfig TLK_DEBUG_ASSERT
+    bool "Enable debug assert"
+
+if TLK_DEBUG_ASSERT
+
+# MCU reaction on assert
+choice
+    prompt "Assert MCU action"
+    default TLK_DEBUG_ASSERT_MCU_MODE_REBOOT
+
+config TLK_DEBUG_ASSERT_MCU_MODE_REBOOT
+    bool "Reboot"
+
+config TLK_DEBUG_ASSERT_MCU_MODE_STALL
+    bool "Stall"
+
+config TLK_DEBUG_ASSERT_MCU_MODE_DEEP_SLEEP
+    bool "Deep Sleep"
+    depends on TLK_PM_DEEP_SLEEP
+
+endchoice # Assert MCU action
+
+endif # TLK_DEBUG_ASSERT
+
+endmenu

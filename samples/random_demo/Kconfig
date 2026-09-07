@@ -1,0 +1,25 @@
+config TLK_RANDOM_DEMO
+    def_bool y
+    select TLK_RANDOM
+    select TLK_API_TIME
+
+
+menu "Random Demo Configuration"
+
+config TLK_RANDOM_DEMO_NUMBERS_COUNT
+    int "Numbers count"
+    default 10
+    range 1 100
+
+
+config TLK_RANDOM_DEMO_MAX_NUMBER
+    int "Max number"
+    default 10
+
+
+config TLK_RANDOM_DEMO_SLEEP
+    bool "Random demo with sleep"
+    select TLK_API_SLEEP
+    imply TLK_RANDOM_PM
+
+endmenu

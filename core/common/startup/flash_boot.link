@@ -1,0 +1,402 @@
+/********************************************************************************************************
+ * @file    flash_boot.link
+ *
+ * @brief   This is the link file for UniSDK
+ *
+ * @author  Telink UTC
+ * @date    2025
+ *
+ * @par     Copyright (c) 2025, Telink Semiconductor (Shanghai) Co., Ltd. ("TELINK")
+ *          All rights reserved.
+ *
+ *          Redistribution and use in source and binary forms, with or without
+ *          modification, are permitted provided that the following conditions are met:
+ *
+ *              1. Redistributions of source code must retain the above copyright
+ *              notice, this list of conditions and the following disclaimer.
+ *
+ *              2. Unless for usage inside a TELINK integrated circuit, redistributions
+ *              in binary form must reproduce the above copyright notice, this list of
+ *              conditions and the following disclaimer in the documentation and/or other
+ *              materials provided with the distribution.
+ *
+ *              3. Neither the name of TELINK, nor the names of its contributors may be
+ *              used to endorse or promote products derived from this software without
+ *              specific prior written permission.
+ *
+ *              4. This software, with or without modification, must only be used with a
+ *              TELINK integrated circuit. All other usages are subject to written permission
+ *              from TELINK and different commercial license may apply.
+ *
+ *              5. Licensee shall be solely responsible for any claim to the extent arising out of or
+ *              relating to such deletion(s), modification(s) or alteration(s).
+ *
+ *          THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
+ *          ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+ *          WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+ *          DISCLAIMED. IN NO EVENT SHALL COPYRIGHT HOLDER BE LIABLE FOR ANY
+ *          DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+ *          (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+ *          LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND
+ *          ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+ *          (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+ *          SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ *
+ *******************************************************************************************************/
+
+#define UPDATE_FLASH_PTR(section) \
+    FLASH_PTR = LOADADDR(section) + SIZEOF(section);
+
+#define TLK_BINARY_SIGNATURE_SIZE \
+    (CONFIG_TLK_BINARY_SIGNATURE_CORE_NAME_SIZE + CONFIG_TLK_BINARY_SIGNATURE_SOC_NAME_SIZE + \
+     CONFIG_TLK_BINARY_SIGNATURE_SOC_CASE_NAME_SIZE + CONFIG_TLK_BINARY_SIGNATURE_SDK_VERSION_SIZE + \
+     CONFIG_TLK_BINARY_SIGNATURE_APP_VERSION_SIZE)
+
+#if (CONFIG_TLK_PM_RAM_RETENTION_ENABLE)
+    #define RAM_DLM_IF_NON_RET RAM_ILM_RET
+    #define RAM_ILM_NON_RET_LENGTH (UNISDK_CHIP_MEMORY_IRAM_SIZE * 1024 - CONFIG_TLK_PM_RETENTION_MEMORY_SIZE * 1024)
+#else
+    #define RAM_DLM_IF_NON_RET RAM_DLM
+#endif
+
+MEMORY
+{
+    #if defined(CONFIG_TLK_MCUBOOT_MODE_BOOTLOADER)
+        FLASH (xr) : ORIGIN = UNISDK_CHIP_MEMORY_ROM_STARTADDR, LENGTH = CONFIG_TLK_MCUBOOT_BOOTLOADER_SIZE
+    #elif defined(CONFIG_TLK_MCUBOOT_MODE_APP)
+        FLASH (xr) : ORIGIN = UNISDK_CHIP_MEMORY_ROM_STARTADDR + CONFIG_TLK_MCUBOOT_BOOTLOADER_SIZE + CONFIG_TLK_MCUBOOT_HEADER_SIZE, LENGTH = CONFIG_TLK_MCUBOOT_SLOT_SIZE - CONFIG_TLK_MCUBOOT_HEADER_SIZE
+    #else
+        FLASH (xr) : ORIGIN = UNISDK_CHIP_MEMORY_ROM_STARTADDR, LENGTH = UNISDK_CHIP_MEMORY_ROM_SIZE * 1024
+    #endif
+#if (CONFIG_TLK_PM_RAM_RETENTION_ENABLE)
+    RAM_ILM_RET (xw)    : ORIGIN = UNISDK_CHIP_MEMORY_IRAM_STARTADDR, LENGTH = CONFIG_TLK_PM_RETENTION_MEMORY_SIZE * 1024
+
+    #if (RAM_ILM_NON_RET_LENGTH == 0)
+        #define RAM_ILM RAM_ILM_RET
+    #else
+        RAM_ILM (xw)    : ORIGIN = UNISDK_CHIP_MEMORY_IRAM_STARTADDR + CONFIG_TLK_PM_RETENTION_MEMORY_SIZE * 1024, LENGTH = RAM_ILM_NON_RET_LENGTH
+    #endif
+
+#else
+    RAM_ILM (xw)        : ORIGIN = UNISDK_CHIP_MEMORY_IRAM_STARTADDR, LENGTH = UNISDK_CHIP_MEMORY_IRAM_SIZE * 1024
+    #define RAM_ILM_RET RAM_ILM
+
+#endif
+    RAM_DLM (w)         : ORIGIN = UNISDK_CHIP_MEMORY_DRAM_STARTADDR, LENGTH = UNISDK_CHIP_MEMORY_DRAM_SIZE * 1024
+}
+
+/* Flash storage areas definitions */
+_user_flash_storage_size           = 0K;     /* user flash storage area size, aligh 4K */
+
+ASSERT (_user_flash_storage_size % 4K == 0, "user flash area size should be x4K");
+
+PROVIDE(NDS_SAG_LMA_FLASH                    = ORIGIN(FLASH));
+PROVIDE(NDS_SAG_LMA_FLASH_USER_STORAGE_BEGIN = ORIGIN(FLASH) + LENGTH(FLASH) - _user_flash_storage);
+PROVIDE(NDS_SAG_LMA_FLASH_END                = NDS_SAG_LMA_FLASH_USER_STORAGE_BEGIN);
+
+
+ENTRY(_RESET_ENTRY)
+
+/* Generate a link error if heap and stack don't fit into RAM_RETENTION */
+#ifndef CONFIG_TLK_MEMORY_HEAP_SIZE
+#define CONFIG_TLK_MEMORY_HEAP_SIZE 0
+#endif
+
+_Heap_Size  = CONFIG_TLK_MEMORY_HEAP_SIZE * 1024;          /* required amount of heap  */
+
+/* TL321X MCUboot requires a reduced stack to fit in 32K DLM. */
+#if defined(CONFIG_TLK_MCUBOOT_MODE_BOOTLOADER) && (UNISDK_CHIP_MEMORY_DRAM_SIZE <= 32)
+_Stack_Size = 9728;
+#else
+_Stack_Size = CONFIG_TLK_MEMORY_STACK_SIZE * 1024;          /* required amount of stack */
+#endif
+
+FLASH_PTR = ORIGIN(FLASH);
+
+SECTIONS
+{
+/*
+ * XIP sections use identical VMA/LMA addresses.
+ * RAM-loaded sections below use AT() to keep their load address in flash.
+ */
+    .vectors : ALIGN(4)
+    {
+        KEEP(*(.vectors))
+    } > FLASH
+    UPDATE_FLASH_PTR(.vectors)
+
+    ASSERT(FLASH_PTR <= ORIGIN(FLASH) + CONFIG_TLK_BINARY_SIGNATURE_ADDRESS,
+        "flash_boot.link: .vectors grew past CONFIG_TLK_BINARY_SIGNATURE_ADDRESS, update the reserved offset in Kconfig.common")
+
+    /*
+     * MCU-info block: intentionally given an explicit, absolute VMA/LMA
+     * (ORIGIN(FLASH) + CONFIG_TLK_BINARY_SIGNATURE_ADDRESS) instead of the
+     * usual FLASH_PTR chain, so its address never shifts because of code-size
+     * changes in any preceding section (vectored/non-vectored PLIC mode, RF
+     * certification config, compiler changes, etc.). It is always at this
+     * fixed flash offset, in every build, for every chip. VMA and LMA must
+     * be the same expression here - this is XIP flash (VMA == LMA).
+     */
+    .mcu_info ORIGIN(FLASH) + CONFIG_TLK_BINARY_SIGNATURE_ADDRESS : AT(ORIGIN(FLASH) + CONFIG_TLK_BINARY_SIGNATURE_ADDRESS)
+    {
+        KEEP(*(.mcu_info))
+    } > FLASH
+    ASSERT(SIZEOF(.mcu_info) <= TLK_BINARY_SIGNATURE_SIZE,
+        "flash_boot.link: .mcu_info exceeds the size reserved in Kconfig.common")
+
+    /* Resume the normal chain from the end of the reserved (fixed-size) block. */
+    FLASH_PTR = ORIGIN(FLASH) + CONFIG_TLK_BINARY_SIGNATURE_ADDRESS + TLK_BINARY_SIGNATURE_SIZE;
+
+    .text : ALIGN(4)
+    {
+        *(.text .stub .text.* .gnu.linkonce.t.*)
+        KEEP(*(.text.*personality*))
+        *(.gnu.warning)
+    } > FLASH
+
+    .rodata : ALIGN(4)
+    {
+        *(.rodata .rodata.* .gnu.linkonce.r.* )
+        *(.srodata.cst16)
+        *(.srodata.cst8)
+        *(.srodata.cst4)
+        *(.srodata.cst2)
+        *(.srodata .srodata.*)
+    } > FLASH
+
+    .init_array : ALIGN(4)
+    {
+        PROVIDE_HIDDEN(__init_array_start = .);
+        KEEP(*(SORT_BY_INIT_PRIORITY(.init_array.*)))
+        KEEP(*(.init_array))
+        PROVIDE_HIDDEN(__init_array_end = .);
+    } > FLASH
+
+    .fini_array : ALIGN(4)
+    {
+        PROVIDE_HIDDEN(__fini_array_start = .);
+        KEEP(*(SORT_BY_INIT_PRIORITY(.fini_array.*)))
+        KEEP(*(.fini_array))
+        PROVIDE_HIDDEN(__fini_array_end = .);
+    } > FLASH
+
+    .eh_frame_hdr :
+    {
+        *(.eh_frame_hdr)
+    } > FLASH
+
+    .eh_frame :
+    {
+        KEEP(*(.eh_frame))
+    } > FLASH
+
+    .ctors : ALIGN(4)
+    {
+        KEEP(*crtbegin*.o(.ctors))
+        KEEP(*(EXCLUDE_FILE (*crtend*.o) .ctors))
+        KEEP(*(SORT(.ctors.* )))
+        KEEP(*(.ctors ))
+    } > FLASH
+
+    .dtors : ALIGN(4)
+    {
+        KEEP(*crtbegin*.o(.dtors))
+        KEEP(*(EXCLUDE_FILE (*crtend*.o) .dtors))
+        KEEP(*(SORT(.dtors.* )))
+        KEEP(*(.dtors ))
+    } > FLASH
+
+    .pre_init_array : ALIGN(4)
+    {
+        PROVIDE(__pre_init_start = .);
+        KEEP(*(SORT(.pre_init_array*)))
+        PROVIDE(__pre_init_end = .);
+    } > FLASH
+
+    .loop_array : ALIGN(4)
+    {
+        PROVIDE(__loop_start = .);
+        KEEP(*(.loop_array))
+        PROVIDE(__loop_end = .);
+    } > FLASH
+
+    .before_suspend_array : ALIGN(4)
+    {
+        PROVIDE(__before_suspend_start = .);
+        KEEP(*(SORT(.before_suspend_array*)))
+        PROVIDE(__before_suspend_end = .);
+    } > FLASH
+
+    .after_suspend_array : ALIGN(4)
+    {
+        PROVIDE(__after_suspend_start = .);
+        KEEP(*(SORT(.after_suspend_array*)))
+        PROVIDE(__after_suspend_end = .);
+    } > FLASH
+
+    .before_sleep_array : ALIGN(4)
+    {
+        PROVIDE(__before_sleep_start = .);
+        KEEP(*(SORT(.before_sleep_array*)))
+        PROVIDE(__before_sleep_end = .);
+    } > FLASH
+
+    .after_sleep_array : ALIGN(4)
+    {
+        PROVIDE(__after_sleep_start = .);
+        KEEP(*(SORT(.after_sleep_array*)))
+        PROVIDE(__after_sleep_end = .);
+    } > FLASH
+
+    .prevent_suspend_array : ALIGN(4)
+    {
+        PROVIDE(__prevent_suspend_start = .);
+        KEEP(*(.prevent_suspend_array))
+        PROVIDE(__prevent_suspend_end = .);
+    } > FLASH
+
+    .prevent_sleep_array : ALIGN(4)
+    {
+        PROVIDE(__prevent_sleep_start = .);
+        KEEP(*(.prevent_sleep_array))
+        PROVIDE(__prevent_sleep_end = .);
+    } > FLASH
+
+    .rf_certification_cfg : ALIGN(4)
+    {
+        PROVIDE(__rf_certification_begin = .);
+        KEEP(*(.rf_certification_cfg))
+        PROVIDE(__rf_certification_end = .);
+    } > FLASH
+    UPDATE_FLASH_PTR(.rf_certification_cfg)
+
+    /* Start of RAM description */
+
+    /* Should be placed at zero address, which is start of ILM RAM */
+    .retention_reset : AT(ALIGN(FLASH_PTR, 4)) ALIGN(4)
+    {
+        PROVIDE(_RETENTION_RESET_VMA_START = .);
+        KEEP(*(.retention_reset))
+        PROVIDE_HIDDEN(_RETENTION_RESET_VMA_END = .);
+    } > RAM_ILM_RET
+    PROVIDE(_RETENTION_RESET_LMA_START = LOADADDR(.retention_reset));
+    UPDATE_FLASH_PTR(.retention_reset)
+
+    ._stack (NOLOAD) : ALIGN(16)
+    {
+        . = . + _Stack_Size;
+        PROVIDE(_STACK_TOP = .);
+    } > RAM_DLM_IF_NON_RET
+
+    /* By default,the aes_data section can only be used in the first 64K of IRAM, */
+    /* please do not change the position of this section,unless you know the correct way to use */
+    .aes_data (NOLOAD) :
+    {
+        PROVIDE(_AES_VMA_START = .);
+        KEEP(*(.aes_data))
+        PROVIDE(_AES_VMA_END = .);
+    } > RAM_ILM_RET
+
+    .ram_code : AT(ALIGN(FLASH_PTR, 4)) ALIGN(4)
+    {
+        PROVIDE(_RAMCODE_VMA_START = .);
+        KEEP(*(.ram_code))
+        PROVIDE(_RAMCODE_VMA_END = .);
+    } > RAM_ILM_RET
+    PROVIDE(_RAMCODE_LMA_START = LOADADDR(.ram_code));
+    UPDATE_FLASH_PTR(.ram_code)
+
+    .exec.itable : AT(ALIGN(FLASH_PTR, 4)) ALIGN(4)
+    {
+        PROVIDE(_EXECIT_VMA_START = .);
+        KEEP(*(.exec.itable))
+        PROVIDE(_EXECIT_VMA_END = .);
+    } > RAM_ILM_RET
+    PROVIDE(_EXECIT_LMA_START = LOADADDR(.exec.itable));
+    UPDATE_FLASH_PTR(.exec.itable)
+
+    .tasks_array : AT(ALIGN(FLASH_PTR, 8)) ALIGN(8)
+    {
+        PROVIDE(__tasks_start = .);
+        KEEP(*(.tasks_array.tasks))
+        PROVIDE(__tasks_end = .);
+        PROVIDE(__timers_start = .);
+        KEEP(*(.tasks_array.timers))
+        PROVIDE(__timers_end = .);
+    } > RAM_DLM_IF_NON_RET
+    PROVIDE(_TASKS_ARRAY_LMA_START = LOADADDR(.tasks_array));
+    UPDATE_FLASH_PTR(.tasks_array)
+
+    .data : AT(ALIGN(FLASH_PTR, 4)) ALIGN(4)
+    {
+        PROVIDE (__global_pointer$ = . + 0x800);
+        PROVIDE(_DATA_VMA_START = .);
+        *(.data .data.* .gnu.linkonce.d.*)
+        KEEP(*(.gnu.linkonce.d.*personality*))
+        SORT(CONSTRUCTORS)
+        *(.sdata .sdata.* .gnu.linkonce.s.*)
+        *(.sdata2 .sdata2.* .gnu.linkonce.s.*)
+        PROVIDE(_DATA_VMA_END = .);
+    } > RAM_DLM_IF_NON_RET
+    PROVIDE(_DATA_LMA_START = LOADADDR(.data));
+    UPDATE_FLASH_PTR(.data)
+
+    .bss (NOLOAD) : ALIGN(4)
+    {
+        PROVIDE(_BSS_VMA_START = .);
+        *(.dynsbss )
+        *(.sbss .sbss.* .gnu.linkonce.sb.* )
+        *(.scommon .scommon.* )
+        *(.dynbss)
+        *(.bss .bss.* .gnu.linkonce.b.*)
+        *(COMMON)
+        PROVIDE(_BSS_VMA_END = .);
+    } > RAM_DLM_IF_NON_RET
+
+    .noinit (NOLOAD) : ALIGN(4)
+    {
+        *(.noinit)
+    } > RAM_DLM_IF_NON_RET
+
+    .noinit_nonret (NOLOAD) : ALIGN(4)
+    {
+        *(.noinit_nonret)
+    } > RAM_DLM
+
+    ._user_heap (NOLOAD) : ALIGN(16)
+    {
+        PROVIDE(_end = .);
+    } > RAM_DLM_IF_NON_RET
+}
+
+PROVIDE(BIN_SIZE = FLASH_PTR - ORIGIN(FLASH));
+PROVIDE(NDS_SAG_LMA_FLASH_BL = ALIGN(FLASH_PTR, 4K));
+
+#if (CONFIG_TLK_PM_RAM_RETENTION_ENABLE)
+    ASSERT(
+        SIZEOF(.retention_reset) +
+        SIZEOF(._stack) +
+        SIZEOF(.aes_data) +
+        SIZEOF(.ram_code) +
+        SIZEOF(.exec.itable) +
+        SIZEOF(.tasks_array) +
+        SIZEOF(.data) +
+        SIZEOF(.bss) +
+        SIZEOF(.noinit) <= LENGTH(RAM_ILM_RET), "RAM_ILM_RET overflow!")
+    ASSERT(
+        SIZEOF(.noinit_nonret) <= LENGTH(RAM_DLM), "RAM_DLM overflow!")
+#else
+    ASSERT(
+        SIZEOF(.retention_reset) +
+        SIZEOF(.aes_data) +
+        SIZEOF(.ram_code) +
+        SIZEOF(.exec.itable) <= LENGTH(RAM_ILM), "RAM_ILM overflow!")
+    ASSERT(
+        SIZEOF(._stack) +
+        SIZEOF(.tasks_array) +
+        SIZEOF(.data) +
+        SIZEOF(.bss) +
+        SIZEOF(.noinit) +
+        SIZEOF(.noinit_nonret) <= LENGTH(RAM_DLM), "RAM_DLM overflow!")
+#endif
+ASSERT((BIN_SIZE) <= LENGTH(FLASH), "BIN FILE OVERFLOW");

@@ -1,0 +1,108 @@
+menuconfig TLK_RANDOM
+    bool "RANDOM"
+    select TLK_CRYPTO
+    select TLK_CRYPTO_TRNG
+
+
+if TLK_RANDOM
+
+# Global configs
+config TLK_RANDOM_USED_PRNG
+    bool
+
+config TLK_RANDOM_USED_TRNG
+    bool
+
+
+choice
+    prompt "Mode"
+    default TLK_RANDOM_PRNG
+
+config TLK_RANDOM_PRNG
+    bool "PRNG"
+    select TLK_RANDOM_USED_PRNG
+
+config TLK_RANDOM_PRNG_TRNG
+    bool "TRNG + PRNG"
+    select TLK_RANDOM_USED_TRNG
+    select TLK_RANDOM_USED_PRNG
+
+config TLK_RANDOM_TRNG
+    bool "TRNG"
+    select TLK_RANDOM_USED_TRNG
+
+config TLK_RANDOM_TRNG_DRBG
+    bool "TRNG + DRBG"
+    select TLK_RANDOM_USED_TRNG
+
+endchoice # Mode
+
+
+if TLK_RANDOM_USED_TRNG
+
+menu "Entropy sources"
+
+for i in range 0 ${trng.source_count}
+
+menuconfig TLK_RANDOM_TRNG_SOURCE{i}
+    bool "SORCE {i}"
+    default y
+
+
+if TLK_RANDOM_TRNG_SOURCE{i}
+
+for j in range 0 ${trng.ro_count}
+
+config TLK_RANDOM_TRNG_SOURCE{i}_RO{j}
+    bool "RO {j}"
+    default y
+
+endfor
+
+endif # TLK_RANDOM_SOURCE{i}
+
+endfor
+
+endmenu
+
+
+choice
+    prompt "TRNG clock divider"
+    default TLK_RANDOM_TRNG_FSEL_32
+
+config TLK_RANDOM_TRNG_FSEL_4
+    bool "4"
+
+config TLK_RANDOM_TRNG_FSEL_8
+    bool "8"
+
+config TLK_RANDOM_TRNG_FSEL_16
+    bool "16"
+
+config TLK_RANDOM_TRNG_FSEL_32
+    bool "32"
+
+endchoice # TRNG clock divider
+
+
+config TLK_RANDOM_TRNG_FSEL
+    int
+    default 0 if TLK_RANDOM_TRNG_FSEL_4
+    default 1 if TLK_RANDOM_TRNG_FSEL_8
+    default 2 if TLK_RANDOM_TRNG_FSEL_16
+    default 3 if TLK_RANDOM_TRNG_FSEL_32
+
+
+config TLK_RANDOM_TRNG_TIMEOUT
+    int "TRNG waiting timeout (ms)"
+    default 2000
+
+
+config TLK_RANDOM_PM
+    bool "Enable PM Support"
+    depends on TLK_PM
+    default y
+
+endif # TLK_RANDOM_USED_TRNG
+
+endif # TLK_RANDOM

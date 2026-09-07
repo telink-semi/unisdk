@@ -1,0 +1,30 @@
+menuconfig TLK_RF
+    bool "RF"
+    select TLK_DMA
+    select TLK_PLIC
+
+
+if TLK_RF
+
+config TLK_RF_RX_SHORT_MODE
+    bool "RX short mode"
+    default y
+
+config TLK_RF_TX_HPMC_COMPENSATION
+    bool "TX HPMC compensation"
+    default y
+
+config TLK_RF_LDO_PLL_COMPENSATION
+    bool "LDO PLL compensation"
+    default y
+
+config TLK_RF_RX_DCOC_SW_CALIBRATION
+    bool "RX DCOC SW calibration"
+    default y
+
+config TLK_RF_PM_DEVICE
+    bool "Enable PM support"
+    depends on TLK_PM
+    default y
+
+endif # TLK_RF

@@ -1,0 +1,34 @@
+menuconfig TLK_CRYPTO
+    bool "Crypto functionality"
+
+
+if TLK_CRYPTO
+
+config TLK_CRYPTO_DMA_SUPPORT
+    bool "Support DMA functionality for cryptography"
+    select TLK_DMA
+    depends on ${crypto.has_dma_support}
+
+config TLK_CRYPTO_TRNG
+    bool "Support random functionality"
+    depends on ${crypto.has_trng}
+
+config TLK_CRYPTO_HASH
+    bool "Support hash functionality"
+    depends on ${crypto.has_hash}
+
+config TLK_CRYPTO_CHACHA20
+    bool "Support chacha20 functionality"
+    depends on ${crypto.has_chacha20}
+
+config TLK_CRYPTO_PKE
+    bool "Support public key engine functionality"
+    select TLK_CRYPTO_TRNG if ${crypto.has_trng}
+    select TLK_CRYPTO_HASH if ${crypto.has_hash}
+    depends on ${crypto.has_pke}
+
+config TLK_CRYPTO_SKE
+    bool "Support symmetric key engine functionality"
+    depends on ${crypto.has_ske}
+
+endif # TLK_CRYPTO

@@ -1,0 +1,30 @@
+# SPDX-License-Identifier: Apache-2.0
+#
+# UniSDK API configuration for Zephyr builds
+#
+# API-level configuration symbols exposed in Zephyr builds:
+#   - TLK_API_SLEEP  sleep API
+#   - TLK_API_TIME   time API
+#   - BT_TLX_LOG_LEVEL  BLE controller log level
+
+menu "UniSDK API Configuration"
+
+config TLK_API_SLEEP
+    bool "Sleep API"
+    help
+        Enable the UniSDK sleep API.
+
+config TLK_API_TIME
+    bool "Time API"
+    help
+        Enable the UniSDK time API.
+
+config BT_TLX_LOG_LEVEL
+    int "BLE controller log level (0=OFF, 1=ERR, 2=WRN, 3=INF, 4=DBG)"
+    depends on BT_TLX
+    default 3
+    range 0 4
+    help
+        Log level for the Telink BLE controller when integrated with Zephyr.
+
+endmenu # UniSDK API Configuration

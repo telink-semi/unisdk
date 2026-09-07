@@ -1,0 +1,87 @@
+menuconfig TLK_MCUBOOT
+    bool "Enable MCUBoot DFU support"
+    default n
+    help
+        Enables MCUBoot partition layout and integration for UniSDK
+
+if TLK_MCUBOOT
+
+choice
+    prompt "MCUBoot image type"
+    default TLK_MCUBOOT_MODE_BOOTLOADER if TLK_MCUBOOT_BOOTLOADER_APP
+    default TLK_MCUBOOT_MODE_APP
+
+config TLK_MCUBOOT_MODE_BOOTLOADER
+    bool "Build as MCUBoot bootloader target"
+    select TLK_NV_STORAGE
+    select TLK_UART
+    select TLK_MBEDTLS
+    help
+        Links the binary to bootloader partition
+
+config TLK_MCUBOOT_MODE_APP
+    bool "Build as Application under MCUboot"
+    select TLK_NV_STORAGE
+    help
+      Links the binary to Slot 0 partition with offset for MCUboot Header.
+      Also links bootutil_public.c so the app can call boot_set_confirmed()
+      to mark itself confirmed, avoiding a revert on the next reset.
+
+endchoice
+
+config TLK_MCUBOOT_BOOTLOADER_SIZE
+    hex "MCUBoot bootloader partition size"
+    default 0x00090000
+    help
+        Size allocated for the bootloader binary (default: 576KB). Sized for mbedtls's
+        default config, which measures at ~472KB -- see TLK_MCUBOOT_SLOT_SIZE.
+config TLK_MCUBOOT_HEADER_SIZE
+    hex "MCUBoot image header size"
+    default 0x00000200
+    help
+        Space reserved at the start of each application slot for the
+        MCUboot image header. Must exactly match the --header-size
+        passed to imgtool when signing the application image, or the
+        signed image's vector table will land at the wrong flash offset.
+config TLK_MCUBOOT_SLOT_SIZE
+    hex "Slot 0/Slot 1 partition size"
+    default 0x000B0000
+    help
+      Size allocated for each application slot (default: 704KB). Bootloader + 2 slots +
+      scratch must fit in the 2MB chip flash alongside TLK_MCUBOOT_BOOTLOADER_SIZE.
+
+      Chips with 32KB of RAM or less use a 128KB slot instead as long as this stays at its
+      default value (see MCUBOOT_PORT_SLOT_SIZE in mcuboot_config.h) -- their RAM can't hold
+      bootutil's sector-tracking arrays at 704KB. Setting this explicitly overrides that and
+      applies on every chip; verify the RAM budget yourself before doing so on a small-RAM chip.
+config TLK_MCUBOOT_SCRATCH_SIZE
+    hex "Scratch partition size"
+    default 0x00004000
+    help
+        Size allocated for swap operations (default: 16KB)
+
+config TLK_MCUBOOT_SERIAL_UART
+    int "UART instance used for MCUboot serial recovery"
+    default 0
+    depends on TLK_MCUBOOT_MODE_BOOTLOADER
+    help
+        Selects which tlk_uart_module the MCUboot serial recovery transport uses.
+        The corresponding TLK_UARTx must still be enabled and configured through the UART Kconfig menu.
+
+config TLK_MCUBOOT_SERIAL_RECOVERY
+    bool "Enable UART serial recovery (DFU) console"
+    default n
+    depends on TLK_MCUBOOT_MODE_BOOTLOADER
+    help
+        Compiles in boot_serial and hands the transport from
+        TLK_MCUBOOT_SERIAL_UART to it when the DFU-entry GPIO is held at reset.
+
+config TLK_MCUBOOT_PRODUCTION_KEY
+    bool "Signing key in keys.c is a real production key"
+    default n
+    depends on TLK_MCUBOOT_MODE_BOOTLOADER
+    help
+        Silences the SDK development-key warning once
+        you've replaced the public key bytes in subsystem/mcuboot/port/keys.c with your own.
+
+endif # TLK_MCUBOOT

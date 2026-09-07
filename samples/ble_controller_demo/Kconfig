@@ -1,0 +1,39 @@
+config TLK_BLE_CONTROLLER_DEMO
+    def_bool y
+    select TLK_UART
+    select TLK_UART1_ENABLED
+    select TLK_RF
+    select TLK_BLE_CONTROLLER
+
+config TLK_BLE_CONTROLLER_HCI_ACL_DATA_SIZE
+    def_int 50
+
+config TLK_BLE_CONTROLLER_HCI_ACL_BUFFER_COUNT
+    def_int 10
+
+config TLK_BLE_CONTROLLER_ACCEPT_LIST_ENABLE
+    def_bool y
+
+config TLK_BLE_CONTROLLER_RESOLVING_LIST_ENABLE
+    def_bool y
+
+config TLK_BLE_CONTROLLER_LEGACY_ADV_ENABLE
+    def_bool y
+
+config TLK_BLE_CONTROLLER_LEGACY_SCAN_ENABLE
+    def_bool y
+
+config TLK_BLE_CONTROLLER_ACL_PERIPHERAL_ENABLE
+    def_bool y
+
+config TLK_BLE_CONTROLLER_ACL_PERIPHERAL_MAX_NUM
+    def_int 1
+
+config TLK_BLE_CONTROLLER_ACL_CENTRAL_ENABLE
+    def_bool y
+
+config TLK_BLE_CONTROLLER_ACL_CENTRAL_MAX_NUM
+    def_int 1
+
+config TLK_BLE_CONTROLLER_ACL_RX_MAX_LENGTH
+    def_int 27

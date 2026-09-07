@@ -1,0 +1,60 @@
+menu "Task Planner"
+
+# Task planner top-level enable
+menuconfig TLK_TASK_PLANNER
+    bool "Enable task planner"
+
+if TLK_TASK_PLANNER
+
+# Task planner execution mode
+choice
+    prompt "Task Planner mode"
+    default TLK_TASK_PLANNER_MODE_LOOP
+
+config TLK_TASK_PLANNER_MODE_LOOP
+    bool "Loop"
+    select TLK_API_TIME
+
+config TLK_TASK_PLANNER_MODE_SCHEDULER
+    bool "Scheduler"
+    select TLK_MTIMER
+    select TLK_MTIMER_IRQ_ENABLE
+
+# config TLK_TASK_PLANNER_MODE_RTOS
+#     bool "RTOS"
+
+endchoice # Task Planner mode
+
+
+# Default task enable
+config TLK_TASK_PLANNER_DEFAULT_TASK
+    bool "Enable default task"
+    depends on TLK_TASK_PLANNER_MODE_SCHEDULER
+
+# Default task loop period
+config TLK_TASK_PLANNER_DEFAULT_TASK_LOOP_PERIOD_MS
+    int "Default task loop period (ms)"
+    default 500
+    depends on TLK_TASK_PLANNER_DEFAULT_TASK
+
+
+# Work queue task enable
+config TLK_TASK_PLANNER_WORK_QUEUE
+    bool "Enable work queue task"
+    select TLK_PLIC_SW
+
+# Work queue depth
+config TLK_TASK_PLANNER_WORK_QUEUE_SIZE
+    int "Work queue task stack size"
+    default 16
+    depends on TLK_TASK_PLANNER_WORK_QUEUE
+
+endif # TLK_TASK_PLANNER
+
+
+# Software timers enable
+config TLK_SOFTWARE_TIMERS
+    bool "Enable software timers"
+    select TLK_MTIMER
+
+endmenu

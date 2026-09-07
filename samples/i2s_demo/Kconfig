@@ -1,0 +1,20 @@
+menu "I2S Demo Configuration"
+
+config TLK_I2S_DEMO
+    bool
+    select TLK_I2S
+    select TLK_I2S0
+    default y
+
+choice
+    prompt "Device role"
+
+config TLK_I2S_DEMO_ROLE_MASTER
+    bool "Master"
+
+config TLK_I2S_DEMO_ROLE_SLAVE
+    bool "Slave"
+
+endchoice
+
+endmenu

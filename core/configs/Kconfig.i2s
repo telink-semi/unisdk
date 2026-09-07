@@ -1,0 +1,15 @@
+menuconfig TLK_I2S
+    bool "I2S"
+    select TLK_GPIO
+    select TLK_DMA
+
+if TLK_I2S
+
+for i in range 0 ${i2s.count}
+
+menuconfig TLK_I2S{i}
+    bool "I2S{i}"
+
+endfor
+
+endif # TLK_I2S

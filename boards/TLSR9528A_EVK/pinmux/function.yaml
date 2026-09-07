@@ -1,0 +1,37 @@
+pinmux:
+  function:
+    led:
+      "0":
+        depends_on: TLK_GPIO
+        optional: true
+        default: PD0
+      "1":
+        depends_on: TLK_GPIO
+        optional: true
+        default: PD1
+      "2":
+        depends_on: TLK_GPIO
+        optional: true
+        default: PE6
+      "3":
+        depends_on: TLK_GPIO
+        optional: true
+        default: PE7
+
+    key:
+      "0":
+        depends_on: TLK_GPIO
+        optional: true
+        default: PD2
+      "1":
+        depends_on: TLK_GPIO
+        optional: true
+        default: PD7
+      "2":
+        depends_on: TLK_GPIO
+        optional: true
+        default: PD6
+      "3":
+        depends_on: TLK_GPIO
+        optional: true
+        default: PF6

@@ -1,0 +1,5 @@
+menuconfig TLK_AUDIO
+    bool "AUDIO"
+    select TLK_GPIO
+    select TLK_DMA
+    select TLK_I2S

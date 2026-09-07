@@ -1,0 +1,4 @@
+config TLK_BLE_HOST_V2_DEMO
+    def_bool y
+    select TLK_BLE_HOST_V2
+    select TLK_BLE_CONTROLLER

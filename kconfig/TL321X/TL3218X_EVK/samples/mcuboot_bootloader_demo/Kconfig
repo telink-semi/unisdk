@@ -1,0 +1,9 @@
+config TLK_MCUBOOT_BOOTLOADER_APP
+    def_bool y
+    select TLK_MCUBOOT
+
+    # Matches TLK_MCUBOOT_SERIAL_UART's default of 0.
+    select TLK_UART0_ENABLED
+
+config TLK_MEMORY_STACK_SIZE
+    default 96

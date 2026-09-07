@@ -1,0 +1,46 @@
+config TLK_PMP_DEMO
+    def_bool y
+    select TLK_PMP
+
+
+menu "PMP Sample configuration"
+
+# Mode selection
+choice
+    prompt "PMP mode"
+    default TLK_PMP_DEMO_TOR
+
+config TLK_PMP_DEMO_OFF
+    bool "OFF"
+
+config TLK_PMP_DEMO_TOR
+    bool "TOR"
+
+config TLK_PMP_DEMO_NAPOT
+    bool "NAPOT"
+
+endchoice # PMP mode
+
+
+# Action selection
+choice
+    prompt "Action mode"
+    default TLK_PMP_DEMO_READ
+
+config TLK_PMP_DEMO_READ
+    bool "READ"
+
+config TLK_PMP_DEMO_WRITE
+    bool "WRITE"
+
+endchoice # Action mode
+
+
+# Demo with sleep
+config TLK_PMP_DEMO_SLEEP
+    bool "PMP demo with sleep"
+    depends on !TLK_PMP_DEMO_OFF
+    select TLK_API_SLEEP
+    imply TLK_PMP_PM_DEVICE
+
+endmenu

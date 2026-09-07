@@ -1,0 +1,4 @@
+name: unisdk
+build:
+  cmake: zephyr/
+  kconfig: zephyr/Kconfig
