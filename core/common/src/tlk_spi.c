@@ -1,7 +1,7 @@
 #include "core/include/tlk_spi.h"
 #include "common/include/tlk_init.h"
 
-#if TLK_IS_ENABLED(CONFIG_TLK_SPI_AUTO_CONFIG)
+#if TLK_IS_ENABLED(CONFIG_TLK_SPI_USE_AUTO_CONFIG)
 
 #define TLK_DECLARE_SPI_AUTO_CONFIG(num)                                                           \
     __attribute__((used, noinline)) static void tlk_spi##num##_auto_config(void)                   \
@@ -13,7 +13,7 @@
             .miso = {PINMUX_SPI##num##_MISO_PORT, PINMUX_SPI##num##_MISO_PIN},                     \
         };                                                                                         \
                                                                                                    \
-        tlk_spi_configure_pinmux(&tlk_spi##num, &pinmux);                                          \
+        tlk_spi_pinmux_configure(&tlk_spi##num, &pinmux);                                          \
                                                                                                    \
         struct tlk_spi_config config = {.mode      = CONFIG_TLK_SPI##num##_AC_MODE,                \
                                         .io_mode   = CONFIG_TLK_SPI##num##_AC_IO_MODE,             \

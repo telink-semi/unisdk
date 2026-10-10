@@ -47,6 +47,132 @@ function Test-WingetAvailable {
     }
 }
 
+# Function: Download and install winget
+function Install-Winget {
+    Write-Host "winget is not installed, attempting to download and install winget..." -ForegroundColor Yellow
+
+    try {
+        # Check Windows build version (winget requires Windows 10 1809+)
+        $osVersion = [Environment]::OSVersion.Version
+        $windowsBuild = $osVersion.Build
+        if ($windowsBuild -lt 17763) {
+            Write-Host "Windows version too old for winget (build $windowsBuild). Requires Windows 10 1809+ (build 17763)." -ForegroundColor Red
+            return $false
+        }
+
+        # Check if App Installer is already installed
+        $appInstaller = Get-AppxPackage -Name "Microsoft.DesktopAppInstaller" -ErrorAction SilentlyContinue
+        if ($appInstaller) {
+            Write-Host "Microsoft Desktop App Installer is already installed." -ForegroundColor Green
+            # Add winget paths to current process PATH
+            $env:PATH += ";$env:USERPROFILE\AppData\Local\Microsoft\WinGet\Links;$env:LOCALAPPDATA\Microsoft\WindowsApps"
+            return $true
+        }
+
+        # Create temp directory for download
+        $tempDir = Join-Path $env:TEMP "winget_install"
+        if (-not (Test-Path $tempDir)) {
+            New-Item -ItemType Directory -Path $tempDir -Force | Out-Null
+        }
+
+        # Get latest winget release info from GitHub API
+        $apiUrl = "https://api.github.com/repos/microsoft/winget-cli/releases/latest"
+        Write-Host "Fetching latest winget release info..." -ForegroundColor Yellow
+        $releaseInfo = Invoke-RestMethod -Uri $apiUrl -UseBasicParsing
+        $assets = $releaseInfo.assets
+
+        # Find the .msixbundle asset
+        $msixBundle = $assets | Where-Object { $_.name -like "*.msixbundle" -and $_.name -notlike "*.xml*" } | Select-Object -First 1
+
+        if (-not $msixBundle) {
+            Write-Host "Could not find winget msixbundle in the latest release." -ForegroundColor Red
+            return $false
+        }
+
+        $downloadUrl = $msixBundle.browser_download_url
+        $outputPath = Join-Path $tempDir $msixBundle.name
+
+        # Also download the license XML if available
+        $licenseXml = $assets | Where-Object { $_.name -like "*.xml" -and $_.name -like "*DesktopAppInstaller*" } | Select-Object -First 1
+        $licensePath = $null
+        if ($licenseXml) {
+            $licensePath = Join-Path $tempDir $licenseXml.name
+            Write-Host "Downloading license file..." -ForegroundColor Yellow
+            Invoke-WebRequest -Uri $licenseXml.browser_download_url -OutFile $licensePath
+        }
+
+        # Download the msixbundle
+        Write-Host "Downloading winget..." -ForegroundColor Yellow
+        Invoke-WebRequest -Uri $downloadUrl -OutFile $outputPath
+        Write-Host "Download completed: $(Split-Path $outputPath -Leaf)" -ForegroundColor Green
+
+        # Install the msixbundle
+        Write-Host "Installing winget..." -ForegroundColor Yellow
+        if ($licensePath) {
+            Add-AppxPackage -Path $outputPath -LicensePath $licensePath
+        } else {
+            Add-AppxPackage -Path $outputPath
+        }
+
+        # Refresh winget paths in current process PATH
+        $env:PATH += ";$env:USERPROFILE\AppData\Local\Microsoft\WinGet\Links;$env:LOCALAPPDATA\Microsoft\WindowsApps"
+
+        Write-Host "winget installed successfully" -ForegroundColor Green
+
+        # Clean up temp files
+        Remove-Item -Path $tempDir -Recurse -Force -ErrorAction SilentlyContinue
+
+        # Verify installation
+        return Test-WingetAvailable
+    } catch {
+        Write-Host "Failed to install winget automatically: $_" -ForegroundColor Red
+        return $false
+    }
+}
+
+# Function: Retry downloading winget from official Microsoft link as fallback
+function Install-WingetFallback {
+    Write-Host "Trying alternative method to download winget..." -ForegroundColor Yellow
+
+    try {
+        $tempDir = Join-Path $env:TEMP "winget_install"
+        if (-not (Test-Path $tempDir)) {
+            New-Item -ItemType Directory -Path $tempDir -Force | Out-Null
+        }
+
+        # Alternative download from Microsoft's official CDN (stable release)
+        $altUrl = "https://aka.ms/getwinget"
+        $outputPath = Join-Path $tempDir "Microsoft.DesktopAppInstaller.msixbundle"
+
+        Write-Host "Downloading winget from Microsoft CDN..." -ForegroundColor Yellow
+        Invoke-WebRequest -Uri $altUrl -OutFile $outputPath
+
+        if (-not (Test-Path $outputPath) -or (Get-Item $outputPath).Length -eq 0) {
+            Write-Host "Downloaded file is empty or missing." -ForegroundColor Red
+            return $false
+        }
+
+        Write-Host "Download completed: $outputPath" -ForegroundColor Green
+
+        # Install
+        Write-Host "Installing winget..." -ForegroundColor Yellow
+        Add-AppxPackage -Path $outputPath
+
+        # Refresh PATH
+        $env:PATH += ";$env:USERPROFILE\AppData\Local\Microsoft\WinGet\Links;$env:LOCALAPPDATA\Microsoft\WindowsApps"
+
+        Write-Host "winget installed successfully" -ForegroundColor Green
+
+        # Clean up
+        Remove-Item -Path $tempDir -Recurse -Force -ErrorAction SilentlyContinue
+
+        return Test-WingetAvailable
+    } catch {
+        Write-Host "Alternative download also failed: $_" -ForegroundColor Red
+        return $false
+    }
+}
+
 # Function: Install or update application (using winget)
 function Install-WithWinget {
     param (
@@ -65,7 +191,7 @@ function Install-WithWinget {
 
     try {
         # Use packageId for more reliable checking
-        $installed = winget list --id $packageId --exact 2>$null
+        $installed = winget list --id $packageId --exact --accept-source-agreements 2>$null
 
         # Check if the package is installed by looking for the package ID in the output
         if ($installed -match $packageId) {
@@ -200,9 +326,13 @@ function Find-ToolPath {
         "C:\Program Files (x86)\$toolName\bin",
         "D:\Program Files\$toolName\bin",
         "D:\Program Files (x86)\$toolName\bin",
-        "$env:USERPROFILE\AppData\Local\Microsoft\WinGet\Links",
-        "$env:LOCALAPPDATA\Microsoft\WindowsApps"
+        "$env:USERPROFILE\AppData\Local\Microsoft\WinGet\Links"
     )
+
+    # Only add WindowsApps for non-Python tools (WindowsApps python/python3 are App Execution Aliases, not real Python)
+    if ($toolName -ne "python") {
+        $possiblePaths += "$env:LOCALAPPDATA\Microsoft\WindowsApps"
+    }
 
     # Add tool-specific paths
     if ($toolName -eq "cmake") {
@@ -215,6 +345,10 @@ function Find-ToolPath {
                          "C:\Program Files (x86)\Ninja",
                          "D:\Program Files\Ninja",
                          "D:\Program Files (x86)\Ninja"
+    } elseif ($toolName -eq "python") {
+        # Python installed via official installer (winget or manual)
+        $possiblePaths += "$env:LOCALAPPDATA\Programs\Python\Python312\",
+                         "$env:LOCALAPPDATA\Programs\Python\Python312\Scripts\"
     }
 
     # Remove duplicates
@@ -236,7 +370,7 @@ function Find-ToolPath {
                 Write-Host "Added $path to current process PATH" -ForegroundColor Green
 
                 # Also add to user PATH for future sessions
-                Add-ToPath -pathToAdd $path -scope "User"
+                $null = Add-ToPath -pathToAdd $path -scope "User"
 
                 # Test again with the updated PATH
                 try {
@@ -306,6 +440,12 @@ function New-PythonVirtualEnvironment {
             Write-Host "Virtual environment already exists, skipping creation" -ForegroundColor Green
         } else {
             python -m venv $envPath
+            # Verify the virtual environment was actually created (e.g. Activate.ps1 exists)
+            $activateScript = Join-Path $envPath "Scripts\Activate.ps1"
+            if (-not (Test-Path $activateScript)) {
+                Write-Host "Failed to create Python virtual environment: python -m venv did not produce expected output" -ForegroundColor Red
+                return $false
+            }
             Write-Host "Python virtual environment created successfully: $envPath" -ForegroundColor Green
         }
         return $true
@@ -383,37 +523,7 @@ function Initialize-WestWorkspace {
     }
 }
 
-# Function: Download and set up Telink toolchain
-function Set-TelinkToolchain {
-    param (
-        [string]$toolchainDir
-    )
 
-    Write-Host "Setting up Telink toolchain..." -ForegroundColor Yellow
-
-    # Create toolchain directory
-    if (-not (Test-Path $toolchainDir)) {
-        New-Item -ItemType Directory -Path $toolchainDir -Force | Out-Null
-    }
-
-    # Note: Due to potential permission requirements for the toolchain download link, we only create the directory and set environment variables here
-    Write-Host "Toolchain directory created: $toolchainDir" -ForegroundColor Yellow
-    Write-Host "Please manually download the toolchain and extract it to $toolchainDir" -ForegroundColor Yellow
-    Write-Host "Toolchain download link: https://drive.weixin.qq.com/s?k=AKwA0AfNAA8Ox1r0ab" -ForegroundColor Cyan
-
-    # Set TELINK_TOOLCHAIN_PATH environment variable
-    Set-EnvironmentVariable -name "TELINK_TOOLCHAIN_PATH" -value $toolchainDir -scope "User"
-
-    # Add toolchain bin directory to PATH
-    $toolchainBinPath = Join-Path $toolchainDir "bin"
-    if (Test-Path $toolchainBinPath) {
-        Add-ToPath -pathToAdd $toolchainBinPath -scope "User"
-    } else {
-        Write-Host "Warning: Toolchain bin directory does not exist, it will be automatically added to PATH after extracting the toolchain" -ForegroundColor Yellow
-    }
-
-    return $true
-}
 
 # Main function
 function Main {
@@ -440,16 +550,36 @@ function Main {
             Install-WithWinget -packageId "Python.Python.3.12" -appName "Python" -skipUpdate $SkipToolUpdates
             Install-WithWinget -packageId "Git.Git" -appName "Git" -skipUpdate $SkipToolUpdates
         } else {
-            Write-Host "Warning: winget is not available, will prompt for manual tool installation" -ForegroundColor Yellow
-            Write-Host "Please download and install winget from the following link:" -ForegroundColor Yellow
-            Write-Host "https://github.com/microsoft/winget-cli/releases" -ForegroundColor Cyan
-            Write-Host "or download and install required tools from the following links:" -ForegroundColor Yellow
-            Write-Host "1. CMake: https://cmake.org/download/" -ForegroundColor Cyan
-            Write-Host "2. Ninja: https://github.com/ninja-build/ninja/releases" -ForegroundColor Cyan
-            Write-Host "3. Python: https://www.python.org/downloads/" -ForegroundColor Cyan
-            Write-Host "4. Git: https://git-scm.com/downloads" -ForegroundColor Cyan
+            Write-Host "Warning: winget is not available, attempting to download and install winget automatically..." -ForegroundColor Yellow
 
-            Read-Host "Press Enter to continue after installation..."
+            # Try primary installation method (GitHub API)
+            $wingetInstalled = Install-Winget
+
+            # Try fallback method if primary fails
+            if (-not $wingetInstalled) {
+                $wingetInstalled = Install-WingetFallback
+            }
+
+            if ($wingetInstalled) {
+                Write-Host "winget has been successfully installed and is ready to use" -ForegroundColor Green
+
+                # Install necessary tools using winget
+                Install-WithWinget -packageId "Kitware.CMake" -appName "CMake" -skipUpdate $SkipToolUpdates
+                Install-WithWinget -packageId "Ninja-build.Ninja" -appName "Ninja" -skipUpdate $SkipToolUpdates
+                Install-WithWinget -packageId "Python.Python.3.12" -appName "Python" -skipUpdate $SkipToolUpdates
+                Install-WithWinget -packageId "Git.Git" -appName "Git" -skipUpdate $SkipToolUpdates
+            } else {
+                Write-Host "Warning: Failed to automatically install winget" -ForegroundColor Red
+                Write-Host "Please download and install winget from the following link:" -ForegroundColor Yellow
+                Write-Host "https://github.com/microsoft/winget-cli/releases" -ForegroundColor Cyan
+                Write-Host "or download and install required tools from the following links:" -ForegroundColor Yellow
+                Write-Host "1. CMake: https://cmake.org/download/" -ForegroundColor Cyan
+                Write-Host "2. Ninja: https://github.com/ninja-build/ninja/releases" -ForegroundColor Cyan
+                Write-Host "3. Python: https://www.python.org/downloads/" -ForegroundColor Cyan
+                Write-Host "4. Git: https://git-scm.com/downloads" -ForegroundColor Cyan
+
+                Read-Host "Press Enter to continue after installation..."
+            }
         }
 
         # Verify tool installation success
@@ -466,10 +596,6 @@ function Main {
         $requirementsPath = Join-Path $unisdkRoot "requirements.txt"
         Install-PythonDependencies -envPath $venvPath -requirementsPath $requirementsPath
 
-        # Set up Telink toolchain
-        $toolchainDir = Join-Path $unisdkRoot "toolchain"
-        Set-TelinkToolchain -toolchainDir $toolchainDir
-
         # Initialize west workspace
         Initialize-WestWorkspace -workspacePath $unisdkRoot
 
@@ -483,14 +609,12 @@ function Main {
         Write-Host "- Python: $pythonInstalled" -ForegroundColor $(if($pythonInstalled){"Green"}else{"Red"})
         Write-Host "- Git: $gitInstalled" -ForegroundColor $(if($gitInstalled){"Green"}else{"Red"})
         Write-Host "- Python virtual environment: $venvPath"
-        Write-Host "- Telink toolchain path: $toolchainDir (please download and extract manually)"
         Write-Host "- West workspace initialized"
         Write-Host ""
         Write-Host "Next steps:"
-        Write-Host "1. Download and extract Telink toolchain to $toolchainDir" -ForegroundColor Yellow
-        Write-Host "2. Open a new PowerShell window to apply environment variable changes" -ForegroundColor Yellow
-        Write-Host "3. Activate virtual environment using: $venvPath\Scripts\Activate.ps1" -ForegroundColor Yellow
-        Write-Host "4. Run west tl-build to start building projects" -ForegroundColor Yellow
+        Write-Host "1. Open a new PowerShell window to apply environment variable changes" -ForegroundColor Yellow
+        Write-Host "2. Activate virtual environment using: $venvPath\Scripts\Activate.ps1" -ForegroundColor Yellow
+        Write-Host "3. Run west tl-build to start building projects (toolchain will be checked and downloaded automatically)" -ForegroundColor Yellow
 
         return $true
     } catch {

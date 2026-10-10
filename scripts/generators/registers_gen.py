@@ -269,11 +269,18 @@ def emit_register_overlay(device_name: str, path: list[str], reg_name: str, reg_
         enum_tag = get_enum_tag(device_name, path)
         bit_width = reg_len * 8
 
-        return [
-            f"{indent}    struct {{",
-            f"{indent}        enum {enum_tag} __attribute__((packed)) {reg_name} : {bit_width};",
-            f"{indent}    }};{reg_comment}",
-        ]
+        if array_postfix:
+            return [
+                f"{indent}    struct {{",
+                f"{indent}        enum {enum_tag} __attribute__((packed)) value : {bit_width};",
+                f"{indent}    }} __attribute__((packed)) {reg_name}{array_postfix};{reg_comment}",
+            ]
+        else:
+            return [
+                f"{indent}    struct {{",
+                f"{indent}        enum {enum_tag} __attribute__((packed)) {reg_name} : {bit_width};",
+                f"{indent}    }};{reg_comment}",
+            ]
 
     return [f"{indent}    {get_c_type(reg_len)} {reg_name}{array_postfix};{reg_comment}"]
 

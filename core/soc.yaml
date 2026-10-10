@@ -1,0 +1,62 @@
+# SoC series definitions for UniSDK
+# This file provides metadata about supported SoC series, including
+# the toolchain version required for each series.
+# Additional fields can be added later to describe core dependencies,
+# peripherals, etc.
+
+soc_series:
+  TL321X:
+    toolchain: andes-riscv32-v5-gcc14.2
+    toolchain_zephyr: zephyr-riscv64-v0.17.0
+    description: "TL321X series"
+  TL721X:
+    toolchain: andes-riscv32-v5f-gcc14.2
+    toolchain_zephyr: zephyr-riscv64-v0.17.0
+    description: "TL721X series"
+  TLSR922X:
+    toolchain: andes-riscv32-v5f-gcc14.2
+    toolchain_zephyr: zephyr-riscv64-v0.17.0
+    description: "TLSR922X series"
+  TLSR952X:
+    toolchain: andes-riscv32-v5f-gcc14.2
+    toolchain_zephyr: zephyr-riscv64-v0.17.0
+    description: "TLSR952X series"
+
+# Toolchain version definitions
+toolchain_versions:
+  andes-riscv32-v5-gcc14.2:
+    prefix: "riscv32-elf-"
+    subdir: "nds32le-elf-mculib-v5"
+    description: "TL32 ELF MCULIB V5 GCC14.2"
+    download_url:
+      windows: "https://doc.telink-semi.cn/tools/vsc/windows/toolchains/toolchain_v54x_v5_win.tar.xz"
+      linux: "https://doc.telink-semi.cn/tools/vsc/linux/toolchains/toolchain_v5_v54x.tar.xz"
+      mac_x64: "https://doc.telink-semi.cn/tools/vsc/MacX64/toolchains/toolchain_v541_v5_mac_x64.txz"
+      mac_aarch64: "https://doc.telink-semi.cn/tools/vsc/MacAArch64/toolchains/toolchain_v541_v5_mac_aarch64.txz"
+
+  andes-riscv32-v5f-gcc14.2:
+    prefix: "riscv32-elf-"
+    subdir: "nds32le-elf-mculib-v5f"
+    description: "TL32 ELF MCULIB V5F GCC14.2"
+    # This toolchain build's mext-dsp multilib ships single-float (ilp32f) libgcc/libc,
+    # not soft-float. -mcpu=d25f alone resolves to -mabi=ilp32 (soft-float), so the
+    # hardware-FPU ABI must be requested explicitly and match that multilib's F extension.
+    extra_flags:
+      - "-march=rv32imafc_zicsr_zifencei_xandes"
+      - "-mabi=ilp32f"
+    download_url:
+      windows: "https://doc.telink-semi.cn/tools/vsc/windows/toolchains/toolchain_v54x_v5f_win.tar.xz"
+      linux: "https://doc.telink-semi.cn/tools/vsc/linux/toolchains/toolchain_v5f_v54x.tar.xz"
+      mac_x64: "https://doc.telink-semi.cn/tools/vsc/MacX64/toolchains/toolchain_v541_v5f_mac_x64.txz"
+      mac_aarch64: "https://doc.telink-semi.cn/tools/vsc/MacAArch64/toolchains/toolchain_v541_v5f_mac_aarch64.txz"
+
+  zephyr-riscv64-v0.17.0:
+    prefix: "riscv64-zephyr-elf-"
+    subdir: ""
+    description: "Zephyr RISC64 v0.17.0"
+    download_url:
+      windows: "https://github.com/zephyrproject-rtos/sdk-ng/releases/download/v0.17.0/toolchain_windows-x86_64_riscv64-zephyr-elf.7z"
+      linux_x86_64: "https://github.com/zephyrproject-rtos/sdk-ng/releases/download/v0.17.0/toolchain_linux-x86_64_riscv64-zephyr-elf.tar.xz"
+      linux_aarch64: "https://github.com/zephyrproject-rtos/sdk-ng/releases/download/v0.17.0/toolchain_linux-aarch64_riscv64-zephyr-elf.tar.xz"
+      mac_x64: "https://github.com/zephyrproject-rtos/sdk-ng/releases/download/v0.17.0/toolchain_macos-x86_64_riscv64-zephyr-elf.tar.xz"
+      mac_aarch64: "https://github.com/zephyrproject-rtos/sdk-ng/releases/download/v0.17.0/toolchain_macos-aarch64_riscv64-zephyr-elf.tar.xz"

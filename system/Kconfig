@@ -1,9 +1,7 @@
-osource "$(KCONFIG_BINARY_DIR)/Kconfig.debug" # TODO: Explore how we can script all Kconfig files where ${...} inserts or for are possible, which are currently processed via preprocess_kconfig.py
-osource "$(KCONFIG_BINARY_DIR)/Kconfig.task_planner" # TODO: Explore how we can script all Kconfig files where ${...} inserts or for are possible, which are currently processed via preprocess_kconfig.py
+menu "System configuration"
 
 menu "SoC configuration"
 
-# Stack size in retention memory
 config TLK_MEMORY_STACK_SIZE
     int "Stack size in Kbytes"
     default 4
@@ -25,14 +23,17 @@ config ALLOW_DYNAMIC_MEMORY_ALLOCATION
 endmenu
 
 
+source "$(KCONFIG_BINARY_DIR)/system/Kconfig.debug"
+source "$(KCONFIG_BINARY_DIR)/system/Kconfig.task_planner"
+rsource "storage/Kconfig.nv_storage"
+
+
 menu "Other configuration"
 
-# Allow CPP wrappers for C++ builds
 config TLK_ALLOW_CPP_WRAPPERS
     bool "Allow CPP wrappers"
 
 
-# Compiler optimization level selection
 choice
     prompt "Optimization level"
     default TLK_OPTIMIZATION_LEVEL_O2
@@ -58,7 +59,6 @@ config TLK_OPTIMIZATION_LEVEL_OFAST
 endchoice # Optimization level
 
 
-# Selected optimization level string
 config TLK_OPTIMIZATION_LEVEL
     string
     default "O0" if TLK_OPTIMIZATION_LEVEL_O0
@@ -68,7 +68,7 @@ config TLK_OPTIMIZATION_LEVEL
     default "Os" if TLK_OPTIMIZATION_LEVEL_OS
     default "Ofast" if TLK_OPTIMIZATION_LEVEL_OFAST
 
-# Application binary output name configuration
+
 config TLK_USE_CUSTOM_ARTIFACT_NAME
     bool "Use custom artifact binary name"
     default n
@@ -77,6 +77,7 @@ config TLK_USE_CUSTOM_ARTIFACT_NAME
         output name, or specify a custom name. When disabled, the artifact
         name defaults to "Telink", making it convenient for BDT tool to
         locate the firmware without reconfiguration when switching samples.
+
 
 if TLK_USE_CUSTOM_ARTIFACT_NAME
 
@@ -90,15 +91,5 @@ config TLK_CUSTOM_ARTIFACT_NAME
 endif # TLK_USE_CUSTOM_ARTIFACT_NAME
 
 endmenu
-
-
-menu "Subsystems"
-
-rsource "storage/Kconfig.nv_storage"
-rsource "Kconfig.mbedtls"
-
-if TLK_USB
-    rsource "Kconfig.tinyusb"
-endif
 
 endmenu

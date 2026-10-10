@@ -2,8 +2,35 @@
 
 include_guard(GLOBAL)
 
+# Priority 0: Detect stale cache when SoC series or toolchain type changed.
+# This runs on EVERY cmake invocation, including re-configures triggered by
+# `make config`. Without this, switching SoC via Kconfig menuconfig would
+# silently use the old toolchain, causing binary corruption.
+#
+# When the SoC series or toolchain type has changed, unset the
+# TLK_TOOLCHAIN_* cached guard variables so that toolchain discovery
+# re-runs with the correct settings in this CMake invocation
+# CMake's cache conflict detection.
+if((DEFINED TLK_TOOLCHAIN_SOC_SERIES_CACHED
+        AND DEFINED CONFIG_TLK_SOC_SERIES
+        AND NOT "${TLK_TOOLCHAIN_SOC_SERIES_CACHED}" STREQUAL "${CONFIG_TLK_SOC_SERIES}")
+        OR
+   (DEFINED TLK_TOOLCHAIN_TYPE_CACHED
+        AND DEFINED CONFIG_TLK_TOOLCHAIN_TYPE
+        AND NOT "${TLK_TOOLCHAIN_TYPE_CACHED}" STREQUAL "${CONFIG_TLK_TOOLCHAIN_TYPE}"))
+    unset(TLK_TOOLCHAIN_DISCOVERED CACHE)
+    unset(TLK_TOOLCHAIN_SOC_SERIES_CACHED CACHE)
+    unset(TLK_TOOLCHAIN_TYPE_CACHED CACHE)
+    unset(TLK_TOOLCHAIN_PATH_CACHED CACHE)
+    unset(TLK_TOOLCHAIN_PREFIX_CACHED CACHE)
+endif()
+include(extensions)
+
 # Set compiler before project() is called
-if(NOT DEFINED CMAKE_C_COMPILER)
+# Use a custom guard variable (TLK_TOOLCHAIN_DISCOVERED) instead of
+# checking CMAKE_C_COMPILER, so that Priority 0 can trigger re-discovery
+# by simply unsetting the guard without touching CMake internal variables.
+if(NOT DEFINED TLK_TOOLCHAIN_DISCOVERED)
     # Step 0: Determine toolchain type (default: andes)
     if(NOT DEFINED CONFIG_TLK_TOOLCHAIN_TYPE)
         set(CONFIG_TLK_TOOLCHAIN_TYPE "andes")
@@ -18,6 +45,7 @@ if(NOT DEFINED CMAKE_C_COMPILER)
             AND "${TLK_TOOLCHAIN_TYPE_CACHED}" STREQUAL "${CONFIG_TLK_TOOLCHAIN_TYPE}")
         set(TELINK_TOOLCHAIN_PATH "${TLK_TOOLCHAIN_PATH_CACHED}")
         set(TLK_TOOLCHAIN_PREFIX "${TLK_TOOLCHAIN_PREFIX_CACHED}")
+        set(TLK_TOOLCHAIN_EXTRA_FLAGS "${TLK_TOOLCHAIN_EXTRA_FLAGS_CACHED}")
         message(STATUS "Using cached toolchain path for ${CONFIG_TLK_SOC_SERIES} (${CONFIG_TLK_TOOLCHAIN_TYPE}): ${TELINK_TOOLCHAIN_PATH}")
     # Priority 2: Auto-discovery via Python script
     else()
@@ -60,6 +88,16 @@ if(NOT DEFINED CMAKE_C_COMPILER)
         string(JSON TELINK_TOOLCHAIN_PATH GET "${TOOLCHAIN_JSON}" "toolchain_path")
         string(JSON TLK_TOOLCHAIN_PREFIX GET "${TOOLCHAIN_JSON}" "prefix")
         message(STATUS "Discovered toolchain path: ${TELINK_TOOLCHAIN_PATH} (prefix: ${TLK_TOOLCHAIN_PREFIX})")
+
+        # Some toolchain builds (e.g. the hardware-FPU "v5f" variant) need extra
+        # -march/-mabi flags that don't match the SoC-generic -mcpu default, so
+        # that the correct multilib (matching libgcc/libc) is selected. Read
+        # them from soc.yaml via the discovery script's JSON output.
+        set(TLK_TOOLCHAIN_EXTRA_FLAGS "")
+        string(JSON TOOLCHAIN_EXTRA_FLAGS_JSON ERROR_VARIABLE _extra_flags_err GET "${TOOLCHAIN_JSON}" "extra_flags")
+        if(NOT _extra_flags_err)
+            json_to_list(${TOOLCHAIN_EXTRA_FLAGS_JSON} TLK_TOOLCHAIN_EXTRA_FLAGS)
+        endif()
     endif()
 
     # Step 2: Verify the toolchain path and set all compiler/tool variables
@@ -87,13 +125,33 @@ if(NOT DEFINED CMAKE_C_COMPILER)
     # Step 3: Cache the discovered path into CMakeCache
     # This saves re-running Python discovery on subsequent cmake re-configures
     # as long as the SoC series and toolchain type have not changed.
+    #
+    # SOC series and toolchain type are cached unconditionally (even when
+    # TELINK_TOOLCHAIN_PATH is set via env var) so that Priority 0 can
+    # detect SOC changes on subsequent cmake re-configures.
+    set(TLK_TOOLCHAIN_SOC_SERIES_CACHED "${CONFIG_TLK_SOC_SERIES}" CACHE STRING "SoC series for cached toolchain path" FORCE)
+    set(TLK_TOOLCHAIN_TYPE_CACHED "${CONFIG_TLK_TOOLCHAIN_TYPE}" CACHE STRING "Toolchain type for cached toolchain path" FORCE)
     if(NOT DEFINED ENV{TELINK_TOOLCHAIN_PATH})
         set(TLK_TOOLCHAIN_PATH_CACHED "${TELINK_TOOLCHAIN_PATH}" CACHE PATH "Discovered Telink toolchain path" FORCE)
-        set(TLK_TOOLCHAIN_SOC_SERIES_CACHED "${CONFIG_TLK_SOC_SERIES}" CACHE STRING "SoC series for cached toolchain path" FORCE)
-        set(TLK_TOOLCHAIN_TYPE_CACHED "${CONFIG_TLK_TOOLCHAIN_TYPE}" CACHE STRING "Toolchain type for cached toolchain path" FORCE)
         set(TLK_TOOLCHAIN_PREFIX_CACHED "${TLK_TOOLCHAIN_PREFIX}" CACHE STRING "Toolchain prefix for cached toolchain path" FORCE)
         message(STATUS "Cached toolchain path for ${CONFIG_TLK_SOC_SERIES} (${CONFIG_TLK_TOOLCHAIN_TYPE}): ${TELINK_TOOLCHAIN_PATH}")
     endif()
+
+
+    # Always persist extra_flags so they remain available on later reconfigures.
+    set(TLK_TOOLCHAIN_EXTRA_FLAGS_CACHED
+        "${TLK_TOOLCHAIN_EXTRA_FLAGS}"
+        CACHE STRING "Extra compiler/linker flags for cached toolchain path" FORCE
+    )
+
+    # Mark toolchain as discovered so subsequent cmake re-configures
+    # skip re-discovery as long as the SOC hasn't changed.
+    set(TLK_TOOLCHAIN_DISCOVERED TRUE CACHE INTERNAL "Toolchain has been discovered" FORCE)
+endif()
+
+# Restore extra_flags from cache on reconfigures that skip toolchain discovery.
+if(NOT DEFINED TLK_TOOLCHAIN_EXTRA_FLAGS AND DEFINED TLK_TOOLCHAIN_EXTRA_FLAGS_CACHED)
+    set(TLK_TOOLCHAIN_EXTRA_FLAGS "${TLK_TOOLCHAIN_EXTRA_FLAGS_CACHED}")
 endif()
 
 # Enable compile_commands.json generation
@@ -134,6 +192,7 @@ function(telink_apply_compiler_options target)
     target_compile_options(${target} PRIVATE
         "--imacros=${AUTOCONF_H}"
         "--imacros=${PINMUX_H}"
+        "--imacros=${GIT_VERSION_H}"
 
         "-${CONFIG_TLK_OPTIMIZATION_LEVEL}"
     )
@@ -176,5 +235,11 @@ function(telink_apply_compiler_options target)
     if(CPP_OPTS)
         json_to_list(${CPP_OPTS} CPP_OPTS_LIST CPP_OPTS_STR)
         target_compile_options(${target} PRIVATE $<$<COMPILE_LANGUAGE:CXX>: ${CPP_OPTS_LIST}>)
+    endif()
+
+    # Apply toolchain-specific extra flags (e.g. -march/-mabi for the hardware-FPU
+    # toolchain variant) last, so they override the ABI implied by -mcpu above.
+    if(TLK_TOOLCHAIN_EXTRA_FLAGS)
+        target_compile_options(${target} PRIVATE ${TLK_TOOLCHAIN_EXTRA_FLAGS})
     endif()
 endfunction()

@@ -1,10 +1,9 @@
 #include "api/include/tlk_time.h"
 #include "common/include/tlk_utils.h"
+#include "core/include/tlk_core.h"
 #include "core/include/tlk_gpio.h"
 #include "core/include/tlk_i2c.h"
 #include "system/debug/log/tlk_log.h"
-#include "tlk_board_pinout.h"
-#include "tlk_core.h"
 #include <string.h>
 
 #include "ds1307.h"
@@ -36,19 +35,18 @@ void set_time_cb(enum tlk_gpio_port port, enum tlk_gpio_pin pin)
 void enable_time_setting(void)
 {
     // Applying HIGH to KEY_2 pin to detect a logic '1' on the KEY_0, when pressed.
-    tlk_gpio_configure(UNISDK_BOARD_KEY_2_PORT, UNISDK_BOARD_KEY_2_PIN, TLK_GPIO_OUTPUT);
-    tlk_gpio_pin_write(UNISDK_BOARD_KEY_2_PORT, UNISDK_BOARD_KEY_2_PIN, 1);
+    tlk_gpio_configure(PINMUX_KEY_2_PORT, PINMUX_KEY_2_PIN, TLK_GPIO_OUTPUT);
+    tlk_gpio_pin_write(PINMUX_KEY_2_PORT, PINMUX_KEY_2_PIN, 1);
 
-    tlk_gpio_configure(UNISDK_BOARD_KEY_0_PORT, UNISDK_BOARD_KEY_0_PIN, TLK_GPIO_INPUT_PULL_DOWN);
+    tlk_gpio_configure(PINMUX_KEY_0_PORT, PINMUX_KEY_0_PIN, TLK_GPIO_INPUT_PULL_DOWN);
 
     static struct tlk_gpio_irq_callback callback = {
         .handler = set_time_cb,
-        .pin     = UNISDK_BOARD_KEY_0_PIN,
+        .pin     = PINMUX_KEY_0_PIN,
     };
 
-    tlk_gpio_irq_add_callback(UNISDK_BOARD_KEY_0_PORT, &callback);
-    tlk_gpio_irq_configure(
-        UNISDK_BOARD_KEY_0_PORT, UNISDK_BOARD_KEY_0_PIN, TLK_GPIO_INTR_RISING_EDGE);
+    tlk_gpio_irq_add_callback(PINMUX_KEY_0_PORT, &callback);
+    tlk_gpio_irq_configure(PINMUX_KEY_0_PORT, PINMUX_KEY_0_PIN, TLK_GPIO_INTR_RISING_EDGE);
 }
 
 int main(void)
@@ -60,7 +58,7 @@ int main(void)
 
     tlk_core_interrupt_enable();
 
-    tlk_i2c_configure_pinmux(dev, &pinmux);
+    tlk_i2c_pinmux_configure(dev, &pinmux);
 
     struct tlk_i2c_master_config config = {
         .clock_speed = 100000,
@@ -89,6 +87,6 @@ int main(void)
                          time.sec);
         }
 
-        tlk_api_delay(TLK_SEC_TO_US(1));
+        tlk_api_time_delay(TLK_SEC_TO_US(1));
     }
 }

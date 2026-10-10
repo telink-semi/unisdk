@@ -32,10 +32,13 @@ class PinmuxManager:
         self.current_pinmux.validate(self.context)
 
     def read(self) -> None:
-        dotconfig_path = self.path_manager.build_dir / ".config"
-        self.dotconfig = ConfigReader(dotconfig_path)
+        chip_config_path = self.path_manager.build_dir / "chip.config"
+        build_config_path = self.path_manager.build_dir / "build.config"
 
-        self.context = PinmuxContext(self.path_manager, self.dotconfig)
+        self.chip_config = ConfigReader(chip_config_path)
+        self.build_config = ConfigReader(build_config_path)
+
+        self.context = PinmuxContext(self.path_manager, self.chip_config, self.build_config)
 
         self.context.read_id()
         self.context.read_functions()

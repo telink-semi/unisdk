@@ -44,19 +44,38 @@
  *
  *******************************************************************************************************/
 
+#define TLK_BOOT_MAILBOX_SIZE TLK_MCUBOOT_MAILBOX_SIZE
+
 #define UPDATE_FLASH_PTR(section) \
     FLASH_PTR = LOADADDR(section) + SIZEOF(section);
 
+#define TLK_BINARY_SIGNATURE_SIZE \
+    (CONFIG_TLK_BINARY_SIGNATURE_CORE_NAME_SIZE + CONFIG_TLK_BINARY_SIGNATURE_SOC_NAME_SIZE + \
+     CONFIG_TLK_BINARY_SIGNATURE_SOC_CASE_NAME_SIZE + CONFIG_TLK_BINARY_SIGNATURE_SDK_VERSION_SIZE + \
+     CONFIG_TLK_BINARY_SIGNATURE_APP_VERSION_SIZE)
+
+#if defined(CONFIG_TLK_MCUBOOT)
+    #define TLK_IRAM_USABLE_SIZE (UNISDK_CHIP_MEMORY_IRAM_SIZE * 1024 - TLK_BOOT_MAILBOX_SIZE)
+#else
+    #define TLK_IRAM_USABLE_SIZE (UNISDK_CHIP_MEMORY_IRAM_SIZE * 1024)
+#endif
+
 #if (CONFIG_TLK_PM_RAM_RETENTION_ENABLE)
     #define RAM_DLM_IF_NON_RET RAM_ILM_RET
-    #define RAM_ILM_NON_RET_LENGTH (UNISDK_CHIP_MEMORY_IRAM_SIZE * 1024 - CONFIG_TLK_PM_RETENTION_MEMORY_SIZE * 1024)
+    #define RAM_ILM_NON_RET_LENGTH (TLK_IRAM_USABLE_SIZE - CONFIG_TLK_PM_RETENTION_MEMORY_SIZE * 1024)
 #else
     #define RAM_DLM_IF_NON_RET RAM_DLM
 #endif
 
 MEMORY
 {
-    FLASH   (xr)        : ORIGIN = UNISDK_CHIP_MEMORY_ROM_STARTADDR, LENGTH = UNISDK_CHIP_MEMORY_ROM_SIZE * 1024
+    #if defined(CONFIG_TLK_MCUBOOT_MODE_BOOTLOADER)
+        FLASH (xr) : ORIGIN = UNISDK_CHIP_MEMORY_ROM_STARTADDR, LENGTH = CONFIG_TLK_MCUBOOT_BOOTLOADER_SIZE
+    #elif defined(CONFIG_TLK_MCUBOOT_MODE_APP)
+        FLASH (xr) : ORIGIN = UNISDK_CHIP_MEMORY_ROM_STARTADDR + CONFIG_TLK_MCUBOOT_BOOTLOADER_SIZE + CONFIG_TLK_MCUBOOT_HEADER_SIZE, LENGTH = CONFIG_TLK_MCUBOOT_SLOT_SIZE - CONFIG_TLK_MCUBOOT_HEADER_SIZE
+    #else
+        FLASH (xr) : ORIGIN = UNISDK_CHIP_MEMORY_ROM_STARTADDR, LENGTH = UNISDK_CHIP_MEMORY_ROM_SIZE * 1024
+    #endif
 #if (CONFIG_TLK_PM_RAM_RETENTION_ENABLE)
     RAM_ILM_RET (xw)    : ORIGIN = UNISDK_CHIP_MEMORY_IRAM_STARTADDR, LENGTH = CONFIG_TLK_PM_RETENTION_MEMORY_SIZE * 1024
 
@@ -67,12 +86,20 @@ MEMORY
     #endif
 
 #else
-    RAM_ILM (xw)        : ORIGIN = UNISDK_CHIP_MEMORY_IRAM_STARTADDR, LENGTH = UNISDK_CHIP_MEMORY_IRAM_SIZE * 1024
+    RAM_ILM (xw)        : ORIGIN = UNISDK_CHIP_MEMORY_IRAM_STARTADDR, LENGTH = TLK_IRAM_USABLE_SIZE
     #define RAM_ILM_RET RAM_ILM
 
 #endif
+#if defined(CONFIG_TLK_MCUBOOT)
+    RAM_BOOT_MAILBOX (rw) : ORIGIN = UNISDK_CHIP_MEMORY_IRAM_STARTADDR + TLK_IRAM_USABLE_SIZE, LENGTH = TLK_BOOT_MAILBOX_SIZE
+#endif
     RAM_DLM (w)         : ORIGIN = UNISDK_CHIP_MEMORY_DRAM_STARTADDR, LENGTH = UNISDK_CHIP_MEMORY_DRAM_SIZE * 1024
 }
+
+#if (CONFIG_TLK_PM_RAM_RETENTION_ENABLE) && defined(CONFIG_TLK_MCUBOOT)
+ASSERT(RAM_ILM_NON_RET_LENGTH >= 0,
+    "flash_boot.link: TLK_PM_RETENTION_MEMORY_SIZE leaves no room for the mcuboot boot mailbox")
+#endif
 
 /* Flash storage areas definitions */
 _user_flash_storage_size           = 0K;     /* user flash storage area size, aligh 4K */
@@ -92,27 +119,58 @@ ENTRY(_RESET_ENTRY)
 #endif
 
 _Heap_Size  = CONFIG_TLK_MEMORY_HEAP_SIZE * 1024;          /* required amount of heap  */
+
+/* TL321X MCUboot requires a reduced stack to fit in 32K DLM. */
+#if defined(CONFIG_TLK_MCUBOOT_MODE_BOOTLOADER) && (UNISDK_CHIP_MEMORY_DRAM_SIZE <= 32)
+_Stack_Size = 9728;
+#else
 _Stack_Size = CONFIG_TLK_MEMORY_STACK_SIZE * 1024;          /* required amount of stack */
+#endif
 
 FLASH_PTR = ORIGIN(FLASH);
 
 SECTIONS
 {
-    .vectors : AT(ALIGN(FLASH_PTR, 4))  ALIGN(4)
+/*
+ * XIP sections use identical VMA/LMA addresses.
+ * RAM-loaded sections below use AT() to keep their load address in flash.
+ */
+    .vectors : ALIGN(4)
     {
         KEEP(*(.vectors))
     } > FLASH
     UPDATE_FLASH_PTR(.vectors)
 
-    .text : AT(ALIGN(FLASH_PTR, 4))  ALIGN(4)
+    ASSERT(FLASH_PTR <= ORIGIN(FLASH) + CONFIG_TLK_BINARY_SIGNATURE_ADDRESS,
+        "flash_boot.link: .vectors grew past CONFIG_TLK_BINARY_SIGNATURE_ADDRESS, update the reserved offset in Kconfig.common")
+
+    /*
+     * MCU-info block: intentionally given an explicit, absolute VMA/LMA
+     * (ORIGIN(FLASH) + CONFIG_TLK_BINARY_SIGNATURE_ADDRESS) instead of the
+     * usual FLASH_PTR chain, so its address never shifts because of code-size
+     * changes in any preceding section (vectored/non-vectored PLIC mode, RF
+     * certification config, compiler changes, etc.). It is always at this
+     * fixed flash offset, in every build, for every chip. VMA and LMA must
+     * be the same expression here - this is XIP flash (VMA == LMA).
+     */
+    .mcu_info ORIGIN(FLASH) + CONFIG_TLK_BINARY_SIGNATURE_ADDRESS : AT(ORIGIN(FLASH) + CONFIG_TLK_BINARY_SIGNATURE_ADDRESS)
+    {
+        KEEP(*(.mcu_info))
+    } > FLASH
+    ASSERT(SIZEOF(.mcu_info) <= TLK_BINARY_SIGNATURE_SIZE,
+        "flash_boot.link: .mcu_info exceeds the size reserved in Kconfig.common")
+
+    /* Resume the normal chain from the end of the reserved (fixed-size) block. */
+    FLASH_PTR = ORIGIN(FLASH) + CONFIG_TLK_BINARY_SIGNATURE_ADDRESS + TLK_BINARY_SIGNATURE_SIZE;
+
+    .text : ALIGN(4)
     {
         *(.text .stub .text.* .gnu.linkonce.t.*)
         KEEP(*(.text.*personality*))
         *(.gnu.warning)
     } > FLASH
-    UPDATE_FLASH_PTR(.text)
 
-    .rodata : AT(ALIGN(FLASH_PTR, 4))  ALIGN(4)
+    .rodata : ALIGN(4)
     {
         *(.rodata .rodata.* .gnu.linkonce.r.* )
         *(.srodata.cst16)
@@ -121,122 +179,117 @@ SECTIONS
         *(.srodata.cst2)
         *(.srodata .srodata.*)
     } > FLASH
-    UPDATE_FLASH_PTR(.rodata)
 
-    .init_array : AT(ALIGN(FLASH_PTR, 4))  ALIGN(4)
+    .init_array : ALIGN(4)
     {
         PROVIDE_HIDDEN(__init_array_start = .);
         KEEP(*(SORT_BY_INIT_PRIORITY(.init_array.*)))
         KEEP(*(.init_array))
         PROVIDE_HIDDEN(__init_array_end = .);
     } > FLASH
-    UPDATE_FLASH_PTR(.init_array)
 
-    .fini_array : AT(ALIGN(FLASH_PTR, 4))  ALIGN(4)
+    .fini_array : ALIGN(4)
     {
         PROVIDE_HIDDEN(__fini_array_start = .);
         KEEP(*(SORT_BY_INIT_PRIORITY(.fini_array.*)))
         KEEP(*(.fini_array))
         PROVIDE_HIDDEN(__fini_array_end = .);
     } > FLASH
-    UPDATE_FLASH_PTR(.fini_array)
 
-    .eh_frame_hdr : AT(FLASH_PTR)
+    #if defined(CONFIG_TLK_MCUBOOT)
+
+    .boot_mailbox (NOLOAD) : ALIGN(4)
+    {
+        __tlk_boot_mailbox_start = .;
+        . += TLK_BOOT_MAILBOX_SIZE;
+        __tlk_boot_mailbox_end = .;
+    } > RAM_BOOT_MAILBOX
+
+    #endif
+
+    .eh_frame_hdr :
     {
         *(.eh_frame_hdr)
     } > FLASH
-    UPDATE_FLASH_PTR(.eh_frame_hdr)
 
-    .eh_frame : AT(FLASH_PTR)
+    .eh_frame :
     {
         KEEP(*(.eh_frame))
     } > FLASH
-    UPDATE_FLASH_PTR(.eh_frame)
 
-    .ctors : AT(ALIGN(FLASH_PTR, 4)) ALIGN(4)
+    .ctors : ALIGN(4)
     {
         KEEP(*crtbegin*.o(.ctors))
         KEEP(*(EXCLUDE_FILE (*crtend*.o) .ctors))
         KEEP(*(SORT(.ctors.* )))
         KEEP(*(.ctors ))
     } > FLASH
-    UPDATE_FLASH_PTR(.ctors)
 
-    .dtors : AT(ALIGN(FLASH_PTR, 4)) ALIGN(4)
+    .dtors : ALIGN(4)
     {
         KEEP(*crtbegin*.o(.dtors))
         KEEP(*(EXCLUDE_FILE (*crtend*.o) .dtors))
         KEEP(*(SORT(.dtors.* )))
         KEEP(*(.dtors ))
     } > FLASH
-    UPDATE_FLASH_PTR(.dtors)
 
-    .pre_init_array : AT(ALIGN(FLASH_PTR, 4)) ALIGN(4)
+    .pre_init_array : ALIGN(4)
     {
         PROVIDE(__pre_init_start = .);
         KEEP(*(SORT(.pre_init_array*)))
         PROVIDE(__pre_init_end = .);
     } > FLASH
-    UPDATE_FLASH_PTR(.pre_init_array)
 
-    .loop_array : AT(ALIGN(FLASH_PTR, 4)) ALIGN(4)
+    .loop_array : ALIGN(4)
     {
         PROVIDE(__loop_start = .);
         KEEP(*(.loop_array))
         PROVIDE(__loop_end = .);
     } > FLASH
-    UPDATE_FLASH_PTR(.loop_array)
 
-    .before_suspend_array : AT(ALIGN(FLASH_PTR, 4)) ALIGN(4)
+    .before_suspend_array : ALIGN(4)
     {
         PROVIDE(__before_suspend_start = .);
         KEEP(*(SORT(.before_suspend_array*)))
         PROVIDE(__before_suspend_end = .);
     } > FLASH
-    UPDATE_FLASH_PTR(.before_suspend_array)
 
-    .after_suspend_array : AT(ALIGN(FLASH_PTR, 4)) ALIGN(4)
+    .after_suspend_array : ALIGN(4)
     {
         PROVIDE(__after_suspend_start = .);
         KEEP(*(SORT(.after_suspend_array*)))
         PROVIDE(__after_suspend_end = .);
     } > FLASH
-    UPDATE_FLASH_PTR(.after_suspend_array)
 
-    .before_sleep_array : AT(ALIGN(FLASH_PTR, 4)) ALIGN(4)
+    .before_sleep_array : ALIGN(4)
     {
         PROVIDE(__before_sleep_start = .);
         KEEP(*(SORT(.before_sleep_array*)))
         PROVIDE(__before_sleep_end = .);
     } > FLASH
-    UPDATE_FLASH_PTR(.before_sleep_array)
 
-    .after_sleep_array : AT(ALIGN(FLASH_PTR, 4)) ALIGN(4)
+    .after_sleep_array : ALIGN(4)
     {
         PROVIDE(__after_sleep_start = .);
         KEEP(*(SORT(.after_sleep_array*)))
         PROVIDE(__after_sleep_end = .);
     } > FLASH
-    UPDATE_FLASH_PTR(.after_sleep_array)
 
-    .prevent_suspend_array : AT(ALIGN(FLASH_PTR, 4)) ALIGN(4)
+    .prevent_suspend_array : ALIGN(4)
     {
         PROVIDE(__prevent_suspend_start = .);
         KEEP(*(.prevent_suspend_array))
         PROVIDE(__prevent_suspend_end = .);
     } > FLASH
-    UPDATE_FLASH_PTR(.prevent_suspend_array)
 
-    .prevent_sleep_array : AT(ALIGN(FLASH_PTR, 4)) ALIGN(4)
+    .prevent_sleep_array : ALIGN(4)
     {
         PROVIDE(__prevent_sleep_start = .);
         KEEP(*(.prevent_sleep_array))
         PROVIDE(__prevent_sleep_end = .);
     } > FLASH
-    UPDATE_FLASH_PTR(.prevent_sleep_array)
 
-
-    .rf_certification_cfg : AT(ALIGN(FLASH_PTR, 4)) ALIGN(4)
+    .rf_certification_cfg : ALIGN(4)
     {
         PROVIDE(__rf_certification_begin = .);
         KEEP(*(.rf_certification_cfg))
@@ -332,6 +385,11 @@ SECTIONS
         *(.noinit)
     } > RAM_DLM_IF_NON_RET
 
+    .noinit_nonret (NOLOAD) : ALIGN(4)
+    {
+        *(.noinit_nonret)
+    } > RAM_DLM
+
     ._user_heap (NOLOAD) : ALIGN(16)
     {
         PROVIDE(_end = .);
@@ -341,6 +399,23 @@ SECTIONS
 PROVIDE(BIN_SIZE = FLASH_PTR - ORIGIN(FLASH));
 PROVIDE(NDS_SAG_LMA_FLASH_BL = ALIGN(FLASH_PTR, 4K));
 
+#if defined(CONFIG_TLK_MCUBOOT)
+    ASSERT(
+        (ORIGIN(RAM_BOOT_MAILBOX) & 0x3) == 0,
+        "RAM_BOOT_MAILBOX must be 4-byte aligned"
+    );
+
+    ASSERT(
+        ADDR(.boot_mailbox) == ORIGIN(RAM_BOOT_MAILBOX),
+        ".boot_mailbox placed at wrong address"
+    );
+
+    ASSERT(
+        SIZEOF(.boot_mailbox) == TLK_BOOT_MAILBOX_SIZE,
+        "Invalid boot mailbox size"
+    );
+#endif
+
 #if (CONFIG_TLK_PM_RAM_RETENTION_ENABLE)
     ASSERT(
         SIZEOF(.retention_reset) +
@@ -348,19 +423,24 @@ PROVIDE(NDS_SAG_LMA_FLASH_BL = ALIGN(FLASH_PTR, 4K));
         SIZEOF(.aes_data) +
         SIZEOF(.ram_code) +
         SIZEOF(.exec.itable) +
+        SIZEOF(.tasks_array) +
         SIZEOF(.data) +
-        SIZEOF(.bss) <= LENGTH(RAM_ILM_RET), "RAM_ILM_RET overflow!")
+        SIZEOF(.bss) +
+        SIZEOF(.noinit) <= LENGTH(RAM_ILM_RET), "RAM_ILM_RET overflow!")
+    ASSERT(
+        SIZEOF(.noinit_nonret) <= LENGTH(RAM_DLM), "RAM_DLM overflow!")
 #else
     ASSERT(
         SIZEOF(.retention_reset) +
         SIZEOF(.aes_data) +
         SIZEOF(.ram_code) +
-        SIZEOF(.exec.itable) <= LENGTH(RAM_ILM),
-        "RAM_ILM overflow!")
+        SIZEOF(.exec.itable) <= LENGTH(RAM_ILM), "RAM_ILM overflow!")
     ASSERT(
         SIZEOF(._stack) +
+        SIZEOF(.tasks_array) +
         SIZEOF(.data) +
-        SIZEOF(.bss) <= LENGTH(RAM_DLM),
-        "RAM_DLM overflow!")
+        SIZEOF(.bss) +
+        SIZEOF(.noinit) +
+        SIZEOF(.noinit_nonret) <= LENGTH(RAM_DLM), "RAM_DLM overflow!")
 #endif
 ASSERT((BIN_SIZE) <= LENGTH(FLASH), "BIN FILE OVERFLOW");

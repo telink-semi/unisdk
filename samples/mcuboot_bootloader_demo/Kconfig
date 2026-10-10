@@ -1,0 +1,5 @@
+config TLK_MCUBOOT_BOOTLOADER_APP
+    def_bool y
+
+config TLK_MEMORY_STACK_SIZE
+    default 96

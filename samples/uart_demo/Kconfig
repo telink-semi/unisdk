@@ -1,1 +1,19 @@
-osource "$(KCONFIG_BINARY_DIR)/Kconfig.uart_demo" # TODO: Explore how we can script all Kconfig files where ${...} inserts or for are possible, which are currently processed via preprocess_kconfig.py
+menu "UART Sample configuration"
+
+config TLK_UART_DEMO_BUFFER_SIZE
+    int "Buffer size"
+    default 15
+
+config TLK_UART_DEMO_SLEEP
+    bool "UART demo with sleep"
+    select TLK_API_SLEEP
+    imply TLK_UART0_PM_DEVICE
+
+
+config TLK_UART_DEMO_PREVENT
+    bool "UART demo with prevent"
+    select TLK_PM
+    select TLK_PM_SUSPEND
+    select TLK_UART0_PREVENT_SLEEP
+
+endmenu

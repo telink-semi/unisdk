@@ -84,7 +84,7 @@ config TLK_BOARD_TL7218X_EVK
     bool
     default y if BOARD_TL7218X_EVK
 
-config TLK_HAS_BOARD_SELECTED
+config TLK_BOARD_IS_SELECTED
     bool
     default y if TLK_BOARD_TL3218X_EVK
     default y if TLK_BOARD_TL7218X_EVK
@@ -120,7 +120,7 @@ config TLK_CASE
 
 rsource "../common/Kconfig.zephyr"
 rsource "../core/Kconfig.zephyr"
-rsource "../api/Kconfig.zephyr"
+rsource "../core/api/Kconfig.zephyr"
 
 if BT_TLX
 # Source the BLE controller Kconfig tree so that all controller config

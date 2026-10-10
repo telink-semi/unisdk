@@ -227,7 +227,7 @@ typedef struct
  * @par Side Effects
  * Sets `tm->active` and updates internal timing state.
  */
-void tlk_sw_timer_start(tSwTimer* tm);
+void tlk_task_sw_timer_start(tSwTimer* tm);
 
 /**
  * @brief Stops a running software timer.
@@ -245,7 +245,7 @@ void tlk_sw_timer_start(tSwTimer* tm);
  * @par Side Effects
  * Clears `tm->active`.
  */
-void tlk_sw_timer_stop(tSwTimer* tm);
+void tlk_task_sw_timer_stop(tSwTimer* tm);
 
 /**
  * @brief Sets the period of a software timer.
@@ -266,7 +266,7 @@ void tlk_sw_timer_stop(tSwTimer* tm);
  * @par Side Effects
  * Updates `tm->period`.
  */
-void tlk_sw_set_period(tSwTimer* tm, uint64_t period);
+void tlk_task_sw_timer_set_period(tSwTimer* tm, uint64_t period);
 
 /**
  * @brief Sets the operating mode of a software timer.
@@ -287,7 +287,7 @@ void tlk_sw_set_period(tSwTimer* tm, uint64_t period);
  * @par Side Effects
  * Updates `tm->mode`.
  */
-void tlk_sw_set_mode(tSwTimer* tm, teSwTimer_mode mode);
+void tlk_task_sw_timer_set_mode(tSwTimer* tm, teSwTimer_mode mode);
 
 /**
  * @brief Statically registers a software timer instance.
@@ -296,7 +296,7 @@ void tlk_sw_set_mode(tSwTimer* tm, teSwTimer_mode mode);
  * ".tasks_array.timers" linker section.
  *
  * The timer is initialized but inactive. It must be started
- * explicitly using ::tlk_sw_timer_start().
+ * explicitly using ::tlk_task_sw_timer_start().
  *
  * @param name       Identifier of the generated timer object.
  * @param callback   Timer callback function.
@@ -363,7 +363,7 @@ typedef void (*tlk_work_fn_t)(void* arg);
  * }
  * @endcode
  */
-bool tlk_work_pending(void);
+bool tlk_task_work_is_pending(void);
 
 /**
  * @brief Submits a work item for deferred execution.
@@ -400,7 +400,7 @@ bool tlk_work_pending(void);
  * tlk_work_submit(MyWorkHandler, NULL);
  * @endcode
  */
-bool tlk_work_submit(tlk_work_fn_t fn, void* arg);
+bool tlk_task_work_submit(tlk_work_fn_t fn, void* arg);
 #endif
 
 #endif

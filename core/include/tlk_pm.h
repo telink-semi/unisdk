@@ -1,9 +1,16 @@
 #ifndef TLK_INCLUDE_DRIVERS_PM_H_
 #define TLK_INCLUDE_DRIVERS_PM_H_
 
-#if TLK_IS_DISABLED(CONFIG_TLK_PM_SUSPEND) && TLK_IS_DISABLED(CONFIG_TLK_PM_DEEP_SLEEP)
-#error "All sleep modes are disabled. Is there any need to include the PM driver?"
+#if TLK_IS_DISABLED(CONFIG_TLK_PM)
+#warning PM driver is disabled in Kconfig, but its header is being used; note that its implementation will not be linked until you enable it in Kconfig.
 #endif
+
+#if TLK_IS_DISABLED(CONFIG_TLK_PM_SUSPEND) && TLK_IS_DISABLED(CONFIG_TLK_PM_DEEP_SLEEP)
+#warning PM driver has no enabled sleep modes; enable the ones you are going to use, otherwise disable the driver entirely.
+#endif
+
+#include "common/include/tlk_tick.h"
+#include "core/include/tlk_stimer.h"
 
 enum tlk_pm_sleep_mode
 {
@@ -17,6 +24,18 @@ enum tlk_pm_sleep_mode
     TLK_PM_SLEEP_MODE_DEEP_RETENTION,
 #endif
     TLK_PM_SLEEP_MAX_LEVEL
+};
+
+enum tlk_pm_tick_mode
+{
+    PM_TICK_STIMER,
+    PM_TICK_32K,
+};
+struct tlk_pm_sleep_tick
+{
+    uint32_t              ticks;
+    uint32_t              tick_base;
+    enum tlk_pm_tick_mode mode;
 };
 
 enum tlk_pm_gpio_wakeup_level
@@ -71,12 +90,59 @@ void tlk_pm_clear_wakeup_sources(void);
  * Requests the system to enter a specific low-power mode for a specific duration.
  *
  * @param mode The desired low-power state.
- * @param duration_us The duration to sleep in milliseconds.
+ * @param sleep_tick The duration to sleep and sleep count base. Pass UINT32_MAX as a sleep tick to
+ * sleep until a non-timer wakeup source fires.
  *
  * @return enum tlk_pm_sleep_status The result of the operation (e.g., TLK_PM_SLEEP_OK or error
  * code).
  */
-enum tlk_pm_sleep_status tlk_pm_sleep(enum tlk_pm_sleep_mode mode, uint32_t duration_ms);
+enum tlk_pm_sleep_status tlk_pm_sleep(enum tlk_pm_sleep_mode   mode,
+                                      struct tlk_pm_sleep_tick sleep_tick);
+
+#define TLK_PM_SLEEP_US_TICKS(us)                                                                  \
+    ((struct tlk_pm_sleep_tick) {                                                                  \
+        .ticks = (uint32_t) ((TLK_TICK_HF_RC_TICKS_FROM_US(us) <= UINT32_MAX)                      \
+                                 ? TLK_TICK_HF_RC_TICKS_FROM_US(us)                                \
+                                 : TLK_TICK_32K_TICKS_FROM_US(us)),                                \
+        .mode  = (TLK_TICK_HF_RC_TICKS_FROM_US(us) <= UINT32_MAX) ? PM_TICK_STIMER : PM_TICK_32K,  \
+        .tick_base =                                                                               \
+            (TLK_TICK_HF_RC_TICKS_FROM_US(us) <= UINT32_MAX)                                       \
+                ? UNISDK_STIMER_CLOCK                                                              \
+                : ((tlk_clock_32k_get_source() == TLK_CLOCK_32K_XTAL) ? UNISDK_CLOCK_32K_XTAL_FREQ \
+                                                                      : UNISDK_CLOCK_32K_RC_FREQ), \
+    })
+
+#define TLK_PM_SLEEP_MS_TICKS(ms)                                                                  \
+    ((struct tlk_pm_sleep_tick) {                                                                  \
+        .ticks = (uint32_t) ((TLK_TICK_HF_RC_TICKS_FROM_MS(ms) <= UINT32_MAX)                      \
+                                 ? TLK_TICK_HF_RC_TICKS_FROM_MS(ms)                                \
+                                 : TLK_TICK_32K_TICKS_FROM_MS(ms)),                                \
+        .mode  = (TLK_TICK_HF_RC_TICKS_FROM_MS(ms) <= UINT32_MAX) ? PM_TICK_STIMER : PM_TICK_32K,  \
+        .tick_base =                                                                               \
+            (TLK_TICK_HF_RC_TICKS_FROM_MS(ms) <= UINT32_MAX)                                       \
+                ? UNISDK_STIMER_CLOCK                                                              \
+                : ((tlk_clock_32k_get_source() == TLK_CLOCK_32K_XTAL) ? UNISDK_CLOCK_32K_XTAL_FREQ \
+                                                                      : UNISDK_CLOCK_32K_RC_FREQ), \
+    })
+
+#define TLK_PM_SLEEP_S_TICKS(s)                                                                    \
+    ((struct tlk_pm_sleep_tick) {                                                                  \
+        .ticks = (uint32_t) ((TLK_TICK_HF_RC_TICKS_FROM_S(s) <= UINT32_MAX)                        \
+                                 ? TLK_TICK_HF_RC_TICKS_FROM_S(s)                                  \
+                                 : TLK_TICK_32K_TICKS_FROM_S(s)),                                  \
+        .mode  = (TLK_TICK_HF_RC_TICKS_FROM_S(s) <= UINT32_MAX) ? PM_TICK_STIMER : PM_TICK_32K,    \
+        .tick_base =                                                                               \
+            (TLK_TICK_HF_RC_TICKS_FROM_S(s) <= UINT32_MAX)                                         \
+                ? UNISDK_STIMER_CLOCK                                                              \
+                : ((tlk_clock_32k_get_source() == TLK_CLOCK_32K_XTAL) ? UNISDK_CLOCK_32K_XTAL_FREQ \
+                                                                      : UNISDK_CLOCK_32K_RC_FREQ), \
+    })
+
+#define TLK_PM_SLEEP_US(mode, us) tlk_pm_sleep((mode), TLK_PM_SLEEP_US_TICKS(us))
+
+#define TLK_PM_SLEEP_MS(mode, ms) tlk_pm_sleep((mode), TLK_PM_SLEEP_MS_TICKS(ms))
+
+#define TLK_PM_SLEEP_S(mode, s) tlk_pm_sleep((mode), TLK_PM_SLEEP_S_TICKS(s))
 
 #if TLK_IS_ENABLED(CONFIG_TLK_GPIO)
 

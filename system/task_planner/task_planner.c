@@ -2,19 +2,22 @@
 #include "common/include/tlk_init.h"
 #include "core/include/tlk_core.h"
 #include "core/include/tlk_mtimer.h"
-#include "core/include/tlk_plic_sw.h"
 #include "core/include/tlk_stimer.h"
 #include <string.h>
+
+#if TLK_IS_ENABLED(CONFIG_TLK_TASK_PLANNER_WORK_QUEUE)
+#include "core/include/tlk_plic_sw.h"
+#endif
 
 #if TLK_IS_ENABLED(CONFIG_TLK_PM)
 #include "core/include/tlk_pm.h"
 
 #define systicks_to_mticks(sticks)                                                                 \
-    (((uint64_t) (sticks) * UNISDK_MTIMER_CYCLES_PER_SECOND) / TLK_SYSTEM_TIMER_TICK_1S)
+    (((uint64_t) (sticks) * UNISDK_MTIMER_CYCLES_PER_SECOND) / TLK_STIMER_TICK_1S)
 
 #endif
 
-void idle_task(void);
+static void tlk_task_idle(void);
 
 extern tTask __tasks_start;
 extern tTask __tasks_end;
@@ -43,7 +46,7 @@ typedef struct
 static volatile tWork_Queue sWorkQueue = {
     .work_q_head = 0, .work_q_tail = 0, .work_q_count = 0, .locked = false};
 
-#define is_tlk_work() tlk_work_pending()
+#define is_tlk_work() tlk_task_work_is_pending()
 #else
 #define is_tlk_work() 0
 #endif
@@ -51,7 +54,7 @@ static volatile tWork_Queue sWorkQueue = {
 static volatile uint64_t task_next_deadline  = UINT64_MAX;
 static volatile uint64_t timer_next_deadline = UINT64_MAX;
 
-void task_planner_plan_next_event(void)
+static void tlk_task_planner_next_event_plan(void)
 {
     uint64_t now = tlk_mtimer_get_mtime();
     uint64_t next =
@@ -68,35 +71,35 @@ void task_planner_plan_next_event(void)
 }
 
 #if TLK_IS_ENABLED(CONFIG_TLK_SOFTWARE_TIMERS)
-void tlk_sw_timer_start(tSwTimer* tm)
+void tlk_task_sw_timer_start(tSwTimer* tm)
 {
     tlk_core_interrupt_disable();
     tm->expire = tlk_mtimer_get_mtime() + tm->period;
     tm->active = 1;
     if (tm->expire < timer_next_deadline)
         timer_next_deadline = tm->expire;
-    task_planner_plan_next_event();
+    tlk_task_planner_next_event_plan();
     tlk_core_interrupt_enable();
 }
 
-void tlk_sw_timer_stop(tSwTimer* tm)
+void tlk_task_sw_timer_stop(tSwTimer* tm)
 {
     tm->active = 0;
 }
 
-void tlk_sw_set_period(tSwTimer* tm, uint64_t period)
+void tlk_task_sw_timer_set_period(tSwTimer* tm, uint64_t period)
 {
     tm->period = period;
 }
 
-void tlk_sw_set_mode(tSwTimer* tm, teSwTimer_mode mode)
+void tlk_task_sw_timer_set_mode(tSwTimer* tm, teSwTimer_mode mode)
 {
     tm->mode = mode;
 }
 
 #endif
 
-void task_planner_run(void)
+void tlk_task_planner_run(void)
 {
     while (1)
     {
@@ -115,12 +118,12 @@ void task_planner_run(void)
             }
         }
 
-        task_planner_plan_next_event();
-        idle_task();
+        tlk_task_planner_next_event_plan();
+        tlk_task_idle();
     }
 }
 
-void idle_task(void)
+static void tlk_task_idle(void)
 {
 
     uint64_t mtimecmp = tlk_mtimer_get_mtime_compare();
@@ -137,7 +140,7 @@ void idle_task(void)
                                 (TLK_IF_ENABLED_ELSE(CONFIG_TLK_PM_DEEP_SLEEP,
                                                      (TLK_PM_SLEEP_MODE_DEEP_SLEEP),
                                                      (TLK_PM_SLEEP_MODE_SUSPEND))));
-        enum tlk_pm_sleep_status pm_sleep_state = tlk_pm_sleep(mode, sleep_duration_ms);
+        enum tlk_pm_sleep_status pm_sleep_state = TLK_PM_SLEEP_MS(mode, sleep_duration_ms);
         if (pm_sleep_state == TLK_PM_SLEEP_OK || pm_sleep_state == TLK_PM_SLEEP_SUSPEND_FALLBACK)
         {
             now += systicks_to_mticks(tlk_stimer_get_tick() - tl_stimer_sleep_tick);
@@ -184,10 +187,10 @@ void tlk_task_planner_mtimer_irq(void)
     }
 
 #endif
-    task_planner_plan_next_event();
+    tlk_task_planner_next_event_plan();
 }
 
-void task_planner_init(void)
+static void tlk_task_planner_init(void)
 {
     extern uint32_t _TASKS_ARRAY_LMA_START[];
     // load tasks from flash to RAM
@@ -200,46 +203,46 @@ void task_planner_init(void)
            (uint8_t*) &__tasks_end -
 #endif
                (uint8_t*) &__tasks_start);
-    tlk_mtimer_register_callback(tlk_task_planner_mtimer_irq);
+    tlk_mtimer_irq_register_callback(tlk_task_planner_mtimer_irq);
     tlk_core_interrupt_enable();
 }
 
-TLK_REGISTER_PRE_INIT(task_planner_init, TLK_INIT_LEVEL_APPLICATION, TLK_INIT_PRIORITY_NORMAL);
+TLK_REGISTER_PRE_INIT(tlk_task_planner_init, TLK_INIT_LEVEL_APPLICATION, TLK_INIT_PRIORITY_NORMAL);
 
 #if TLK_IS_ENABLED(CONFIG_TLK_TASK_PLANNER_DEFAULT_TASK)
 extern void user_loop(void);
-void        default_task(tTask* t)
+static void tlk_task_default(tTask* t)
 {
     user_loop();
     TASK_DELAY(t, TASK_MS(CONFIG_TLK_TASK_PLANNER_DEFAULT_TASK_LOOP_PERIOD_MS));
 }
 
-TASK_SPAWN(default_task_obj, default_task);
+TASK_SPAWN(default_task_obj, tlk_task_default);
 #endif
 
 #if TLK_IS_ENABLED(CONFIG_TLK_TASK_PLANNER_WORK_QUEUE)
 
-static void tlk_work_queue_task(tTask* t);
-TASK_SPAWN(work_queue_task_obj, tlk_work_queue_task);
+static void tlk_task_work_queue_task(tTask* t);
+TASK_SPAWN(work_queue_task_obj, tlk_task_work_queue_task);
 
-static inline bool tlk_work_queue_is_empty(void)
+static inline bool tlk_task_work_queue_is_empty(void)
 {
     return sWorkQueue.work_q_count == 0;
 }
 
-static inline bool tlk_work_queue_is_full(void)
+static inline bool tlk_task_work_queue_is_full(void)
 {
     return sWorkQueue.work_q_count >= CONFIG_TLK_TASK_PLANNER_WORK_QUEUE_SIZE;
 }
 
-bool tlk_work_pending(void)
+bool tlk_task_work_is_pending(void)
 {
-    return !tlk_work_queue_is_empty();
+    return !tlk_task_work_queue_is_empty();
 }
 
-static bool tlk_work_queue_pop(tWorkItem* item)
+static bool tlk_task_work_queue_pop(tWorkItem* item)
 {
-    if (tlk_work_queue_is_empty())
+    if (tlk_task_work_queue_is_empty())
     {
         return false;
     }
@@ -251,7 +254,7 @@ static bool tlk_work_queue_pop(tWorkItem* item)
     return true;
 }
 
-bool tlk_work_submit(tlk_work_fn_t fn, void* arg)
+bool tlk_task_work_submit(tlk_work_fn_t fn, void* arg)
 {
     bool ok = false;
 
@@ -263,7 +266,7 @@ bool tlk_work_submit(tlk_work_fn_t fn, void* arg)
     if (!sWorkQueue.locked)
     {
         sWorkQueue.locked = true;
-        if (!tlk_work_queue_is_full())
+        if (!tlk_task_work_queue_is_full())
         {
             sWorkQueue.sWorkItem[sWorkQueue.work_q_tail].fn  = fn;
             sWorkQueue.sWorkItem[sWorkQueue.work_q_tail].arg = arg;
@@ -286,14 +289,14 @@ bool tlk_work_submit(tlk_work_fn_t fn, void* arg)
     return ok;
 }
 
-static void tlk_work_queue_task(tTask* t)
+static void tlk_task_work_queue_task(tTask* t)
 {
     tWorkItem item;
 
     while (1)
     {
         tlk_core_interrupt_disable();
-        bool has_work = tlk_work_queue_pop(&item);
+        bool has_work = tlk_task_work_queue_pop(&item);
         tlk_core_interrupt_enable();
 
         if (!has_work)
@@ -305,7 +308,7 @@ static void tlk_work_queue_task(tTask* t)
 
     /*
      * No more jobs: park forever.
-     * A new tlk_work_submit() will set wake = now and scheduler will run us.
+     * A new tlk_task_work_submit() will set wake = now and scheduler will run us.
      */
     t->wake = UINT64_MAX;
 }

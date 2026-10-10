@@ -22,6 +22,7 @@
 static volatile uint8_t tlk_tx_done = 1;
 #endif
 
+#if TLK_IS_ENABLED(CONFIG_TLK_DEBUG_LOG_COLOR)
 #define COL_RESET  "\x1b[0m"
 #define COL_RED    "\x1b[31m"
 #define COL_GREEN  "\x1b[32m"
@@ -30,6 +31,16 @@ static volatile uint8_t tlk_tx_done = 1;
 #define COL_MAG    "\x1b[35m"
 #define COL_CYAN   "\x1b[36m"
 #define COL_GRAY   "\x1b[90m"
+#else
+#define COL_RESET  ""
+#define COL_RED    ""
+#define COL_GREEN  ""
+#define COL_YELLOW ""
+#define COL_BLUE   ""
+#define COL_MAG    ""
+#define COL_CYAN   ""
+#define COL_GRAY   ""
+#endif
 
 #if TLK_IS_ENABLED(CONFIG_TLK_DEBUG_LOG_PRIO_LOW) || TLK_IS_ENABLED(CONFIG_TLK_DEBUG_LOG_PRIO_HIGH)
 #if TLK_IS_ENABLED(CONFIG_TLK_DEBUG_LOG_PRIO_HIGH)
@@ -53,7 +64,7 @@ typedef struct
 static volatile uint32_t s_wr = 0;
 static volatile uint32_t s_rd = 0;
 static tlk_log_event_t   s_q[CONFIG_TLK_DEBUG_LOG_QUEUE_SIZE];
-static bool              pop_event(tlk_log_event_t* out);
+static bool              tlk_debug_log_event_pop(tlk_log_event_t* out);
 
 #elif TLK_IS_ENABLED(CONFIG_TLK_DEBUG_LOG_PRIO_IMMEDIATE)
 
@@ -61,7 +72,7 @@ static char tlk_log_buffer[CONFIG_TLK_DEBUG_LOG_BUFFER_SIZE];
 
 #endif
 
-static inline const char* tlk_lvl_str(tlk_log_level_t lvl)
+static inline const char* tlk_debug_log_level_str_get(tlk_log_level_t lvl)
 {
     switch (lvl)
     {
@@ -78,7 +89,7 @@ static inline const char* tlk_lvl_str(tlk_log_level_t lvl)
     }
 }
 
-uint64_t log_get_us(void)
+static uint64_t tlk_debug_log_get_us(void)
 {
     return (tlk_mtimer_get_mtime() * 1000000ULL) / UNISDK_MTIMER_CYCLES_PER_SECOND;
 }
@@ -98,17 +109,17 @@ uint64_t log_get_us(void)
 
 #define tlk_log_interface_is_locked() (!tlk_tx_done)
 
-static void tlk_tx_handler(void)
+static void tlk_debug_log_tx_handle(void)
 {
     tlk_log_uart_unlock();
 #if TLK_IS_ENABLED(CONFIG_TLK_DEBUG_LOG_PRIO_HIGH) // apply for timer initiator
     static tlk_log_event_t e;
-    if (pop_event(&e))
+    if (tlk_debug_log_event_pop(&e))
     {
         tlk_uart_send_bytes(CONFIG_TLK_DEBUG_UART,
                             (const uint8_t*) e.msg_buf,
                             e.msg_len,
-                            tlk_tx_handler,
+                            tlk_debug_log_tx_handle,
                             TLK_SEC_TO_US(5));
     }
 #endif
@@ -118,21 +129,64 @@ static void tlk_tx_handler(void)
 
 #endif
 
+void tlk_log_hexdump(const tlk_log_t* log, tlk_log_level_t level, const void* data, uint32_t len)
+{
+    if (!data || len == 0)
+        return;
+
+    const uint8_t* bytes = (const uint8_t*) data;
+    char           line[100];
+
+    for (uint32_t i = 0; i < len; i += 16)
+    {
+        int off = snprintf(line, sizeof(line), "%04X: ", (unsigned int) i);
+
+        for (uint8_t j = 0; j < 16; j++)
+        {
+            if (i + j < len)
+            {
+                off += snprintf(line + off, sizeof(line) - off, "%02X ", bytes[i + j]);
+            }
+            else
+            {
+                off += snprintf(line + off, sizeof(line) - off, "   ");
+            }
+        }
+
+        off += snprintf(line + off, sizeof(line) - off, " |");
+
+        for (uint8_t j = 0; j < 16 && (i + j) < len; j++)
+        {
+            uint8_t c   = bytes[i + j];
+            line[off++] = (c >= 32 && c <= 126) ? (char) c : '.';
+        }
+
+        line[off++] = '|';
+        line[off]   = '\0';
+
+#if TLK_IS_ENABLED(CONFIG_TLK_DEBUG_LOG_PRIO_IMMEDIATE)
+        tlk_debug_log_blocking(log, level, "%s", line);
+#else
+        tlk_log_queue(log, level, "%s", line);
+#endif
+    }
+}
+
 #if TLK_IS_ENABLED(CONFIG_TLK_DEBUG_LOG_PRIO_IMMEDIATE)
 
-void tlk_log_blocking(const tlk_log_t* log, tlk_log_level_t level, const char* fmt, ...)
+void tlk_debug_log_blocking(const tlk_log_t* log, tlk_log_level_t level, const char* fmt, ...)
 {
-    uint64_t timestamp = log_get_us();
+    uint64_t timestamp = tlk_debug_log_get_us();
 
     /* 1) Prefix */
     int off = snprintf(tlk_log_buffer,
                        sizeof(tlk_log_buffer),
-                       "[%llu.%u.%03u]: [%s]: [%s]: ",
-                       (uint64_t) (timestamp / 1000000),
+                       "[%05lu.%03u.%03u]: [%s]: [%s]: ",
+                       (unsigned long) ((timestamp / 1000000) % 100000),
                        (uint16_t) ((timestamp / 1000) % 1000),
                        (uint16_t) (timestamp % 1000),
                        log ? log->module : "?",
-                       tlk_lvl_str(level));
+                       tlk_debug_log_level_str_get(level));
 
     if (off < 0 || off >= (int) sizeof(tlk_log_buffer))
     {
@@ -166,7 +220,7 @@ void tlk_log_blocking(const tlk_log_t* log, tlk_log_level_t level, const char* f
         tlk_uart_send_bytes(CONFIG_TLK_DEBUG_UART,
                             (uint8_t*) tlk_log_buffer,
                             size,
-                            tlk_tx_handler,
+                            tlk_debug_log_tx_handle,
                             TLK_SEC_TO_US(5));
         while (!tlk_tx_done)
         {
@@ -175,10 +229,10 @@ void tlk_log_blocking(const tlk_log_t* log, tlk_log_level_t level, const char* f
     }
 
 #elif TLK_IS_ENABLED(CONFIG_TLK_DEBUG_LOG_INTERFACE_USB_CDC)
-    extern uint16_t tlk_log_usb_print_buffer(const uint8_t* buf, uint16_t len);
+    extern uint16_t tlk_debug_log_usb_print_buffer(const uint8_t* buf, uint16_t len);
     if (size > 0)
     {
-        tlk_log_usb_print_buffer((uint8_t*) tlk_log_buffer, size);
+        tlk_debug_log_usb_print_buffer((uint8_t*) tlk_log_buffer, size);
     }
 #endif
 }
@@ -187,24 +241,24 @@ void tlk_log_blocking(const tlk_log_t* log, tlk_log_level_t level, const char* f
 
 #if TLK_IS_ENABLED(CONFIG_TLK_DEBUG_LOG_PRIO_HIGH)
 
-void tlk_log_timer_shot(void* arg)
+static void tlk_debug_log_timer_shot(void* arg)
 {
     (void) arg;
-    tlk_log_pump();
+    tlk_debug_log_pump();
 }
-TLK_SW_TIMER_REGISTER(log_timer, tlk_log_timer_shot, SW_TIMER_MODE_PERIODIC,
+TLK_SW_TIMER_REGISTER(log_timer, tlk_debug_log_timer_shot, SW_TIMER_MODE_PERIODIC,
                       TASK_MS(CONFIG_TLK_DEBUG_LOG_PERIODIC_PUMP_PERIOD))
 #endif
 
-void tlk_log_init(void)
+void tlk_debug_log_init(void)
 {
 #if TLK_IS_ENABLED(CONFIG_TLK_DEBUG_LOG_PRIO_HIGH)
-    tlk_sw_timer_start(&log_timer);
+    tlk_task_sw_timer_start(&log_timer);
 #endif
 
 #if TLK_IS_ENABLED(CONFIG_TLK_DEBUG_LOG_INTERFACE_USB_CDC)
-    extern void tlk_log_usb_cdc_init(void);
-    tlk_log_usb_cdc_init();
+    extern void tlk_debug_log_usb_cdc_init(void);
+    tlk_debug_log_usb_cdc_init();
 #endif
 
 #if TLK_IS_ENABLED(CONFIG_TLK_DEBUG_LOG_PRIO_LOW) || TLK_IS_ENABLED(CONFIG_TLK_DEBUG_LOG_PRIO_HIGH)
@@ -215,16 +269,16 @@ void tlk_log_init(void)
 
 #if TLK_IS_ENABLED(CONFIG_TLK_DEBUG_LOG_INTERFACE_USB_CDC) &&                                      \
     TLK_IS_DISABLED(CONFIG_TLK_TASK_PLANNER)
-void tlk_log_interface_loop(void)
+void tlk_debug_log_interface_loop(void)
 {
-    extern void tlk_log_usb_run(void);
-    tlk_log_usb_run();
+    extern void tlk_debug_log_usb_run(void);
+    tlk_debug_log_usb_run();
 }
 #endif
 
 #if TLK_IS_ENABLED(CONFIG_TLK_DEBUG_LOG_PRIO_LOW) || TLK_IS_ENABLED(CONFIG_TLK_DEBUG_LOG_PRIO_HIGH)
 
-static bool push_event(const tlk_log_event_t* e)
+static bool tlk_debug_log_event_push(const tlk_log_event_t* e)
 {
     uint32_t cs = tlk_core_mie_disable(TLK_FLD_MIE_MSIE | TLK_FLD_MIE_MTIE | TLK_FLD_MIE_MEIE);
 
@@ -246,7 +300,7 @@ static bool push_event(const tlk_log_event_t* e)
     return true;
 }
 
-static bool pop_event(tlk_log_event_t* out)
+static bool tlk_debug_log_event_pop(tlk_log_event_t* out)
 {
     uint32_t cs = tlk_core_mie_disable(TLK_FLD_MIE_MSIE | TLK_FLD_MIE_MTIE | TLK_FLD_MIE_MEIE);
 
@@ -267,10 +321,10 @@ static bool pop_event(tlk_log_event_t* out)
 }
 
 #if TLK_IS_ENABLED(CONFIG_TLK_DEBUG_LOG_FROM_ISR)
-void tlk_log_isr(const tlk_log_t* log, tlk_log_level_t level, const char* msg)
+void tlk_debug_log_isr(const tlk_log_t* log, tlk_log_level_t level, const char* msg)
 {
     tlk_log_event_t e = {0};
-    e.ts_us           = log_get_us();
+    e.ts_us           = tlk_debug_log_get_us();
     e.module          = log ? log->module : "?";
     e.level           = level;
     e.is_literal      = true;
@@ -278,36 +332,36 @@ void tlk_log_isr(const tlk_log_t* log, tlk_log_level_t level, const char* msg)
     e.msg             = msg ? msg : "";
     e.msg_len         = strlen(e.msg);
 
-    (void) push_event(&e); /* drop if full */
+    (void) tlk_debug_log_event_push(&e); /* drop if full */
 }
 #endif
 
 /* ---- Task/thread log: format into event buffer, then enqueue ---- */
-void tlk_log_queue(const tlk_log_t* log, tlk_log_level_t level, const char* fmt, ...)
+void tlk_debug_log_queue(const tlk_log_t* log, tlk_log_level_t level, const char* fmt, ...)
 {
     /* If someone accidentally calls this from ISR, fall back to literal */
 #if TLK_IS_ENABLED(CONFIG_TLK_DEBUG_LOG_FROM_ISR)
     if (tlk_plic_is_in_isr())
     {
-        tlk_log_isr(log, level, "tlk_log called from ISR (use tlk_log_isr)");
+        tlk_debug_log_isr(log, level, "tlk_log called from ISR (use tlk_log_isr)");
         return;
     }
 #endif
 
     tlk_log_event_t e = {0};
-    e.ts_us           = log_get_us();
+    e.ts_us           = tlk_debug_log_get_us();
     e.module          = log ? log->module : "?";
     e.level           = level;
     e.is_literal      = false;
 
     int16_t off = snprintf(e.msg_buf,
                            sizeof(e.msg_buf),
-                           "[%llu.%u.%03u]: [%s]: [%s]: ",
-                           (uint64_t) (e.ts_us / 1000000),
+                           "[%05lu.%03u.%03u]: [%s]: [%s]: ",
+                           (uint32_t) ((e.ts_us / 1000000) % 100000),
                            (uint16_t) ((e.ts_us / 1000u) % 1000u),
                            (uint16_t) (e.ts_us % 1000u),
                            e.module ? e.module : "?",
-                           tlk_lvl_str(e.level));
+                           tlk_debug_log_level_str_get(e.level));
 
     if (off < 0)
     {
@@ -339,34 +393,34 @@ void tlk_log_queue(const tlk_log_t* log, tlk_log_level_t level, const char* fmt,
 
     e.msg_len = size;
     e.msg     = e.msg_buf;
-    (void) push_event(&e);
+    (void) tlk_debug_log_event_push(&e);
 }
 
-void tlk_log_pump(void)
+void tlk_debug_log_pump(void)
 {
 #if TLK_IS_ENABLED(CONFIG_TLK_DEBUG_LOG_INTERFACE_UART)
     enum tlk_uart_status uart_log_status = TLK_UART_OK;
 #else
-    extern uint16_t tlk_log_usb_print_buffer(const uint8_t* buf, uint16_t len);
+    extern uint16_t tlk_debug_log_usb_print_buffer(const uint8_t* buf, uint16_t len);
 #endif
 
     tlk_log_event_t e;
 
     if (!tlk_log_interface_is_locked())
     {
-        while (pop_event(&e))
+        while (tlk_debug_log_event_pop(&e))
         {
             if (e.is_literal)
             {
                 static char tlk_log_buffer[CONFIG_TLK_DEBUG_LOG_BUFFER_SIZE];
                 int16_t     off = snprintf(tlk_log_buffer,
                                            CONFIG_TLK_DEBUG_LOG_BUFFER_SIZE,
-                                           "[%llu.%u.%03u]: [IRQ]: [%s]: [%s]: %s",
-                                           (unsigned long long) (e.ts_us / 1000000),
+                                           "[%05lu.%03u.%03u]: [IRQ]: [%s]: [%s]: %s",
+                                           (unsigned int) ((e.ts_us / 1000000) % 100000),
                                            (unsigned short) (e.ts_us / 1000u) % 1000u,
                                            (unsigned short) (e.ts_us % 1000u),
                                            e.module ? e.module : "?",
-                                           tlk_lvl_str(e.level),
+                                           tlk_debug_log_level_str_get(e.level),
                                            e.msg);
 
 #if TLK_IS_ENABLED(CONFIG_TLK_DEBUG_LOG_INTERFACE_UART)
@@ -374,11 +428,11 @@ void tlk_log_pump(void)
                 uart_log_status = tlk_uart_send_bytes(CONFIG_TLK_DEBUG_UART,
                                                       (const uint8_t*) tlk_log_buffer,
                                                       off,
-                                                      tlk_tx_handler,
+                                                      tlk_debug_log_tx_handle,
                                                       TLK_USEC(5));
 #elif TLK_IS_ENABLED(CONFIG_TLK_DEBUG_LOG_INTERFACE_USB_CDC)
                 if (off > 0)
-                    tlk_log_usb_print_buffer((uint8_t*) tlk_log_buffer, off);
+                    tlk_debug_log_usb_print_buffer((uint8_t*) tlk_log_buffer, off);
 #endif
             }
             else
@@ -388,11 +442,11 @@ void tlk_log_pump(void)
                 uart_log_status = tlk_uart_send_bytes(CONFIG_TLK_DEBUG_UART,
                                                       (const uint8_t*) e.msg_buf,
                                                       e.msg_len,
-                                                      tlk_tx_handler,
+                                                      tlk_debug_log_tx_handle,
                                                       TLK_USEC(5));
 #elif TLK_IS_ENABLED(CONFIG_TLK_DEBUG_LOG_INTERFACE_USB_CDC)
                 if (e.msg_len > 0)
-                    tlk_log_usb_print_buffer((uint8_t*) e.msg_buf, e.msg_len);
+                    tlk_debug_log_usb_print_buffer((uint8_t*) e.msg_buf, e.msg_len);
 #endif
             }
 
@@ -410,30 +464,30 @@ void tlk_log_pump(void)
 #if TLK_IS_ENABLED(CONFIG_TLK_DEBUG_LOG_PRIO_LOW)
 #if TLK_IS_ENABLED(CONFIG_TLK_TASK_PLANNER_MODE_LOOP)
 #include "common/include/tlk_loop.h"
-TLK_REGISTER_LOOP(tlk_log_pump)
+TLK_REGISTER_LOOP(tlk_debug_log_pump)
 #if TLK_IS_ENABLED(CONFIG_TLK_DEBUG_LOG_INTERFACE_USB_CDC)
-extern void tlk_log_usb_run(void);
-TLK_REGISTER_LOOP(tlk_log_usb_run);
+extern void tlk_debug_log_usb_run(void);
+TLK_REGISTER_LOOP(tlk_debug_log_usb_run);
 #endif
 #elif TLK_IS_ENABLED(CONFIG_TLK_TASK_PLANNER_MODE_SCHEDULER)
 #include "system/task_planner/task_planner.h"
-void task_log_pump(tTask* t)
+static void tlk_debug_log_pump_task(tTask* t)
 {
-    tlk_log_pump();
+    tlk_debug_log_pump();
     TASK_DELAY(t, TASK_MS(CONFIG_TLK_DEBUG_LOG_PERIODIC_PUMP_PERIOD));
 }
 #if TLK_IS_ENABLED(CONFIG_TLK_DEBUG_LOG_INTERFACE_USB_CDC)
-void task_interface_loop(tTask* t)
+static void tlk_debug_log_interface_task(tTask* t)
 {
-    extern void tlk_log_usb_run(void);
-    tlk_log_usb_run();
+    extern void tlk_debug_log_usb_run(void);
+    tlk_debug_log_usb_run();
     TASK_DELAY(t, TASK_MS(5));
 }
-TASK_SPAWN(log_interface_task, task_interface_loop)
+TASK_SPAWN(log_interface_task, tlk_debug_log_interface_task)
 #endif
 
-TASK_SPAWN(log_task, task_log_pump)
+TASK_SPAWN(log_task, tlk_debug_log_pump_task)
 #endif
 #endif
 #endif
-TLK_REGISTER_PRE_INIT(tlk_log_init, TLK_INIT_LEVEL_APPLICATION, TLK_INIT_PRIORITY_HIGH)
+TLK_REGISTER_PRE_INIT(tlk_debug_log_init, TLK_INIT_LEVEL_APPLICATION, TLK_INIT_PRIORITY_HIGH)

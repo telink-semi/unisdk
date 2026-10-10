@@ -4,7 +4,6 @@
 #include "core/include/tlk_sys.h"
 #include "core/include/tlk_watchdog.h"
 #include "system/debug/log/tlk_log.h"
-#include "tlk_board_pinout.h"
 
 #if TLK_IS_ENABLED(CONFIG_TLK_WDT_DEMO_GPIO_INDICATION)
 #include "core/include/tlk_gpio.h"
@@ -32,14 +31,14 @@ int main(void)
     }
 
 #if TLK_IS_ENABLED(CONFIG_TLK_WDT_DEMO_GPIO_INDICATION)
-    tlk_gpio_configure(UNISDK_BOARD_LED_0_PORT, UNISDK_BOARD_LED_0_PIN, TLK_GPIO_OUTPUT);
-    tlk_gpio_pin_write(UNISDK_BOARD_LED_0_PORT, UNISDK_BOARD_LED_0_PIN, 1);
+    tlk_gpio_configure(PINMUX_LED_0_PORT, PINMUX_LED_0_PIN, TLK_GPIO_OUTPUT);
+    tlk_gpio_pin_write(PINMUX_LED_0_PORT, PINMUX_LED_0_PIN, 1);
 
-    tlk_gpio_configure(UNISDK_BOARD_LED_1_PORT, UNISDK_BOARD_LED_1_PIN, TLK_GPIO_OUTPUT);
-    tlk_gpio_pin_write(UNISDK_BOARD_LED_1_PORT, UNISDK_BOARD_LED_1_PIN, 0);
+    tlk_gpio_configure(PINMUX_LED_1_PORT, PINMUX_LED_1_PIN, TLK_GPIO_OUTPUT);
+    tlk_gpio_pin_write(PINMUX_LED_1_PORT, PINMUX_LED_1_PIN, 0);
 #endif
 
-    tlk_api_delay(TLK_SEC_TO_US(2));
+    tlk_api_time_delay(TLK_SEC_TO_US(2));
 
     // Run the WDT, expecting passing the WDT window with blocking delay or sleep and lighting LED1.
 #if TLK_IS_ENABLED(CONFIG_TLK_WDT_DEMO_STARTUP)
@@ -51,12 +50,12 @@ int main(void)
 #if TLK_IS_ENABLED(CONFIG_TLK_WDT_DEMO_PM)
     tlk_api_sleep(TLK_SEC_TO_MS(2));
 #else
-    tlk_api_delay(TLK_SEC_TO_US(2));
+    tlk_api_time_delay(TLK_SEC_TO_US(2));
 #endif
 
     // Switch on the LED1 if passed the WDT window with blocking delay or sleep.
 #if TLK_IS_ENABLED(CONFIG_TLK_WDT_DEMO_GPIO_INDICATION)
-    tlk_gpio_pin_write(UNISDK_BOARD_LED_1_PORT, UNISDK_BOARD_LED_1_PIN, 1);
+    tlk_gpio_pin_write(PINMUX_LED_1_PORT, PINMUX_LED_1_PIN, 1);
 #endif
 
     // Feed the WDT and wait until it fires.

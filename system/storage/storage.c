@@ -1,17 +1,18 @@
 #include "storage.h"
+#include "common/include/tlk_utils.h"
 #include "storage_device.h"
 #include <errno.h>
 #include <string.h>
 
-static int storage_pages_modify(struct tlk_storage_device* dev, uintptr_t addr, const void* buf,
-                                size_t len)
+static int tlk_storage_modify_pages(struct tlk_storage_device* dev, uintptr_t addr, const void* buf,
+                                    size_t len)
 {
     int result = 0;
 
     while (len)
     {
         size_t page_offset = addr % dev->page;
-        size_t page_len    = MIN(len, dev->page - page_offset);
+        size_t page_len    = TLK_MIN(len, dev->page - page_offset);
 
         result = dev->read(dev, addr, &dev->buffer[page_offset], page_len);
         if (result)
@@ -131,7 +132,7 @@ static int storage_pages_modify(struct tlk_storage_device* dev, uintptr_t addr, 
     return result;
 }
 
-int storage_read(uintptr_t addr, void* buf, size_t len)
+int tlk_storage_read(uintptr_t addr, void* buf, size_t len)
 {
     int result;
 
@@ -142,7 +143,7 @@ int storage_read(uintptr_t addr, void* buf, size_t len)
             result = -EINVAL;
             break;
         }
-        struct tlk_storage_device* dev = tlk_storage_device_find(addr, len);
+        struct tlk_storage_device* dev = tlk_storage_find_device(addr, len);
 
         if (!dev)
         {
@@ -159,7 +160,7 @@ int storage_read(uintptr_t addr, void* buf, size_t len)
     return result;
 }
 
-int storage_erase(uintptr_t addr, size_t len)
+int tlk_storage_erase(uintptr_t addr, size_t len)
 {
     int result;
 
@@ -170,7 +171,7 @@ int storage_erase(uintptr_t addr, size_t len)
             result = -EINVAL;
             break;
         }
-        struct tlk_storage_device* dev = tlk_storage_device_find(addr, len);
+        struct tlk_storage_device* dev = tlk_storage_find_device(addr, len);
 
         if (!dev)
         {
@@ -186,10 +187,10 @@ int storage_erase(uintptr_t addr, size_t len)
                 break;
             }
 
-            memset(dev->buffer, dev->clean_byte, MIN(len, STORAGE_DEVICE_DEFAULT_BUFFER_SIZE));
+            memset(dev->buffer, dev->clean_byte, TLK_MIN(len, STORAGE_DEVICE_DEFAULT_BUFFER_SIZE));
             while (len)
             {
-                size_t tmp_len = MIN(len, STORAGE_DEVICE_DEFAULT_BUFFER_SIZE);
+                size_t tmp_len = TLK_MIN(len, STORAGE_DEVICE_DEFAULT_BUFFER_SIZE);
 
                 result = dev->write(dev, addr, dev->buffer, tmp_len);
                 if (result)
@@ -208,13 +209,13 @@ int storage_erase(uintptr_t addr, size_t len)
                 result = -ENOSYS;
                 break;
             }
-            result = storage_pages_modify(dev, addr, NULL, len);
+            result = tlk_storage_modify_pages(dev, addr, NULL, len);
         }
     } while (0);
     return result;
 }
 
-int storage_write(uintptr_t addr, const void* buf, size_t len)
+int tlk_storage_write(uintptr_t addr, const void* buf, size_t len)
 {
     int result;
 
@@ -225,7 +226,7 @@ int storage_write(uintptr_t addr, const void* buf, size_t len)
             result = -EINVAL;
             break;
         }
-        struct tlk_storage_device* dev = tlk_storage_device_find(addr, len);
+        struct tlk_storage_device* dev = tlk_storage_find_device(addr, len);
 
         if (!dev)
         {
@@ -250,7 +251,7 @@ int storage_write(uintptr_t addr, const void* buf, size_t len)
                 result = -ENOSYS;
                 break;
             }
-            result = storage_pages_modify(dev, addr, buf, len);
+            result = tlk_storage_modify_pages(dev, addr, buf, len);
         }
     } while (0);
     return result;

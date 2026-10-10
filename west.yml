@@ -32,7 +32,18 @@ manifest:
       remote: telink
       repo-path: unisdk-ble_controller
       path: unisdk/subsystem/ble/controller
-      revision: v0.2.0
+      revision: 182c607d6199a456ddee337b849ad7a2d433481a
+
+    - name: mcuboot
+      url: https://github.com/telink-semi/mcuboot.git
+      revision: 346f7374ff4467e40b5594658f8ac67a5e9813c9
+      path: unisdk/modules/mcuboot/repo
+
+    - name: flashdb
+      url: https://github.com/armink/FlashDB.git
+      revision: 9f7ea2a438c097a13c275e9b1fb28f723717e9ec
+      path: unisdk/modules/FlashDB/repo
+
   self:
     path: unisdk
     west-commands: scripts/west-commands.yml

@@ -29,14 +29,11 @@
 #if TLK_IS_ENABLED(CONFIG_TLK_PM_DEMO_ENABLE_GPIO_INPUT)
 #include "core/include/tlk_gpio.h"
 #include "core/include/tlk_pm.h"
-#include "tlk_board_pinout.h"
 #endif
 
 #if TLK_IS_ENABLED(CONFIG_TLK_PM_DEMO_ENABLE_LED)
 #include "common/include/tlk_init.h"
 #include "core/include/tlk_gpio.h"
-#include "tlk_board_pinout.h"
-#include <stdbool.h>
 
 bool led0_state;
 bool led1_state;
@@ -52,11 +49,11 @@ TLK_REGISTER_BEFORE_SLEEP(flip_led, TLK_INIT_LEVEL_APPLICATION, TLK_INIT_PRIORIT
 
 void init_led(void)
 {
-    tlk_gpio_configure(UNISDK_BOARD_LED_0_PORT, UNISDK_BOARD_LED_0_PIN, TLK_GPIO_OUTPUT);
-    tlk_gpio_pin_write(UNISDK_BOARD_LED_0_PORT, UNISDK_BOARD_LED_0_PIN, led0_state);
+    tlk_gpio_configure(PINMUX_LED_0_PORT, PINMUX_LED_0_PIN, TLK_GPIO_OUTPUT);
+    tlk_gpio_pin_write(PINMUX_LED_0_PORT, PINMUX_LED_0_PIN, led0_state);
 
-    tlk_gpio_configure(UNISDK_BOARD_LED_1_PORT, UNISDK_BOARD_LED_1_PIN, TLK_GPIO_OUTPUT);
-    tlk_gpio_pin_write(UNISDK_BOARD_LED_1_PORT, UNISDK_BOARD_LED_1_PIN, led1_state);
+    tlk_gpio_configure(PINMUX_LED_1_PORT, PINMUX_LED_1_PIN, TLK_GPIO_OUTPUT);
+    tlk_gpio_pin_write(PINMUX_LED_1_PORT, PINMUX_LED_1_PIN, led1_state);
 }
 
 TLK_REGISTER_AFTER_SUSPEND(init_led, TLK_INIT_LEVEL_APPLICATION, TLK_INIT_PRIORITY_NORMAL)
@@ -81,7 +78,7 @@ int main(void)
 
     while (1)
     {
-        tlk_api_delay(TLK_SEC_TO_US(1));
+        tlk_api_time_delay(TLK_SEC_TO_US(1));
 
 #if TLK_IS_ENABLED(CONFIG_TLK_PM_DEMO_ENABLE_GPIO_INPUT)
         tlk_pm_set_gpio_wakeup(TLK_GPIO_PORT_C, TLK_GPIO_PIN_4, TLK_PM_GPIO_WAKEUP_LEVEL_HIGH);
@@ -93,8 +90,8 @@ int main(void)
          * state.
          */
 #if TLK_IS_ENABLED(CONFIG_TLK_PM_DEMO_DISABLE_LED_BEFORE_SLEEP)
-        tlk_gpio_pin_write(UNISDK_BOARD_LED_0_PORT, UNISDK_BOARD_LED_0_PIN, 0);
-        tlk_gpio_pin_write(UNISDK_BOARD_LED_1_PORT, UNISDK_BOARD_LED_1_PIN, 0);
+        tlk_gpio_pin_write(PINMUX_LED_0_PORT, PINMUX_LED_0_PIN, 0);
+        tlk_gpio_pin_write(PINMUX_LED_1_PORT, PINMUX_LED_1_PIN, 0);
 #endif
 
         tlk_api_sleep(TLK_SEC_TO_MS(1));

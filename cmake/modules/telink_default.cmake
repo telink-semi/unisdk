@@ -10,14 +10,6 @@ include_guard(GLOBAL)
 # It is however permitted to have multiple invocations of cmake_minimum_required.
 cmake_minimum_required(VERSION 3.20.0)
 
-message(STATUS "Application: ${APPLICATION_SOURCE_DIR}")
-# Save the sample/project directory name for informational purposes
-get_filename_component(TLK_SAMPLE_NAME "${APPLICATION_SOURCE_DIR}" NAME)
-message(STATUS "Sample: ${TLK_SAMPLE_NAME}")
-# Default output binary name is "Telink" — use CONFIG_TLK_USE_CUSTOM_ARTIFACT_NAME
-# to override with the sample name or a custom name (see root CMakeLists.txt)
-set(TLK_ARTIFACT_NAME "Telink")
-
 # Different CMake versions can have very subtle differences, for
 # instance CMake 3.21 links object files in a different order compared
 # to CMake 3.20; this produces different binaries.
@@ -38,16 +30,75 @@ if(${CMAKE_VERSION} VERSION_EQUAL 3.22.1 OR ${CMAKE_VERSION} VERSION_EQUAL 3.22.
   endif()
 endif()
 
+
+message(STATUS "Application: ${APPLICATION_SOURCE_DIR}")
+# Save the sample/project directory name for informational purposes
+get_filename_component(TLK_SAMPLE_NAME "${APPLICATION_SOURCE_DIR}" NAME)
+message(STATUS "Sample: ${TLK_SAMPLE_NAME}")
+# Default output binary name is "Telink" — use CONFIG_TLK_USE_CUSTOM_ARTIFACT_NAME
+# to override with the sample name or a custom name (see root CMakeLists.txt)
+set(TLK_ARTIFACT_NAME "Telink")
+
+
+# === Common utilities for all modules ===
+
+# SRC (source checkout, builds the libraries) or SDK (export, links the prebuilt ones), from version.yaml
+set(SDK_TYPE "")
+
+if(EXISTS "${TELINK_BASE}/version.yaml")
+    file(STRINGS "${TELINK_BASE}/version.yaml" SDK_TYPE REGEX "^type:")
+    string(REGEX REPLACE "^type:[ \t]*[\"']?([A-Za-z]*).*" "\\1" SDK_TYPE "${SDK_TYPE}")
+    string(TOUPPER "${SDK_TYPE}" SDK_TYPE)
+endif()
+
+if(SDK_TYPE STREQUAL "SRC")
+    set(IS_SDK_MODE 0)
+    message(STATUS "DEV SRC mode")
+elseif(SDK_TYPE STREQUAL "SDK")
+    set(IS_SDK_MODE 1)
+    message(STATUS "DEV SDK mode")
+else()
+    message(FATAL_ERROR "${TELINK_BASE}/version.yaml must have 'type: SRC' or 'type: SDK'")
+endif()
+
+
+# Check if it is the first Cmake Configuration Time for the current Sample
+if(DEFINED PREVIOUS_SAMPLE_DIR AND "${PREVIOUS_SAMPLE_DIR}" STREQUAL "${KCONFIG_APPLICATION_DIR}")
+    set(FIRST_CONFIGURATION 0)
+    message(STATUS "First Cmake Configuration Time")
+else()
+    set(FIRST_CONFIGURATION 1)
+endif()
+
+set(PREVIOUS_SAMPLE_DIR "${KCONFIG_APPLICATION_DIR}" CACHE INTERNAL "Sample dir from previous configure")
+
+
+# Directory for auto-generation
+set(GENERATED_BASE_DIR "${CMAKE_BINARY_DIR}/generated")
+
+
+# Collect all files that should be cleaned automatically
+set(FILES_TO_CLEAN
+    ${GENERATED_BASE_DIR}
+)
+# === Common utilities for all modules ===
+
+
 list(APPEND telink_cmake_modules python)
 list(APPEND telink_cmake_modules extensions)
 list(APPEND telink_cmake_modules west)
 list(APPEND telink_cmake_modules kconfig)
+
+if(NOT IS_SDK_MODE)
+  list(APPEND telink_cmake_modules yaml_helper)
+endif()
+
+list(APPEND telink_cmake_modules version)
+list(APPEND telink_cmake_modules pristine)
 list(APPEND telink_cmake_modules compiler)
-list(APPEND telink_cmake_modules headers_gen)
 list(APPEND telink_cmake_modules pinmux)
 list(APPEND telink_cmake_modules linker)
 list(APPEND telink_cmake_modules library)
-
 
 foreach(component ${SUB_COMPONENTS})
   if(NOT ${component} IN_LIST telink_cmake_modules)
@@ -78,3 +129,12 @@ if(NOT DEFINED TELINK_ROOT_INCLUDED)
   # Include root directory CMakeLists.txt
   add_subdirectory(${TELINK_BASE} ${CMAKE_BINARY_DIR}/telink)
 endif()
+
+
+# === Common utilities for all modules ===
+
+# Set additional clean files for the directory in one call
+set_directory_properties(
+    PROPERTIES ADDITIONAL_CLEAN_FILES "${FILES_TO_CLEAN}"
+)
+# === Common utilities for all modules ===

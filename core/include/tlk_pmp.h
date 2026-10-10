@@ -1,6 +1,10 @@
 #ifndef TLK_INCLUDE_DRIVERS_PMP_H_
 #define TLK_INCLUDE_DRIVERS_PMP_H_
 
+#if TLK_IS_DISABLED(CONFIG_TLK_PMP)
+#warning PMP driver is disabled in Kconfig, but its header is being used; note that its implementation will not be linked until you enable it in Kconfig.
+#endif
+
 #include "properties/tlk_pmp.h"
 
 struct tlk_pmp_config
@@ -29,7 +33,7 @@ enum tlk_pmp_entry
  * @param[in]  config   Pointer to the PMP entry configuration (R/W/X/L permissions).
  * @return     None
  */
-void tlk_pmp_tor_config(enum tlk_pmp_entry entry, void* address, struct tlk_pmp_config* config);
+void tlk_pmp_configure_tor(enum tlk_pmp_entry entry, void* address, struct tlk_pmp_config* config);
 
 /**
  * @brief      This function serves to configure a PMP entry using the NAPOT
@@ -45,8 +49,8 @@ void tlk_pmp_tor_config(enum tlk_pmp_entry entry, void* address, struct tlk_pmp_
  * @param[in]  config   Pointer to the PMP entry configuration (R/W/X/L permissions).
  * @return     None
  */
-void tlk_pmp_napot_config(enum tlk_pmp_entry entry, void* address, uint64_t size,
-                          struct tlk_pmp_config* config);
+void tlk_pmp_configure_napot(enum tlk_pmp_entry entry, void* address, uint64_t size,
+                             struct tlk_pmp_config* config);
 
 /**
  * @brief      This function serves to disable a PMP entry by setting its
@@ -61,5 +65,5 @@ void tlk_pmp_napot_config(enum tlk_pmp_entry entry, void* address, uint64_t size
  *                      Pass NULL if the address is not relevant.
  * @return     None
  */
-void tlk_pmp_entry_disable(enum tlk_pmp_entry entry, void* address);
+void tlk_pmp_disable_entry(enum tlk_pmp_entry entry, void* address);
 #endif

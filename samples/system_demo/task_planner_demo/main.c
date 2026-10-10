@@ -26,7 +26,6 @@
 #include "common/include/tlk_utils.h"
 #include "core/include/tlk_gpio.h"
 #include "system/task_planner/task_planner.h"
-#include "tlk_board_pinout.h"
 
 #if TLK_IS_ENABLED(CONFIG_TLK_SOFTWARE_TIMERS)
 /**
@@ -50,10 +49,10 @@
  * - Toggle LED1 state.
  * - No internal rescheduling logic required (handled by timer mode).
  */
-void sw_timer_loop(void* arg)
+static void sw_timer_loop(void* arg)
 {
     (void) arg;
-    tlk_gpio_pin_toggle(UNISDK_BOARD_LED_2_PORT, UNISDK_BOARD_LED_2_PIN);
+    tlk_gpio_pin_toggle(PINMUX_LED_2_PORT, PINMUX_LED_2_PIN);
 }
 /**
  * @brief Statically registered periodic software timer instance.
@@ -69,7 +68,7 @@ void sw_timer_loop(void* arg)
  *
  * The timer must be started explicitly using:
  * @code
- * tlk_sw_timer_start(&test_timer1);
+ * tlk_task_sw_timer_start(&test_timer1);
  * @endcode
  *
  * @note
@@ -109,12 +108,12 @@ TLK_SW_TIMER_REGISTER(test_timer1, sw_timer_loop, SW_TIMER_MODE_PERIODIC, TASK_M
  */
 void user_setup(void)
 {
-    tlk_gpio_configure(UNISDK_BOARD_LED_0_PORT, UNISDK_BOARD_LED_0_PIN, TLK_GPIO_OUTPUT);
-    tlk_gpio_configure(UNISDK_BOARD_LED_1_PORT, UNISDK_BOARD_LED_1_PIN, TLK_GPIO_OUTPUT);
-    tlk_gpio_configure(UNISDK_BOARD_LED_2_PORT, UNISDK_BOARD_LED_2_PIN, TLK_GPIO_OUTPUT);
+    tlk_gpio_configure(PINMUX_LED_0_PORT, PINMUX_LED_0_PIN, TLK_GPIO_OUTPUT);
+    tlk_gpio_configure(PINMUX_LED_1_PORT, PINMUX_LED_1_PIN, TLK_GPIO_OUTPUT);
+    tlk_gpio_configure(PINMUX_LED_2_PORT, PINMUX_LED_2_PIN, TLK_GPIO_OUTPUT);
 
 #if TLK_IS_ENABLED(CONFIG_TLK_SOFTWARE_TIMERS)
-    tlk_sw_timer_start(&test_timer1);
+    tlk_task_sw_timer_start(&test_timer1);
 #endif
 }
 
@@ -159,14 +158,14 @@ void user_setup(void)
  */
 void user_loop(void)
 {
-    tlk_gpio_pin_toggle(UNISDK_BOARD_LED_0_PORT, UNISDK_BOARD_LED_0_PIN);
-    tlk_api_delay(TLK_SEC_TO_US(1));
+    tlk_gpio_pin_toggle(PINMUX_LED_0_PORT, PINMUX_LED_0_PIN);
+    tlk_api_time_delay(TLK_SEC_TO_US(1));
 }
 
-void loop1(void)
+static void loop1(void)
 {
-    tlk_gpio_pin_toggle(UNISDK_BOARD_LED_1_PORT, UNISDK_BOARD_LED_1_PIN);
-    tlk_api_delay(TLK_SEC_TO_US(2));
+    tlk_gpio_pin_toggle(PINMUX_LED_1_PORT, PINMUX_LED_1_PIN);
+    tlk_api_time_delay(TLK_SEC_TO_US(2));
 }
 
 TLK_REGISTER_LOOP(loop1)
@@ -212,7 +211,7 @@ TLK_REGISTER_LOOP(loop1)
  */
 void user_loop(void)
 {
-    tlk_gpio_pin_toggle(UNISDK_BOARD_LED_0_PORT, UNISDK_BOARD_LED_0_PIN);
+    tlk_gpio_pin_toggle(PINMUX_LED_0_PORT, PINMUX_LED_0_PIN);
 }
 
 /**
@@ -249,9 +248,9 @@ void user_loop(void)
  * TASK_SPAWN(loop1_task, loop1);
  * @endcode
  */
-void loop1(tTask* t)
+static void loop1(tTask* t)
 {
-    tlk_gpio_pin_toggle(UNISDK_BOARD_LED_1_PORT, UNISDK_BOARD_LED_1_PIN);
+    tlk_gpio_pin_toggle(PINMUX_LED_1_PORT, PINMUX_LED_1_PIN);
     TASK_DELAY(t, TASK_MS(2000));
 }
 

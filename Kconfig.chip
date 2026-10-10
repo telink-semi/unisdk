@@ -1,3 +1,57 @@
-rsource "core/Kconfig"
-rsource "soc/Kconfig"
-rsource "boards/Kconfig"
+config TLK_HAS_BGA56_CASE
+    bool
+
+config TLK_HAS_BGA94_CASE
+    bool
+
+config TLK_HAS_LGA42_CASE
+    bool
+
+config TLK_HAS_QFN28_CASE
+    bool
+
+config TLK_HAS_QFN32_CASE
+    bool
+
+config TLK_HAS_QFN38_CASE
+    bool
+
+config TLK_HAS_QFN40_CASE
+    bool
+
+config TLK_HAS_QFN48_CASE
+    bool
+
+config TLK_HAS_QFN52_CASE
+    bool
+
+config TLK_HAS_QFN56_CASE
+    bool
+
+config TLK_HAS_QFN64_CASE
+    bool
+
+config TLK_HAS_QFN68_CASE
+    bool
+
+config TLK_HAS_QFN88_CASE
+    bool
+
+config TLK_CASE
+    string
+    default "BGA56" if TLK_HAS_BGA56_CASE
+    default "BGA94" if TLK_HAS_BGA94_CASE
+    default "LGA42" if TLK_HAS_LGA42_CASE
+    default "QFN28" if TLK_HAS_QFN28_CASE
+    default "QFN32" if TLK_HAS_QFN32_CASE
+    default "QFN38" if TLK_HAS_QFN38_CASE
+    default "QFN40" if TLK_HAS_QFN40_CASE
+    default "QFN48" if TLK_HAS_QFN48_CASE
+    default "QFN52" if TLK_HAS_QFN52_CASE
+    default "QFN56" if TLK_HAS_QFN56_CASE
+    default "QFN64" if TLK_HAS_QFN64_CASE
+    default "QFN68" if TLK_HAS_QFN68_CASE
+    default "QFN88" if TLK_HAS_QFN88_CASE
+
+# MCU packages Kconfig files
+rsource "packages/Kconfig.mcu"

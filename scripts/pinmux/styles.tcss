@@ -3,11 +3,15 @@ Screen {
     align: center middle;
     background: #202020;
 
+    #body {
+        overflow: auto;
+    }
+
     PortWidget {
         border: round white;
         margin: 1 2;
         height: auto;
-        overflow: auto;
+        width: auto;
 
         PinWidget {
             margin: 0 1;

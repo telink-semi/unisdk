@@ -1,13 +1,3 @@
-config TLK_UMODE_DEMO
-    def_bool y
-    select TLK_PMP
-    select TLK_UART
-    select TLK_UART0_ENABLED
-    select TLK_UART0_AUTO_CONFIG
-    select TLK_API_SLEEP
-    select TLK_TRAP_ECALL_NESTING
-
-
 menu "UMODE Sample configuration"
 
 config TLK_UMODE_DEMO_ENABLE_UART

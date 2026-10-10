@@ -1,6 +1,14 @@
 #ifndef TLK_INCLUDE_DRIVERS_I2C_H_
 #define TLK_INCLUDE_DRIVERS_I2C_H_
 
+#if TLK_IS_DISABLED(CONFIG_TLK_I2C)
+#warning I2C driver is disabled in Kconfig, but its header is being used; note that its implementation will not be linked until you enable it in Kconfig.
+#endif
+
+#if TLK_IS_DISABLED(CONFIG_TLK_I2C_USE_DEVICE)
+#warning I2C driver has no enabled peripheral instances; enable the ones you are going to use, otherwise disable the driver entirely.
+#endif
+
 #include "core/include/tlk_gpio.h"
 #include "properties/tlk_i2c.h"
 
@@ -75,7 +83,7 @@ TLK_FOR_CALL(UNISDK_I2C_COUNT, TLK_DECLARE_I2C_DEVICE_IF_ENABLED)
  *
  * @return TLK_I2C_OK on success, or an error code on failure.
  */
-enum tlk_i2c_status tlk_i2c_configure_pinmux(struct tlk_i2c_device*        dev,
+enum tlk_i2c_status tlk_i2c_pinmux_configure(struct tlk_i2c_device*        dev,
                                              struct tlk_i2c_pinmux_config* config);
 
 /**

@@ -53,7 +53,7 @@ void tlk_sys_reboot(enum tlk_sys_sw_reboot_reason reason);
  *
  * @return None.
  */
-void tlk_sys_delay(unsigned int duration_us);
+void tlk_sys_delay(uint32_t duration_us);
 
 /**
  * @brief Initialize the system with the given power configuration.

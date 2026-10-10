@@ -4,6 +4,7 @@
 
 #define _TLK_AREG_TYPE(reg) tlk_areg_##reg
 #define TLK_AREG_TYPE(reg)  _TLK_AREG_TYPE(reg)
+
 #define _TLK_AREG_SIZE(reg) TLK_AREG_##reg##_SIZE
 #define TLK_AREG_SIZE(reg)  _TLK_AREG_SIZE(reg)
 

@@ -49,7 +49,7 @@ enum tlk_power_gpio_voltage
  * @return None.
  */
 _tlk_attribute_ram_code_sec_noinline_ void
-tlk_power_dig_modules_set_state(enum tlk_power_dig_module modules, bool enable);
+tlk_power_set_dig_modules_state(enum tlk_power_dig_module modules, bool enable);
 
 /**
  * @brief Initialize the power management system.

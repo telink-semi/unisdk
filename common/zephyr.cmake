@@ -34,7 +34,6 @@ zephyr_compile_options(
 # 3. Common sources
 # ============================================================================
 zephyr_sources(
-    ${UNISDK_BASE}/common/src/tlk_sdk_version.c
     ${UNISDK_BASE}/common/src/tlk_init.c
     ${UNISDK_BASE}/common/src/tlk_loop.c
 )

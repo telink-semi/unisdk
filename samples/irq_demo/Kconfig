@@ -1,15 +1,3 @@
-config TLK_IRQ_DEMO
-    bool
-    default y
-    select TLK_PLIC
-    select TLK_PLIC_SW
-    select TLK_MTIMER
-    select TLK_MTIMER_IRQ_ENABLE
-    select TLK_UART
-    select TLK_UART0_ENABLED
-    select TLK_UART0_AUTO_CONFIG
-
-
 menu "IRQ Sample configuration"
 
 choice TLK_IRQ_DEMO_IRQ_BASE
@@ -29,6 +17,7 @@ endchoice
 
 config TLK_IRQ_DEMO_PLIC_PREEMPT
     bool "PLIC with PREEMPT"
+    select TLK_PLIC_NEST_PLIC
     depends on TLK_IRQ_DEMO_IRQ_BASE_PLIC
 
 endmenu

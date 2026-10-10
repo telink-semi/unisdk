@@ -52,8 +52,8 @@ int main(void)
                  (uint32_t) (demo_array + 16),
                  8);
 
-    tlk_pmp_entry_disable(TLK_PMP_ENTRY0, (void*) (demo_array + 8));
-    tlk_pmp_tor_config(TLK_PMP_ENTRY1, (void*) (demo_array + 16), &pmp_config);
+    tlk_pmp_disable_entry(TLK_PMP_ENTRY0, (void*) (demo_array + 8));
+    tlk_pmp_configure_tor(TLK_PMP_ENTRY1, (void*) (demo_array + 16), &pmp_config);
 
 #elif defined(CONFIG_TLK_PMP_DEMO_NAPOT)
     TLK_LOG_INFO(pmp_demo,
@@ -62,7 +62,7 @@ int main(void)
                  (uint32_t) (demo_array + 8 + 8),
                  8);
 
-    tlk_pmp_napot_config(TLK_PMP_ENTRY0, (void*) (demo_array + 8), 8, &pmp_config);
+    tlk_pmp_configure_napot(TLK_PMP_ENTRY0, (void*) (demo_array + 8), 8, &pmp_config);
 #endif
 
 #if defined(CONFIG_TLK_PMP_DEMO_SLEEP)

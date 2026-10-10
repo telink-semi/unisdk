@@ -1,7 +1,7 @@
+#include "system/debug/log/tlk_log.h"
 #include "tusb.h"
 
-#include "core/include/tlk_gpio.h"
-#include "core/include/tlk_sys.h"
+TLK_LOG_CREATE(usb_demo, "USB_DEMO");
 
 tusb_desc_device_t const desc_device = {
     .bLength         = sizeof(tusb_desc_device_t),
@@ -24,7 +24,8 @@ tusb_desc_device_t const desc_device = {
     .iProduct      = 0x02,
     .iSerialNumber = 0x03,
 
-    .bNumConfigurations = 0x01};
+    .bNumConfigurations = 0x01,
+};
 
 uint8_t const* tud_descriptor_device_cb(void)
 {
@@ -117,7 +118,7 @@ void cdc_task(void);
 //--------------------------------------------------------------------+
 int main(void)
 {
-    tud_init(BOARD_TUD_RHPORT); // Initialize USB Device Stack
+    tusb_init(); // Initialize USB Device Stack
 
     while (1)
     {
@@ -156,10 +157,16 @@ void cdc_task(void)
 //--------------------------------------------------------------------+
 
 // Invoked when device is mounted (configured)
-void tud_mount_cb(void) {}
+void tud_mount_cb(void)
+{
+    TLK_LOG_INFO(usb_demo, "Mounted.");
+}
 
 // Invoked when device is unmounted
-void tud_umount_cb(void) {}
+void tud_umount_cb(void)
+{
+    TLK_LOG_INFO(usb_demo, "Unmounted.");
+}
 
 // Invoked when USB bus is suspended
 // remote_wakeup_en: if host allows us to perform remote wakeup

@@ -31,11 +31,11 @@ This sample shows:
    - A callback function (`timer_cb`) is registered using `tlk_stimer_register_callback()`.
    - The first interrupt is scheduled using:
      ```c
-     tlk_stimer_set_irq_capture(tlk_stimer_get_tick() + TLK_SYSTEM_TIMER_TICK_1MS * 500);
+     tlk_stimer_irq_set_capture(tlk_stimer_get_tick() + TLK_STIMER_TICK_1MS * 500);
      ```
    - System timer interrupt mask is enabled via:
      ```c
-     tlk_stimer_set_irq_mask(FLD_SYSTEM_IRQ);
+     tlk_stimer_irq_set_mask(FLD_SYSTEM_IRQ);
      ```
    - PLIC interrupt for STIMER is enabled:
      ```c
@@ -59,7 +59,7 @@ The `timer_cb()` function executes on every timer interrupt:
 ```c
 void timer_cb(void)
 {
-    tlk_stimer_set_irq_capture(tlk_stimer_get_tick() + TLK_SYSTEM_TIMER_TICK_1MS * 500);
-    tlk_stimer_clr_irq_status(FLD_SYSTEM_IRQ);
+    tlk_stimer_irq_set_capture(tlk_stimer_get_tick() + TLK_STIMER_TICK_1MS * 500);
+    tlk_stimer_irq_clr_status(FLD_SYSTEM_IRQ);
     tlk_gpio_pin_toggle(UNISDK_ALIAS_LED_1_PORT, UNISDK_ALIAS_LED_1_PIN);
 }

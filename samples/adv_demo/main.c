@@ -3,7 +3,6 @@
 #include "core/include/tlk_gpio.h"
 #include "core/include/tlk_rf.h"
 #include "core/include/tlk_sys.h"
-#include "tlk_board_pinout.h"
 
 #define TX_DELAY_MS 100
 
@@ -70,19 +69,19 @@ int main(void)
 {
     tlk_core_interrupt_enable();
 
-    tlk_gpio_configure(UNISDK_BOARD_LED_2_PORT, UNISDK_BOARD_LED_2_PIN, TLK_GPIO_OUTPUT);
+    tlk_gpio_configure(PINMUX_LED_2_PORT, PINMUX_LED_2_PIN, TLK_GPIO_OUTPUT);
 
     rf_configure();
 
-    tlk_rf_set_tx_fifo(tx_buffer, 0, TX_BUFFER_SIZE);
+    tlk_rf_tx_fifo_set(tx_buffer, 0, TX_BUFFER_SIZE);
 
     ((struct tlk_rf_ble_pdu*) (tx_packet->pdu))->payload_size = TX_PAYLOAD_SIZE;
 
     while (1)
     {
-        tlk_rf_prepare_tx_packet(tx_packet, TX_PDU_SIZE);
+        tlk_rf_tx_prepare_packet(tx_packet, TX_PDU_SIZE);
 
-        tlk_gpio_pin_toggle(UNISDK_BOARD_LED_2_PORT, UNISDK_BOARD_LED_2_PIN);
+        tlk_gpio_pin_toggle(PINMUX_LED_2_PORT, PINMUX_LED_2_PIN);
 
         tlk_rf_start_stx(tlk_rf_get_tick());
 

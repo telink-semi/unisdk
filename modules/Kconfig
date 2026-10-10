@@ -1,0 +1,11 @@
+# Every module under this directory (and under the application's own
+# modules/, if it has one) is picked up automatically - each one defines its
+# own enable symbol. Keep in sync with telink_add_modules() in
+# cmake/modules/extensions.cmake.
+
+menu "Modules configuration"
+
+orsource "*/Kconfig"
+orsource "$(KCONFIG_APPLICATION_DIR)/modules/*/Kconfig"
+
+endmenu

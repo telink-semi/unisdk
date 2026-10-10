@@ -22,16 +22,15 @@
  *
  *******************************************************************************************************/
 
-#include "common/include/tlk_utils.h"
-#include "core/cpp_wrappers/tlk_uart_cpp.h"
-#include "core/include/tlk_core.h"
+#include "core/cpp_wrappers/tlk_uart.hpp"
 #include <string.h>
 
 #ifdef __cplusplus
 extern "C"
 {
 #endif
-
+#include "common/include/tlk_utils.h"
+#include "core/include/tlk_core.h"
 #if TLK_IS_ENABLED(CONFIG_TLK_UART_DEMO_SLEEP)
 #include "api/include/tlk_sleep.h"
 #endif
@@ -42,18 +41,28 @@ extern "C"
 
 #define BUFFER_SIZE 20
 
-UARTDriver uart(TLK_UART1);
+UARTDriver uart(CONFIG_TLK_UART_DEMO_UART);
 
 unsigned char                data[BUFFER_SIZE];
 static volatile bool         rx_done  = false;
 static volatile unsigned int rx_count = 0;
 
-void print(const char* text, unsigned int timeout_us)
+static volatile bool tx_done = false;
+
+void tx_handler(void)
 {
-    uart.send_bytes((const unsigned char*) text, strlen(text), timeout_us);
+    tx_done = true;
 }
 
-void rx_handler(unsigned int count)
+void print(const char* text, unsigned int timeout_us)
+{
+    uart.sendBytes((const unsigned char*) text, strlen(text), tx_handler, timeout_us);
+    while (!tx_done)
+        ;
+    tx_done = false;
+}
+
+void rx_handler(uint32_t count)
 {
     rx_done  = true;
     rx_count = count;
@@ -61,29 +70,44 @@ void rx_handler(unsigned int count)
 
 int main(void)
 {
-#if TLK_IS_DISABLED(CONFIG_TLK_UART_USED_AUTO_CONFIG)
-    uart.configure(115200,
-                   TLK_UART_PARITY_NONE,
-                   TLK_UART_STOP_BIT_ONE,
-                   TLK_UART_FLOW_RTS_CTS,
-                   TLK_UART_ACTIVE_LOW);
-    uart.configure_pinmux(
-        (struct tlk_gpio_port_pin) {
-            .port = TLK_GPIO_PORT_C,
-            .pin  = TLK_GPIO_PIN_4,
-        },
-        (struct tlk_gpio_port_pin) {
-            .port = TLK_GPIO_PORT_C,
-            .pin  = TLK_GPIO_PIN_5,
-        },
-        (struct tlk_gpio_port_pin) {
-            .port = TLK_GPIO_PORT_A,
-            .pin  = TLK_GPIO_PIN_1,
-        },
-        (struct tlk_gpio_port_pin) {
-            .port = TLK_GPIO_PORT_A,
-            .pin  = TLK_GPIO_PIN_2,
-        });
+#if TLK_IS_DISABLED(CONFIG_TLK_UART_USE_AUTO_CONFIG)
+    struct tlk_uart_config config = {
+        .baudrate       = 115200,
+        .parity         = TLK_UART_PARITY_NONE,
+        .stop_bit       = TLK_UART_STOP_BIT_ONE,
+        .rx_timeout_mul = TLK_UART_RX_TIMEOUT_MUL_2,
+        .tx_port_pin =
+            (struct tlk_gpio_port_pin) {
+                .port = TLK_GPIO_PORT_C,
+                .pin  = TLK_GPIO_PIN_4,
+            },
+        .rx_port_pin =
+            (struct tlk_gpio_port_pin) {
+                .port = TLK_GPIO_PORT_C,
+                .pin  = TLK_GPIO_PIN_5,
+            },
+    };
+    uart.configure(&config);
+    uart.configurePinmux(&config);
+
+#if TLK_IS_ENABLED(CONFIG_TLK_UART1_FLOW_CONTROL)
+    struct tlk_uart_flow_control_config flow_control_config = {
+        .flow_control  = TLK_UART_FLOW_RTS_CTS,
+        .flow_polarity = TLK_UART_ACTIVE_LOW,
+        .rts_port_pin =
+            (struct tlk_gpio_port_pin) {
+                .port = TLK_GPIO_PORT_A,
+                .pin  = TLK_GPIO_PIN_1,
+            },
+        .cts_port_pin =
+            (struct tlk_gpio_port_pin) {
+                .port = TLK_GPIO_PORT_A,
+                .pin  = TLK_GPIO_PIN_2,
+            },
+    };
+    uart.configureFlowControl(&flow_control_config);
+    uart.configureFlowControlPinmux(&flow_control_config);
+#endif
 #endif
 
 #if TLK_IS_ENABLED(CONFIG_TLK_UART_DEMO_SLEEP)
@@ -100,8 +124,7 @@ int main(void)
         memset(data, 0, BUFFER_SIZE);
         print("Start listening: ", TLK_SEC_TO_US(5));
 
-        enum tlk_uart_status recieve_status =
-            uart.receive_bytes(data, BUFFER_SIZE, rx_handler, TLK_SEC_TO_US(5));
+        enum tlk_uart_status recieve_status = uart.receiveBytes(data, BUFFER_SIZE, rx_handler);
         switch (recieve_status)
         {
         case TLK_UART_OK:
@@ -119,7 +142,10 @@ int main(void)
             ;
 
         print("Recieved: ", TLK_SEC_TO_US(5));
-        uart.send_bytes(data, rx_count, TLK_SEC_TO_US(5));
+        uart.sendBytes(data, rx_count, tx_handler, TLK_SEC_TO_US(5));
+        while (!tx_done)
+            ;
+        tx_done = false;
         print("\n", TLK_SEC_TO_US(5));
 
         rx_done  = false;

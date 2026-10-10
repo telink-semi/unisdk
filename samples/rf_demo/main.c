@@ -1,7 +1,6 @@
 #include "main.h"
 #include "core/include/tlk_core.h"
 #include "system/debug/log/tlk_log.h"
-#include "tlk_board_pinout.h"
 
 #if CONFIG_TLK_MEMORY_STACK_SIZE < 3
 #error                                                                                             \
@@ -53,6 +52,12 @@ void rf_configure(enum tlk_rf_mode mode, enum tlk_rf_bitrate bitrate)
             CONFIG_TLK_RF_DEMO_BITRATE_2M,
             (0x43),
             (TLK_IF_ENABLED_ELSE(CONFIG_TLK_RF_DEMO_BITRATE_1M, (0x42), (0x41))));
+
+#if TLK_IS_ENABLED(CONFIG_TLK_RF_DEMO_SB_FORMAT)
+        rf_mode_config.private_config.format           = TLK_RF_PRIVATE_SB;
+        rf_mode_config.private_config.sb_packet_length = TX_PDU_SIZE;
+#endif
+
         break;
     case TLK_RF_MODE_HYBEE:
         rf_config.channel = 40;
@@ -66,10 +71,10 @@ int main(void)
 {
     tlk_core_interrupt_enable();
 
-    tlk_gpio_configure(UNISDK_BOARD_LED_2_PORT, UNISDK_BOARD_LED_2_PIN, TLK_GPIO_OUTPUT);
-    tlk_gpio_configure(UNISDK_BOARD_LED_1_PORT, UNISDK_BOARD_LED_1_PIN, TLK_GPIO_OUTPUT);
+    tlk_gpio_configure(PINMUX_LED_2_PORT, PINMUX_LED_2_PIN, TLK_GPIO_OUTPUT);
+    tlk_gpio_configure(PINMUX_LED_1_PORT, PINMUX_LED_1_PIN, TLK_GPIO_OUTPUT);
 
-    tlk_gpio_pin_write(UNISDK_BOARD_LED_1_PORT, UNISDK_BOARD_LED_1_PIN, 1);
+    tlk_gpio_pin_write(PINMUX_LED_1_PORT, PINMUX_LED_1_PIN, 1);
 
     rf_configure(CONFIG_TLK_RF_DEMO_MODE, CONFIG_TLK_RF_DEMO_BITRATE);
 
@@ -95,13 +100,18 @@ void on_ping_sent(void)
 void on_ping_received(void)
 {
     TLK_LOG_INFO(rf_demo, "[%u] Received!", GET_PDU(tlk_rf_instance.rx_packet)->payload[0]);
+
+#if TLK_IS_ENABLED(CONFIG_TLK_RF_DEMO_PIPE_SWITCHING)
+    TLK_LOG_INFO(rf_demo, "Pipe id: %u", tlk_rf_instance.rx_packet_tail->pipe_id);
+#endif
 }
 
 void on_pong_sent(void)
 {
     TLK_LOG_INFO(rf_demo, "[%u] Pong sent.", GET_PDU(tx_packet)->payload[0]);
+    TLK_LOG_INFO(rf_demo, "");
 
-    tlk_gpio_pin_toggle(UNISDK_BOARD_LED_2_PORT, UNISDK_BOARD_LED_2_PIN);
+    tlk_gpio_pin_toggle(PINMUX_LED_2_PORT, PINMUX_LED_2_PIN);
 }
 
 void on_pong_received(void)
@@ -135,5 +145,5 @@ void on_pong_received(void)
 
     TLK_LOG_INFO(rf_demo, "Count: %-6u | Success count: %u", sent_packets, success_packets);
 
-    tlk_gpio_pin_toggle(UNISDK_BOARD_LED_2_PORT, UNISDK_BOARD_LED_2_PIN);
+    tlk_gpio_pin_toggle(PINMUX_LED_2_PORT, PINMUX_LED_2_PIN);
 }

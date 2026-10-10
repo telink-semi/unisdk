@@ -1,6 +1,10 @@
 #ifndef TLK_INCLUDE_DRIVERS_PLIC_SW_H_
 #define TLK_INCLUDE_DRIVERS_PLIC_SW_H_
 
+#if TLK_IS_DISABLED(CONFIG_TLK_PLIC_SW)
+#warning PLIC_SW driver is disabled in Kconfig, but its header is being used; note that its implementation will not be linked until you enable it in Kconfig.
+#endif
+
 /**
  * @brief    This function serves to enable software interrupt.
  * @return   None.

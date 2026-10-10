@@ -1,6 +1,14 @@
 #ifndef TLK_INCLUDE_DRIVERS_SPI_H_
 #define TLK_INCLUDE_DRIVERS_SPI_H_
 
+#if TLK_IS_DISABLED(CONFIG_TLK_SPI)
+#warning SPI driver is disabled in Kconfig, but its header is being used; note that its implementation will not be linked until you enable it in Kconfig.
+#endif
+
+#if TLK_IS_DISABLED(CONFIG_TLK_SPI_USE_DEVICE)
+#warning SPI driver has no enabled peripheral instances; enable the ones you are going to use, otherwise disable the driver entirely.
+#endif
+
 #include "core/include/tlk_gpio.h"
 #include "properties/tlk_spi.h"
 
@@ -91,7 +99,7 @@ TLK_FOR_CALL(UNISDK_SPI_COUNT, TLK_DECLARE_SPI_DEVICE)
  *
  * @return TLK_SPI_OK on success, or an error code on failure.
  */
-enum tlk_spi_status tlk_spi_configure_pinmux(struct tlk_spi_device* dev,
+enum tlk_spi_status tlk_spi_pinmux_configure(struct tlk_spi_device* dev,
                                              struct tlk_spi_pinmux* mux);
 
 /**

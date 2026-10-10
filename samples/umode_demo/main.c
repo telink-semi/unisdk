@@ -87,7 +87,7 @@ void ecall_handler(void)
 
 #ifdef CONFIG_TLK_UMODE_DEMO_ENABLE_MMODE
     uart_print(TLK_UART0, "Ecall. Turning on M-mode.\n", TLK_SEC_TO_US(1));
-    tlk_core_mmode();
+    tlk_core_enable_mmode();
 #endif
 }
 /* --- Service side --- */
@@ -114,7 +114,7 @@ int main(void)
         .x = 1,
         .l = 0,
     };
-    tlk_pmp_napot_config(TLK_PMP_ENTRY7, 0x0, MEMORY_SIZE, &pmp_all_memory_config);
+    tlk_pmp_configure_napot(TLK_PMP_ENTRY7, 0x0, MEMORY_SIZE, &pmp_all_memory_config);
 
 #ifndef CONFIG_TLK_UMODE_DEMO_ENABLE_UART
     struct tlk_pmp_config pmp_uart_config = {
@@ -123,15 +123,15 @@ int main(void)
         .x = 0,
         .l = 0,
     };
-    tlk_pmp_napot_config(TLK_PMP_ENTRY0, UART_START_ADDRESS, UART_MEMORY_SIZE, &pmp_uart_config);
+    tlk_pmp_configure_napot(TLK_PMP_ENTRY0, UART_START_ADDRESS, UART_MEMORY_SIZE, &pmp_uart_config);
 #endif
 
-    tlk_core_umode(user_task, task_handler);
+    tlk_core_enable_umode(user_task, task_handler);
 
     /*
      * Privilege check: csrr mstatus succeeds in M-mode and fails with an
      * illegal-instruction exception in U-mode. If CONFIG_TLK_UMODE_SAMPLE_POST_MMODE
-     * is not set, ecall_handler never calls tlk_core_mmode(), so execution
+     * is not set, ecall_handler never calls tlk_core_enable_mmode(), so execution
      * returns here still in U-mode and the read below traps.
      */
     uart_print(TLK_UART0, "Main. Trying M-mode.\n", TLK_SEC_TO_US(1));

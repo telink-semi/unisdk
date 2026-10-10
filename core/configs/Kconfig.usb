@@ -1,4 +1,0 @@
-config TLK_USB
-    bool "USB"
-    select TLK_GPIO
-    select TLK_PLIC

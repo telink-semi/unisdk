@@ -1,4 +1,0 @@
-// Auto-generated from YAML
-
-#define UNISDK_JTAG_CTRL_REG_ADDR 0x140833
-#define UNISDK_JTAG_JTAG_SELECT_ENABLE TLK_BIT(0)

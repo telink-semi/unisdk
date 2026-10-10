@@ -5,7 +5,6 @@
 #include "core/include/tlk_spi.h"
 #include "properties/tlk_spi.h"
 #include "system/debug/log/tlk_log.h"
-#include "tlk_board_pinout.h"
 
 TLK_LOG_CREATE(spi_demo, "SPI_DEMO");
 
@@ -22,7 +21,7 @@ static uint8_t rx_data[8] = {0};
 
 void handler(struct tlk_spi_device* dev, tlk_spi_cmd_t cmd)
 {
-    tlk_gpio_pin_toggle(UNISDK_BOARD_LED_0_PORT, UNISDK_BOARD_LED_0_PIN);
+    tlk_gpio_pin_toggle(PINMUX_LED_0_PORT, PINMUX_LED_0_PIN);
 
     switch (cmd)
     {
@@ -57,12 +56,12 @@ int main(void)
         .miso = {.port = TLK_GPIO_PORT_E, .pin = TLK_GPIO_PIN_3},
     };
 
-    tlk_gpio_configure(UNISDK_BOARD_LED_0_PORT, UNISDK_BOARD_LED_0_PIN, TLK_GPIO_OUTPUT);
-    tlk_gpio_configure(UNISDK_BOARD_LED_1_PORT, UNISDK_BOARD_LED_1_PIN, TLK_GPIO_OUTPUT);
+    tlk_gpio_configure(PINMUX_LED_0_PORT, PINMUX_LED_0_PIN, TLK_GPIO_OUTPUT);
+    tlk_gpio_configure(PINMUX_LED_1_PORT, PINMUX_LED_1_PIN, TLK_GPIO_OUTPUT);
 
     tlk_core_interrupt_enable();
 
-    tlk_spi_configure_pinmux(dev, &pinmux);
+    tlk_spi_pinmux_configure(dev, &pinmux);
 
 #if TLK_IS_ENABLED(CONFIG_TLK_SPI_DEMO_ROLE_MASTER)
 
@@ -87,9 +86,9 @@ int main(void)
 
         TLK_LOG_INFO(spi_demo, "Xfer status: %x", status);
 
-        tlk_gpio_pin_toggle(UNISDK_BOARD_LED_0_PORT, UNISDK_BOARD_LED_0_PIN);
+        tlk_gpio_pin_toggle(PINMUX_LED_0_PORT, PINMUX_LED_0_PIN);
 
-        tlk_api_delay(TLK_MS_TO_US(10));
+        tlk_api_time_delay(TLK_MS_TO_US(10));
 
         xfer.type = TLK_SPI_DUMMY_RX;
         xfer.cmd  = COMMAND_READ;
@@ -100,10 +99,10 @@ int main(void)
 
         if (tx_data[0] == rx_data[0])
         {
-            tlk_gpio_pin_toggle(UNISDK_BOARD_LED_1_PORT, UNISDK_BOARD_LED_1_PIN);
+            tlk_gpio_pin_toggle(PINMUX_LED_1_PORT, PINMUX_LED_1_PIN);
         }
 
-        tlk_api_delay(TLK_SEC_TO_US(1));
+        tlk_api_time_delay(TLK_SEC_TO_US(1));
     }
 
 #elif TLK_IS_ENABLED(CONFIG_TLK_SPI_DEMO_ROLE_SLAVE)

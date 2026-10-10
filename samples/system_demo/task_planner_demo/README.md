@@ -63,7 +63,7 @@ Enabled with:
     }
 
 - `user_loop()` toggles **LED0** every 500 ms using
-    `tlk_api_delay_us()`.
+    `tlk_api_time_delay_us()`.
 - An additional loop handler `loop1()` is registered using:
 
     TLK_REGISTER_LOOP(loop1);

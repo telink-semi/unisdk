@@ -72,7 +72,7 @@ static void tlk_pmp_write_address(enum tlk_pmp_entry entry, uint32_t address)
 /* ==== HELPERS ==== */
 
 /* ==== DRIVER APIs ==== */
-void tlk_pmp_tor_config(enum tlk_pmp_entry entry, void* address, struct tlk_pmp_config* config)
+void tlk_pmp_configure_tor(enum tlk_pmp_entry entry, void* address, struct tlk_pmp_config* config)
 {
     uint8_t pmpcfg = *(uint8_t*) config;
     pmpcfg |= SCHEME_TOR << 3; // Enable the TOR mode. A[4:3] reserved[6:5]
@@ -86,8 +86,8 @@ void tlk_pmp_tor_config(enum tlk_pmp_entry entry, void* address, struct tlk_pmp_
     tlk_fence_iorw;
 }
 
-void tlk_pmp_napot_config(enum tlk_pmp_entry entry, void* address, uint64_t size,
-                          struct tlk_pmp_config* config)
+void tlk_pmp_configure_napot(enum tlk_pmp_entry entry, void* address, uint64_t size,
+                             struct tlk_pmp_config* config)
 {
     uint8_t pmpcfg = *(uint8_t*) config;
     pmpcfg |= SCHEME_NAPOT << 3; // Enable the NAPOT mode. A[4:3] reserved[6:5]
@@ -101,7 +101,7 @@ void tlk_pmp_napot_config(enum tlk_pmp_entry entry, void* address, uint64_t size
     tlk_fence_iorw;
 }
 
-void tlk_pmp_entry_disable(enum tlk_pmp_entry entry, void* address)
+void tlk_pmp_disable_entry(enum tlk_pmp_entry entry, void* address)
 {
     // set the entry address
     tlk_pmp_write_address(entry, (uint32_t) address >> 2);

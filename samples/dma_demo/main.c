@@ -32,8 +32,6 @@
 #include "api/include/tlk_sleep.h"
 #endif
 
-TLK_LOG_CREATE(dma_demo, "DMA_DEMO");
-
 #if TLK_IS_ENABLED(CONFIG_TLK_DMA_DEMO_PREVENT)
 #include "core/include/tlk_pm.h"
 #endif
@@ -46,6 +44,8 @@ TLK_LOG_CREATE(dma_demo, "DMA_DEMO");
 #define ARRAY_LEN     300
 #define TRANSFER_SIZE 32 // must be less than ARRAY_LEN
 /* ==== DEFINES ==== */
+
+TLK_LOG_CREATE(dma_demo, "DMA_DEMO");
 
 /* ==== VARIABLES ==== */
 struct tlk_dma_config chn_config = {
@@ -70,16 +70,6 @@ uint8_t          dst[ARRAY_LEN];
 /* ==== VARIABLES ==== */
 
 /* ==== HELPERS ==== */
-void print_array(const char* label, uint8_t* array, uint32_t size)
-{
-    TLK_LOG_INFO(dma_demo, "%s", label);
-
-    for (uint32_t i = 0; i < size; i++)
-    {
-        TLK_LOG_INFO(dma_demo, "%d ", array[i]);
-    }
-}
-
 #if TLK_IS_ENABLED(CONFIG_TLK_DMA_DEMO_INTERRUPT)
 volatile uint8_t dma_complete = 0;
 volatile uint8_t dma_abort    = 0;
@@ -105,19 +95,20 @@ int main(void)
 {
     tlk_core_interrupt_enable();
 
-    demo_chn = tlk_dma_request_chn();
-    tlk_dma_configure(demo_chn, &chn_config);
+    demo_chn = tlk_dma_chn_request();
+    tlk_dma_chn_configure(demo_chn, &chn_config);
 
 #if TLK_IS_ENABLED(CONFIG_TLK_DMA_DEMO_INTERRUPT)
-    tlk_dma_add_callback(demo_chn, chn_handler);
+    tlk_dma_chn_add_callback(demo_chn, chn_handler);
 #endif
 
     while (1)
     {
 #if TLK_IS_ENABLED(CONFIG_TLK_DMA_DEMO_PREVENT)
-        tlk_dma_start_transfer(
-            demo_chn, (uint32_t) src, (uint32_t) dst, ARRAY_LEN, TLK_DMA_BYTE_WIDTH);
-        enum tlk_pm_sleep_status sleep_status = tlk_pm_sleep(TLK_PM_SLEEP_MODE_SUSPEND, 10);
+        tlk_dma_chn_transfer_configure(demo_chn, (uint32_t) src, (uint32_t) dst, ARRAY_LEN);
+        tlk_dma_chn_transfer_start(demo_chn);
+
+        enum tlk_pm_sleep_status sleep_status = TLK_PM_SLEEP_MS(TLK_PM_SLEEP_MODE_SUSPEND, 10);
 
         if (sleep_status == TLK_PM_SLEEP_DENIED)
         {
@@ -131,14 +122,16 @@ int main(void)
         }
         memset(dst, 0, TRANSFER_SIZE);
 
-        print_array("Initial src: ", src, TRANSFER_SIZE);
-        print_array("Initial dst: ", dst, TRANSFER_SIZE);
+        TLK_LOG_INFO(dma_demo, "Initial src:");
+        TLK_LOG_HEXDUMP_INFO(dma_demo, src, TRANSFER_SIZE);
+        TLK_LOG_INFO(dma_demo, "Initial dst:");
+        TLK_LOG_HEXDUMP_INFO(dma_demo, dst, TRANSFER_SIZE);
 
         // TODO: /n
 
-        tlk_dma_start_transfer(
-            demo_chn, (uint32_t) src, (uint32_t) dst, TRANSFER_SIZE, TLK_DMA_BYTE_WIDTH);
-        tlk_dma_abort(demo_chn);
+        tlk_dma_chn_transfer_configure(demo_chn, (uint32_t) src, (uint32_t) dst, TRANSFER_SIZE);
+        tlk_dma_chn_transfer_start(demo_chn);
+        tlk_dma_chn_transfer_abort(demo_chn);
 
 #if TLK_IS_ENABLED(CONFIG_TLK_DMA_DEMO_INTERRUPT)
         while (!dma_abort)
@@ -147,14 +140,16 @@ int main(void)
         TLK_LOG_INFO(dma_demo, "DMA IRQ: abort");
 #endif
 
-        print_array("src after aborting transfer: ", src, TRANSFER_SIZE);
-        print_array("dst after aborting transfer: ", dst, TRANSFER_SIZE);
+        TLK_LOG_INFO(dma_demo, "src after aborting transfer:");
+        TLK_LOG_HEXDUMP_INFO(dma_demo, src, TRANSFER_SIZE);
+        TLK_LOG_INFO(dma_demo, "dst after aborting transfer:");
+        TLK_LOG_HEXDUMP_INFO(dma_demo, dst, TRANSFER_SIZE);
 
         // TODO: /n
 
         memset(dst, 0, TRANSFER_SIZE);
-        tlk_dma_start_transfer(
-            demo_chn, (uint32_t) src, (uint32_t) dst, TRANSFER_SIZE, TLK_DMA_BYTE_WIDTH);
+        tlk_dma_chn_transfer_configure(demo_chn, (uint32_t) src, (uint32_t) dst, TRANSFER_SIZE);
+        tlk_dma_chn_transfer_start(demo_chn);
 
 #if TLK_IS_ENABLED(CONFIG_TLK_DMA_DEMO_INTERRUPT)
         while (!dma_complete)
@@ -163,15 +158,17 @@ int main(void)
         TLK_LOG_INFO(dma_demo, "DMA IRQ: complete");
 #endif
 
-        print_array("src after transfer: ", src, TRANSFER_SIZE);
-        print_array("dst after transfer: ", dst, TRANSFER_SIZE);
+        TLK_LOG_INFO(dma_demo, "src after transfer:");
+        TLK_LOG_HEXDUMP_INFO(dma_demo, src, TRANSFER_SIZE);
+        TLK_LOG_INFO(dma_demo, "dst after transfer:");
+        TLK_LOG_HEXDUMP_INFO(dma_demo, dst, TRANSFER_SIZE);
 
         // TODO: /n/n
 
 #if TLK_IS_ENABLED(CONFIG_TLK_DMA_DEMO_SLEEP)
         tlk_api_sleep(TLK_SEC_TO_MS(5));
 #else
-        tlk_api_delay(TLK_SEC_TO_US(5));
+        tlk_api_time_delay(TLK_SEC_TO_US(5));
 #endif
     }
 }

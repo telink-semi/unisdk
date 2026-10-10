@@ -1,0 +1,5 @@
+CompileFlags:
+  Remove:
+    - -mext-dsp
+    - -mcpu=d25f
+    - -fno-tree-switch-conversion

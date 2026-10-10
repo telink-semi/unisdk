@@ -1,0 +1,44 @@
+# MCU package selection: "SoC Series" and "Board" menus.
+#
+# This file only declares the common symbols and two empty named
+# choices (TLK_SOC_SERIES_CHOICE, TLK_BOARD_CHOICE). Each MCU package adds its own entries to them from
+# packages/<CORE>/Kconfig (found by the glob below). To add or remove
+# an MCU package, just add or remove its folder - no edits here.
+#
+# How it works: kconfiglib merges all `choice <NAME>` blocks with the
+# same name into one choice, and all `config <SYM>` blocks with the
+# same name into one symbol. File order does not matter for merging.
+# Defaults of a merged symbol are checked in parse order.
+
+config TLK_CORE
+    string
+
+choice TLK_SOC_SERIES_CHOICE
+    prompt "SoC Series"
+    # Set the type here, so the choice is valid even with no packages.
+    bool
+endchoice
+
+config TLK_SOC_SERIES
+    string
+
+# Placed between the two choices only for menu order:
+# "SoC Series" -> "SoC" -> "Board".
+# The "SoC" choice (with prompt) is in each soc/<SERIES>/Kconfig.
+# Package choice blocks have no prompt, so they do not add menu
+# entries - they only add items to the choices in this file.
+orsource "*/Kconfig.core"
+
+choice TLK_BOARD_CHOICE
+    prompt "Board"
+    # Board is not required - some SoCs have no board.
+    optional
+    bool
+endchoice
+
+config TLK_BOARD
+    string
+
+# y if a board is selected, n if not.
+config TLK_BOARD_IS_SELECTED
+    def_bool TLK_BOARD != ""

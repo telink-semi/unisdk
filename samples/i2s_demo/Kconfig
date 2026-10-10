@@ -1,0 +1,14 @@
+menu "I2S Sample Configuration"
+
+choice
+    prompt "Device role"
+
+config TLK_I2S_DEMO_ROLE_MASTER
+    bool "Master"
+
+config TLK_I2S_DEMO_ROLE_SLAVE
+    bool "Slave"
+
+endchoice
+
+endmenu

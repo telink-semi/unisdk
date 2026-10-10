@@ -1,2 +1,0 @@
-menuconfig TLK_MBEDTLS
-    bool "Enable mbedtls library"

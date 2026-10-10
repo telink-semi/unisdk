@@ -37,12 +37,12 @@
  */
 enum tlk_system_timer_tick
 {
-    TLK_SYSTEM_TIMER_TICK_1US = UNISDK_STIMER_CLOCK / 1000000,
-    TLK_SYSTEM_TIMER_TICK_1MS = UNISDK_STIMER_CLOCK / 1000,
-    TLK_SYSTEM_TIMER_TICK_1S  = UNISDK_STIMER_CLOCK,
+    TLK_STIMER_TICK_1US = UNISDK_STIMER_CLOCK / 1000000,
+    TLK_STIMER_TICK_1MS = UNISDK_STIMER_CLOCK / 1000,
+    TLK_STIMER_TICK_1S  = UNISDK_STIMER_CLOCK,
 
-    TLK_SYSTEM_TIMER_TICK_625US  = 625 * TLK_SYSTEM_TIMER_TICK_1US,  // 625*24
-    TLK_SYSTEM_TIMER_TICK_1250US = 1250 * TLK_SYSTEM_TIMER_TICK_1US, // 1250*24
+    TLK_STIMER_TICK_625US  = 625 * TLK_STIMER_TICK_1US,  // 625*24
+    TLK_STIMER_TICK_1250US = 1250 * TLK_STIMER_TICK_1US, // 1250*24
 };
 
 /**********************************************************************************************************************
@@ -66,28 +66,28 @@ void tlk_stimer_disable(void);
  * @param[in]   mask - the irq mask.
  * @return      none.
  */
-void tlk_stimer_set_irq_mask(tlk_stimer_irq_mask_e mask);
+void tlk_stimer_irq_set_mask(tlk_stimer_irq_mask_e mask);
 
 /**
  * @brief       This function servers to clear system timer irq mask.
  * @param[in]   mask - the irq mask.
  * @return      none.
  */
-void tlk_stimer_clr_irq_mask(tlk_stimer_irq_mask_e mask);
+void tlk_stimer_irq_clr_mask(tlk_stimer_irq_mask_e mask);
 
 /**
  * @brief       This function servers to clear system timer irq status.
  * @param[in]   status - the irq status.
  * @return      none.
  */
-void tlk_stimer_clr_irq_status(tlk_stimer_irq_status_e status);
+void tlk_stimer_irq_clr_status(tlk_stimer_irq_status_e status);
 
 /**
  * @brief       This function servers to set tick irq capture.
  * @param[in]   tick - the value of irq tick.
  * @return      none.
  */
-void tlk_stimer_set_irq_capture(uint32_t tick);
+void tlk_stimer_irq_set_capture(uint32_t tick);
 
 /**
  * @brief       This function is used to set the tick value of the system timer.
@@ -116,7 +116,7 @@ void tlk_stimer_set_32k_write(bool enable);
  * @retval      non-zero -  the interrupt occurred.
  * @retval      zero  -  the interrupt did not occur.
  */
-tlk_stimer_irq_status_e tlk_stimer_get_irq_status(tlk_stimer_irq_status_e status);
+tlk_stimer_irq_status_e tlk_stimer_irq_get_status(tlk_stimer_irq_status_e status);
 
 /**
  * @brief     This function performs to get system timer tick.

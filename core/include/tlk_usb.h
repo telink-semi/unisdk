@@ -1,6 +1,10 @@
 #ifndef TLK_INCLUDE_DRIVERS_USB_H_
 #define TLK_INCLUDE_DRIVERS_USB_H_
 
+#if TLK_IS_DISABLED(CONFIG_TLK_USB)
+#warning USB driver is disabled in Kconfig, but its header is being used; note that its implementation will not be linked until you enable it in Kconfig.
+#endif
+
 enum tlk_usb_ep_en
 {
     TLK_USB_EDP8_EN = TLK_BIT(0),
@@ -135,7 +139,7 @@ void tlk_usb_enable_manual_interrupt(int m);
  *
  * @return None.
  */
-void tlk_usb_set_irq_mask(enum tlk_usb_irq_mask mask);
+void tlk_usb_irq_set_mask(enum tlk_usb_irq_mask mask);
 
 /**
  * @brief Clear the USB interrupt status flags.
@@ -144,7 +148,7 @@ void tlk_usb_set_irq_mask(enum tlk_usb_irq_mask mask);
  *
  * @return None.
  */
-void tlk_usb_clr_irq_status(enum tlk_usb_irq_status status);
+void tlk_usb_irq_clr_status(enum tlk_usb_irq_status status);
 
 /**
  * @brief Control the USB D+ pull-up resistor (device connection).
@@ -181,14 +185,14 @@ void tlk_usb_ctrl_ep_prepare(void);
  *
  * @return None.
  */
-void tlk_usb_reset_ctrl_ep_ptr(void);
+void tlk_usb_ctrl_ep_reset_ptr(void);
 
 /**
  * @brief Read a byte from the control endpoint.
  *
  * @return The byte read from the control endpoint.
  */
-uint8_t tlk_usb_read_ctrl_ep_data(void);
+uint8_t tlk_usb_ctrl_ep_read_data(void);
 
 /**
  * @brief Reset the data pointer for a specified endpoint.
@@ -197,7 +201,17 @@ uint8_t tlk_usb_read_ctrl_ep_data(void);
  *
  * @return None.
  */
-void tlk_usb_reset_ep_ptr(enum tlk_usb_ep_idx ep);
+void tlk_usb_ep_reset_ptr(enum tlk_usb_ep_idx ep);
+
+/**
+ * @brief Enable or disable endpoint iso mode.
+ *
+ * @param ep  Endpoint index.
+ * @param on  State of the iso mode (enabled or disabled).
+ *
+ * @return None.
+ */
+void tlk_usb_ep_set_iso(enum tlk_usb_ep_idx ep, bool on);
 
 /**
  * @brief Acknowledge a data endpoint interrupt.
@@ -206,7 +220,7 @@ void tlk_usb_reset_ep_ptr(enum tlk_usb_ep_idx ep);
  *
  * @return None.
  */
-void tlk_usb_data_ep_ack(unsigned int ep);
+void tlk_usb_ep_ack_data(unsigned int ep);
 
 /**
  * @brief Write a control byte to the control endpoint control register.
@@ -215,7 +229,7 @@ void tlk_usb_data_ep_ack(unsigned int ep);
  *
  * @return None.
  */
-void tlk_usb_write_ctrl_ep_ctrl(unsigned char data);
+void tlk_usb_ctrl_ep_write_ctrl(unsigned char data);
 
 /**
  * @brief Enable specified USB endpoints.
@@ -242,7 +256,7 @@ void tlk_usb_set_eps_dis(enum tlk_usb_ep_en ep);
  *
  * @return None.
  */
-void tlk_usb_reset_ep(unsigned int ep);
+void tlk_usb_ep_reset(unsigned int ep);
 
 /**
  * @brief Get the pending endpoint interrupt status.

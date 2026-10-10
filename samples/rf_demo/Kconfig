@@ -1,13 +1,5 @@
 menu "RF Demo Configuration"
 
-config TLK_RF_DEMO
-    bool
-    select TLK_RF
-    select TLK_GPIO
-    select TLK_API_PRINT # TODO: change to log
-    select TLK_API_TIME
-    default y
-
 config TLK_RF_DEMO_PM
     bool "RF Demo with PM"
     select TLK_API_SLEEP
@@ -188,5 +180,15 @@ config TLK_RF_DEMO_CHANNEL_SWITCHING
     depends on !TLK_RF_DEMO_MODE_SWITCHING
 
 endif # TLK_RF_DEMO_EXCHANGE_MANUAL
+
+config TLK_RF_DEMO_SB_FORMAT
+    bool "Use SB format"
+    depends on TLK_RF_DEMO_MODE_PRIVATE
+    depends on TLK_RF_DEMO_EXCHANGE_PTX_PRX # not mandatory, just a sample restriction
+
+config TLK_RF_DEMO_PIPE_SWITCHING
+    bool "Switch logical channels (pipes)"
+    depends on TLK_RF_DEMO_MODE_PRIVATE
+    depends on TLK_RF_DEMO_EXCHANGE_PTX_PRX
 
 endmenu

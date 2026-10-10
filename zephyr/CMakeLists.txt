@@ -64,20 +64,20 @@ macro(unisdk_gen_yaml_at_configure_time SCRIPT YAML_DIR OUT_DIR)
 endmacro()
 
 # --- core properties (chip, gpio, pm, uart, etc.) ---
-set(CORE_PROP_YAML_DIR   ${UNISDK_BASE}/core/${CONFIG_TLK_CORE}/properties)
-set(CORE_PROP_OUT_DIR    ${UNISDK_GEN_DIR}/core/${CONFIG_TLK_CORE}/properties)
+set(CORE_PROP_YAML_DIR   ${UNISDK_BASE}/packages/${CONFIG_TLK_CORE}/properties)
+set(CORE_PROP_OUT_DIR    ${UNISDK_GEN_DIR}/packages/${CONFIG_TLK_CORE}/properties)
 
 # --- core registers ---
-set(CORE_REG_YAML_DIR    ${UNISDK_BASE}/core/${CONFIG_TLK_CORE}/registers)
-set(CORE_REG_OUT_DIR     ${UNISDK_GEN_DIR}/core/${CONFIG_TLK_CORE}/registers)
+set(CORE_REG_YAML_DIR    ${UNISDK_BASE}/packages/${CONFIG_TLK_CORE}/registers)
+set(CORE_REG_OUT_DIR     ${UNISDK_GEN_DIR}/packages/${CONFIG_TLK_CORE}/registers)
 
 # --- SoC properties (rf, etc.) ---
-set(SOC_PROP_YAML_DIR    ${UNISDK_BASE}/soc/${CONFIG_TLK_SOC_SERIES}/properties)
-set(SOC_PROP_OUT_DIR     ${UNISDK_GEN_DIR}/soc/${CONFIG_TLK_SOC_SERIES}/properties)
+set(SOC_PROP_YAML_DIR    ${UNISDK_BASE}/packages/${CONFIG_TLK_CORE}/soc/${CONFIG_TLK_SOC_SERIES}/properties)
+set(SOC_PROP_OUT_DIR     ${UNISDK_GEN_DIR}/packages/${CONFIG_TLK_CORE}/soc/${CONFIG_TLK_SOC_SERIES}/properties)
 
 # --- SoC registers ---
-set(SOC_REG_YAML_DIR     ${UNISDK_BASE}/soc/${CONFIG_TLK_SOC_SERIES}/registers)
-set(SOC_REG_OUT_DIR      ${UNISDK_GEN_DIR}/soc/${CONFIG_TLK_SOC_SERIES}/registers)
+set(SOC_REG_YAML_DIR     ${UNISDK_BASE}/packages/${CONFIG_TLK_CORE}/soc/${CONFIG_TLK_SOC_SERIES}/registers)
+set(SOC_REG_OUT_DIR      ${UNISDK_GEN_DIR}/packages/${CONFIG_TLK_CORE}/soc/${CONFIG_TLK_SOC_SERIES}/registers)
 
 unisdk_gen_yaml_at_configure_time(properties_gen "${CORE_PROP_YAML_DIR}" "${CORE_PROP_OUT_DIR}")
 unisdk_gen_yaml_at_configure_time(registers_gen  "${CORE_REG_YAML_DIR}"  "${CORE_REG_OUT_DIR}")
@@ -93,8 +93,8 @@ unisdk_gen_yaml_at_configure_time(registers_gen  "${SOC_REG_YAML_DIR}"   "${SOC_
 
 # Generated headers (from YAML)
 zephyr_include_directories(
-    ${UNISDK_GEN_DIR}/core/${CONFIG_TLK_CORE}
-    ${UNISDK_GEN_DIR}/soc/${CONFIG_TLK_SOC_SERIES}
+    ${UNISDK_GEN_DIR}/packages/${CONFIG_TLK_CORE}
+    ${UNISDK_GEN_DIR}/packages/${CONFIG_TLK_CORE}/soc/${CONFIG_TLK_SOC_SERIES}
 )
 
 # Board include path，but not required. Because the board properties for unisdk are not used in the Zephyr.
@@ -136,14 +136,11 @@ endmacro()
 # Common - always needed (compiler options, base includes, common sources)
 include(${UNISDK_BASE}/common/zephyr.cmake)
 
-# Core drivers - always needed
-include(${UNISDK_BASE}/core/zephyr.cmake)
-
-# SoC-specific drivers - always needed
-include(${UNISDK_BASE}/soc/zephyr.cmake)
+# Core drivers - always needed (pulls in the SoC-specific drivers itself, see zephyr/core.cmake)
+include(${UNISDK_BASE}/zephyr/core.cmake)
 
 # API layer - optional modules
-include(${UNISDK_BASE}/api/zephyr.cmake)
+include(${UNISDK_BASE}/core/api/zephyr.cmake)
 
 # BLE controller (independently-versioned subsystem)
 if(CONFIG_BT_TLX)
@@ -169,26 +166,47 @@ tlk_link_sdk("-zephyr")
 if(CONFIG_TLK_CORE AND CONFIG_TLK_SOC_SERIES)
     set(UNISDK_KCONFIG_GEN_DIR ${UNISDK_GEN_DIR}/kconfig)
 
-    # Write a temporary chip.config so that preprocess_kconfig.py
-    # can read the CONFIG_TLK_CORE / CONFIG_TLK_SOC_SERIES values.
-    # (The script normally reads this from the native build directory.)
-    set(_chip_config ${UNISDK_KCONFIG_GEN_DIR}/chip.config)
-    file(WRITE ${_chip_config} "CONFIG_TLK_CORE=\"${CONFIG_TLK_CORE}\"\n")
-    file(APPEND ${_chip_config} "CONFIG_TLK_SOC_SERIES=\"${CONFIG_TLK_SOC_SERIES}\"\n")
-    if(CONFIG_TLK_BOARD)
-        file(APPEND ${_chip_config} "CONFIG_TLK_BOARD=\"${CONFIG_TLK_BOARD}\"\n")
-    endif()
+    # Same pipeline cmake/modules/kconfig.cmake's parse_kconfig target uses
+    # for a native build (yaml_cache_gen.py + parse_kconfig.py) - the old
+    # single-script preprocess_kconfig.py this used to shell out to was
+    # replaced by that pipeline, see cmake/modules/yaml_helper.cmake.
+    set(_properties_cache ${UNISDK_KCONFIG_GEN_DIR}/_attributes/properties.pkl)
+    file(GLOB _core_property_yaml "${UNISDK_BASE}/packages/${CONFIG_TLK_CORE}/properties/*.yaml")
+    file(GLOB _soc_property_yaml "${UNISDK_BASE}/packages/${CONFIG_TLK_CORE}/soc/${CONFIG_TLK_SOC_SERIES}/properties/*.yaml")
 
     execute_process(
-        COMMAND ${PYTHON_EXECUTABLE}
-                ${UNISDK_BASE}/scripts/preprocess_kconfig.py
-                --root-dir ${UNISDK_BASE}
-                --build-dir ${UNISDK_KCONFIG_GEN_DIR}
+        COMMAND ${PYTHON_EXECUTABLE} -m scripts.generators.yaml_cache_gen
+                ${_properties_cache} ${_core_property_yaml} ${_soc_property_yaml}
         WORKING_DIRECTORY ${UNISDK_BASE}
         RESULT_VARIABLE _kconfig_preproc_result
         OUTPUT_VARIABLE _kconfig_preproc_output
         ERROR_VARIABLE  _kconfig_preproc_error
     )
+
+    if(_kconfig_preproc_result EQUAL 0)
+        foreach(_kconfig_src_dir core/configs system)
+            file(GLOB _kconfig_files "${UNISDK_BASE}/${_kconfig_src_dir}/Kconfig*")
+            foreach(_kconfig_file ${_kconfig_files})
+                get_filename_component(_kconfig_name ${_kconfig_file} NAME)
+                execute_process(
+                    COMMAND ${PYTHON_EXECUTABLE} -m scripts.parsers.parse_kconfig
+                            ${_properties_cache} ${_kconfig_file}
+                            ${UNISDK_KCONFIG_GEN_DIR}/${_kconfig_src_dir}/${_kconfig_name}
+                    WORKING_DIRECTORY ${UNISDK_BASE}
+                    RESULT_VARIABLE _kconfig_preproc_result
+                    OUTPUT_VARIABLE _kconfig_preproc_output
+                    ERROR_VARIABLE  _kconfig_preproc_error
+                )
+                if(NOT _kconfig_preproc_result EQUAL 0)
+                    break()
+                endif()
+            endforeach()
+            if(NOT _kconfig_preproc_result EQUAL 0)
+                break()
+            endif()
+        endforeach()
+    endif()
+
     if(_kconfig_preproc_result EQUAL 0)
         message(STATUS "UniSDK: Kconfig preprocessing succeeded -> ${UNISDK_KCONFIG_GEN_DIR}")
     else()

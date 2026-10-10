@@ -1,8 +1,3 @@
-config TLK_PMP_DEMO
-    def_bool y
-    select TLK_PMP
-
-
 menu "PMP Sample configuration"
 
 # Mode selection

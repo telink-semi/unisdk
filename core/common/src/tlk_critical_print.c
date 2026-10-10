@@ -16,8 +16,8 @@ static void tlk_critical_print_hw_init(void)
     if (!tlk_critical_print_hw_inited)
     {
         tlk_critical_print_hw_inited = true;
-        tlk_uart_configure_critical(CONFIG_TLK_CRITICAL_UART,
-                                    CONFIG_TLK_CRITICAL_UART_BAUDRATE,
+        tlk_uart_configure_critical(CONFIG_TLK_CRITICAL_PRINT_UART,
+                                    CONFIG_TLK_CRITICAL_PRINT_UART_BAUDRATE,
                                     (struct tlk_gpio_port_pin){
                                         .port = PINMUX_CRITICAL_PRINT_TX_PORT,
                                         .pin  = PINMUX_CRITICAL_PRINT_TX_PIN,
@@ -36,7 +36,7 @@ void _tlk_critical_print(const char* buf)
     }
     uint32_t len = strlen(buf);
     if (len)
-        tlk_uart_send_critical(CONFIG_TLK_CRITICAL_UART, buf, len);
+        tlk_uart_send_critical(CONFIG_TLK_CRITICAL_PRINT_UART, buf, len);
 }
 
 int _tlk_critical_printf(const char* fmt, ...)

@@ -1,12 +1,20 @@
 #ifndef TLK_INCLUDE_DRIVERS_UART_H_
 #define TLK_INCLUDE_DRIVERS_UART_H_
 
+#if TLK_IS_DISABLED(CONFIG_TLK_UART)
+#warning UART driver is disabled in Kconfig, but its header is being used; note that its implementation will not be linked until you enable it in Kconfig.
+#endif
+
+#if TLK_IS_DISABLED(CONFIG_TLK_UART_USE_DEVICE)
+#warning UART driver has no enabled peripheral instances; enable the ones you are going to use, otherwise disable the driver entirely.
+#endif
+
 #include "core/include/tlk_gpio.h"
 #include "properties/tlk_uart.h"
 
 #define TLK_UART_DECLARE(num) TLK_UART##num = num,
 #define TLK_UART_DECLARE_IF_ENABLED(num)                                                           \
-    TLK_IF_ENABLED(CONFIG_TLK_UART##num##_ENABLED, (TLK_UART_DECLARE(num)))
+    TLK_IF_ENABLED(CONFIG_TLK_UART##num, (TLK_UART_DECLARE(num)))
 
 enum tlk_uart_module
 {
@@ -58,7 +66,7 @@ struct tlk_uart_config
     struct tlk_gpio_port_pin     rx_port_pin;
 };
 
-#if TLK_IS_ENABLED(CONFIG_TLK_UART_USED_FLOW_CONTROL)
+#if TLK_IS_ENABLED(CONFIG_TLK_UART_USE_FLOW_CONTROL)
 
 enum tlk_uart_flow_control
 {
@@ -119,7 +127,7 @@ void tlk_uart_configure(enum tlk_uart_module uart_num, struct tlk_uart_config* c
  *
  * @return None.
  */
-void tlk_uart_configure_pinmux(enum tlk_uart_module uart_num, struct tlk_uart_config* config);
+void tlk_uart_pinmux_configure(enum tlk_uart_module uart_num, struct tlk_uart_config* config);
 
 /**
  * @brief Send data buffer over UART.
@@ -159,7 +167,7 @@ enum tlk_uart_status tlk_uart_send_bytes(enum tlk_uart_module uart_num, const ui
 enum tlk_uart_status tlk_uart_receive_bytes(enum tlk_uart_module uart_num, uint8_t* buff,
                                             uint32_t buff_size, tlk_uart_rx_handler_t rx_handler);
 
-#if TLK_IS_ENABLED(CONFIG_TLK_UART_USED_FLOW_CONTROL)
+#if TLK_IS_ENABLED(CONFIG_TLK_UART_USE_FLOW_CONTROL)
 /**
  * @brief Configure the flow control for the specified UART module.
  *
@@ -170,7 +178,7 @@ enum tlk_uart_status tlk_uart_receive_bytes(enum tlk_uart_module uart_num, uint8
  *
  * @return None.
  */
-void tlk_uart_configure_flow_control(enum tlk_uart_module                 uart_num,
+void tlk_uart_flow_control_configure(enum tlk_uart_module                 uart_num,
                                      struct tlk_uart_flow_control_config* config);
 
 /**
@@ -185,7 +193,7 @@ void tlk_uart_configure_flow_control(enum tlk_uart_module                 uart_n
  *
  * @return None.
  */
-void tlk_uart_configure_flow_control_pinmux(enum tlk_uart_module                 uart_num,
+void tlk_uart_flow_control_pinmux_configure(enum tlk_uart_module                 uart_num,
                                             struct tlk_uart_flow_control_config* config);
 
 #endif

@@ -3,7 +3,7 @@
 extern tlk_pre_init_func_t __pre_init_start[];
 extern tlk_pre_init_func_t __pre_init_end[];
 
-void tlk_pre_init(void)
+void tlk_perform_pre_init(void)
 {
     size_t cnt = __pre_init_end - __pre_init_start;
 
@@ -16,7 +16,7 @@ void tlk_pre_init(void)
 extern tlk_before_suspend_func_t __before_suspend_start[];
 extern tlk_before_suspend_func_t __before_suspend_end[];
 
-void tlk_before_suspend(void)
+void tlk_perform_before_suspend(void)
 {
     size_t cnt = __before_suspend_end - __before_suspend_start;
 
@@ -29,7 +29,7 @@ void tlk_before_suspend(void)
 extern tlk_after_suspend_func_t __after_suspend_start[];
 extern tlk_after_suspend_func_t __after_suspend_end[];
 
-void tlk_after_suspend(void)
+void tlk_perform_after_suspend(void)
 {
     size_t cnt = __after_suspend_end - __after_suspend_start;
 
@@ -42,7 +42,7 @@ void tlk_after_suspend(void)
 extern tlk_before_sleep_func_t __before_sleep_start[];
 extern tlk_before_sleep_func_t __before_sleep_end[];
 
-void tlk_before_sleep(void)
+void tlk_perform_before_sleep(void)
 {
     size_t cnt = __before_sleep_end - __before_sleep_start;
 
@@ -55,7 +55,7 @@ void tlk_before_sleep(void)
 extern tlk_after_sleep_func_t __after_sleep_start[];
 extern tlk_after_sleep_func_t __after_sleep_end[];
 
-void tlk_after_sleep(void)
+void tlk_perform_after_sleep(void)
 {
     size_t cnt = __after_sleep_end - __after_sleep_start;
 

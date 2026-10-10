@@ -94,8 +94,8 @@ class KconfigParser:
         deps = self._get_dependencies(symbol)
         has_soc_dep = any(dep.startswith('TLK_SOC_') for dep in deps)
         
-        # BOARD configurations usually have TLK_HAS_BOARD_SELECTED in select
-        has_board_select = any('TLK_HAS_BOARD_SELECTED' in str(item) for item in getattr(symbol, 'selects', []))
+        # BOARD configurations usually have TLK_BOARD_IS_SELECTED in select
+        has_board_select = any('TLK_BOARD_IS_SELECTED' in str(item) for item in getattr(symbol, 'selects', []))
         
         return has_soc_dep or has_board_select
     
@@ -143,8 +143,8 @@ class KconfigParser:
             if soc_series_dep:
                 deps.append(soc_series_dep)
         
-        # Filter out None values and empty strings, and TLK_HAS_BOARD_SELECTED (this is select not depends on)
-        deps = [dep for dep in deps if dep and isinstance(dep, str) and dep != 'TLK_HAS_BOARD_SELECTED']
+        # Filter out None values and empty strings, and TLK_BOARD_IS_SELECTED (this is select not depends on)
+        deps = [dep for dep in deps if dep and isinstance(dep, str) and dep != 'TLK_BOARD_IS_SELECTED']
         
         return deps
     

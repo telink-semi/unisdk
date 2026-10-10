@@ -15,11 +15,13 @@ Search order when TELINK_TOOLCHAIN_PATH is NOT set:
 
 If all searches fail:
   - Non-TTY (CI): error exit
-  - TTY (local): interactive download, auto-write to settings.json
+  - TTY (local): interactive download, installed under ~/.telink/toolchains/
+    (never written into the toolchain root / TELINK_TOOLCHAIN_PATH)
 """
 
 import argparse
 import os
+import re
 import sys
 import platform
 import subprocess
@@ -31,6 +33,12 @@ import zipfile
 import tarfile
 from pathlib import Path
 from urllib.request import urlretrieve
+
+try:
+    import py7zr
+    _HAS_PY7ZR = True
+except ImportError:
+    _HAS_PY7ZR = False
 
 SETTINGS_FILENAME = 'settings.json'
 CONVENTION_ROOT = 'toolchains'
@@ -76,6 +84,83 @@ def validate_toolchain_path(path, subdir='', prefix="riscv32-elf-"):
     return os.path.exists(gcc)
 
 
+def extract_expected_gcc_version(toolchain_version):
+    """Extract the expected GCC 'major.minor' from a toolchain version key.
+
+    E.g. 'andes-riscv32-v5-gcc14.2' -> '14.2'. Returns None when the version
+    key does not embed a gcc version (e.g. Zephyr SDK keys like
+    'zephyr-riscv64-v0.17.0'), in which case the version check is skipped.
+    """
+    m = re.search(r'gcc(\d+\.\d+)', toolchain_version or '')
+    return m.group(1) if m else None
+
+
+def get_gcc_version(gcc_dir, prefix):
+    """Return (major.minor, version_line) of <prefix>gcc in gcc_dir.
+
+    Runs '<prefix>gcc -dumpversion' for the machine-readable version and
+    '<prefix>gcc --version' for a human-readable line. Returns
+    (None, error_message) if the compiler cannot be run or its version cannot
+    be determined.
+    """
+    exe_suffix = ".exe" if platform.system() == "Windows" else ""
+    gcc = os.path.join(gcc_dir, f"{prefix}gcc{exe_suffix}")
+    if not os.path.exists(gcc):
+        return None, f"gcc not found: {gcc}"
+    try:
+        dump = subprocess.run([gcc, "-dumpversion"], capture_output=True, text=True, timeout=10)
+        full = subprocess.run([gcc, "--version"], capture_output=True, text=True, timeout=10)
+    except Exception as e:
+        return None, f"failed to run {gcc}: {e}"
+    version_line = (full.stdout or full.stderr or "").strip().splitlines()
+    version_line = version_line[0] if version_line else ""
+    raw = dump.stdout.strip()
+    if dump.returncode == 0 and raw:
+        parts = raw.split('.')
+        if len(parts) >= 2 and all(p.isdigit() for p in parts[:2]):
+            return f"{parts[0]}.{parts[1]}", version_line or f"GCC {raw}"
+    # Fallback: parse the trailing version token from `gcc --version`
+    m = re.search(r'(\d+\.\d+\.\d+)', version_line)
+    if m:
+        parts = m.group(1).split('.')
+        return f"{parts[0]}.{parts[1]}", version_line
+    return None, f"could not determine gcc version from: {version_line or dump.stdout.strip()}"
+
+
+def verify_toolchain_version(path, toolchain_version, prefix, subdir=''):
+    """Verify the installed <prefix>gcc major.minor matches the expected version.
+
+    The expected version is taken from the toolchain version key (e.g.
+    'gcc14.2' -> '14.2'). The check is skipped when the version key does not
+    embed a gcc version (e.g. Zephyr SDK keys).
+
+    Returns (ok, message).
+    """
+    expected = extract_expected_gcc_version(toolchain_version)
+    if expected is None:
+        return True, f"no embedded gcc version in '{toolchain_version}', version check skipped"
+    actual, detail = get_gcc_version(os.path.join(path, subdir, 'bin'), prefix)
+    if actual is None:
+        return False, detail
+    if actual != expected:
+        return False, (f"GCC version mismatch for {toolchain_version}: expected gcc {expected}, "
+                       f"found {detail} at {path}")
+    return True, f"GCC version OK: {detail} (expected {expected})"
+
+
+def _found(path, version, prefix, subdir, source):
+    """Return a discovery result after verifying the installed gcc version.
+
+    On version mismatch the discovery fails (path=None) so that callers error
+    out loudly instead of silently building with a wrong-version toolchain.
+    """
+    ok, msg = verify_toolchain_version(path, version, prefix, subdir)
+    if not ok:
+        print(f"Error: {msg}", file=sys.stderr)
+        return None, version, prefix, None
+    return path, version, prefix, source
+
+
 def load_settings(toolchain_root):
     """Load settings.json from toolchain root directory."""
     path = os.path.join(toolchain_root, SETTINGS_FILENAME)
@@ -86,16 +171,6 @@ def load_settings(toolchain_root):
         except Exception:
             return {}
     return {}
-
-def save_settings(toolchain_root, settings):
-    """Save settings.json to toolchain root directory."""
-    path = os.path.join(toolchain_root, SETTINGS_FILENAME)
-    try:
-        os.makedirs(toolchain_root, exist_ok=True)
-        with open(path, 'w', encoding='utf-8') as f:
-            json.dump(settings, f, indent=2)
-    except Exception as e:
-        print(f"Warning: failed to save {path}: {e}", file=sys.stderr)
 
 
 def find_toolchain_in_settings(toolchain_root, version, prefix):
@@ -196,7 +271,9 @@ def _get_platform_download_url(download_url):
     if system == "Windows":
         return download_url.get("windows")
     elif system == "Linux":
-        return download_url.get("linux")
+        if machine in ("aarch64",):
+            return download_url.get("linux_aarch64") or download_url.get("linux")
+        return download_url.get("linux_x86_64") or download_url.get("linux")
     elif system == "Darwin":
         if machine in ("arm64", "aarch64"):
             return download_url.get("mac_aarch64")
@@ -243,10 +320,53 @@ def _download_progress(block_count, block_size, total_size):
     """Progress callback for urlretrieve."""
     downloaded = block_count * block_size
     if total_size > 0:
+        downloaded = min(downloaded, total_size)  # the last block overshoots
         percent = downloaded * 100 / total_size
         _console_msg(f"\r  {downloaded / 1024 / 1024:.1f} MB / {total_size / 1024 / 1024:.1f} MB ({percent:.0f}%)", end='')
     else:
         _console_msg(f"\r  {downloaded / 1024 / 1024:.1f} MB ...", end='')
+
+
+def _extract_archive(archive_path, extract_dir):
+    """Extract archive to extract_dir, dispatching by format."""
+    if archive_path.endswith('.zip'):
+        with zipfile.ZipFile(archive_path, 'r') as zipf:
+            zipf.extractall(extract_dir)
+    elif archive_path.endswith('.tar.gz') or archive_path.endswith('.tgz'):
+        with tarfile.open(archive_path, 'r:gz') as tar:
+            tar.extractall(extract_dir, filter='data')
+    elif archive_path.endswith('.tar.xz'):
+        with tarfile.open(archive_path, 'r:xz') as tar:
+            tar.extractall(extract_dir, filter='data')
+    elif archive_path.endswith('.7z'):
+        if not _HAS_PY7ZR:
+            raise RuntimeError(
+                ".7z extraction requires py7zr. Install it with: pip install py7zr"
+            )
+        with py7zr.SevenZipFile(archive_path, 'r') as z7z:
+            z7z.extractall(extract_dir)
+    else:
+        raise RuntimeError(f"Unsupported archive format: {archive_path}")
+
+
+def _move_to_target(src_dir, target_dir):
+    """Detect single wrapping directory and move contents to target_dir.
+
+    If src_dir contains exactly one directory entry (a single wrapping
+    directory), its contents are moved up to target_dir — effectively
+    stripping the platform-specific wrapper.  Otherwise, everything in
+    src_dir is moved as-is.
+    """
+    entries = os.listdir(src_dir)
+    if len(entries) == 1 and os.path.isdir(os.path.join(src_dir, entries[0])):
+        # Single wrapping directory — strip it
+        wrapping = os.path.join(src_dir, entries[0])
+        for item in os.listdir(wrapping):
+            shutil.move(os.path.join(wrapping, item), target_dir)
+    else:
+        # No single wrapping directory — move everything as-is
+        for item in entries:
+            shutil.move(os.path.join(src_dir, item), target_dir)
 
 
 def download_toolchain(version, info, target_dir=None):
@@ -278,35 +398,27 @@ def download_toolchain(version, info, target_dir=None):
             _console_msg(f"\nDownload failed: {e}")
             return None
 
-        _console_msg(f"Extracting to {target_dir}...")
-        os.makedirs(target_dir, exist_ok=True)
+        # Extract to a temporary staging directory first, so that the
+        # target_dir only sees the final structure (no partial extraction).
+        staging = os.path.join(tmpdir, 'staging')
+        os.makedirs(staging, exist_ok=True)
+        _console_msg(f"Extracting {archive_name} ...")
         try:
-            if archive_path.endswith('.zip'):
-                with zipfile.ZipFile(archive_path, 'r') as zipf:
-                    zipf.extractall(target_dir)
-            elif archive_path.endswith('.tar.gz') or archive_path.endswith('.tgz'):
-                with tarfile.open(archive_path, 'r:gz') as tar:
-                    tar.extractall(target_dir, filter='data')
-            elif archive_path.endswith('.tar.xz'):
-                with tarfile.open(archive_path, 'r:xz') as tar:
-                    tar.extractall(target_dir, filter='data')
-            else:
-                _console_msg(f"Unsupported archive format: {archive_path}")
-                return None
+            _extract_archive(archive_path, staging)
         except Exception as e:
             _console_msg(f"\nExtraction failed: {e}")
             return None
 
+        # Move extracted content to target_dir, stripping any single
+        # platform-specific wrapping directory (e.g. "toolchain_v5_v54x/"
+        # or "toolchain_linux-x86_64_riscv64-zephyr-elf/").
+        os.makedirs(target_dir, exist_ok=True)
+        _console_msg(f"Installing to {target_dir}...")
         try:
-            entries = os.listdir(target_dir)
-            if len(entries) == 1:
-                single = os.path.join(target_dir, entries[0])
-                if os.path.isdir(single):
-                    for item in os.listdir(single):
-                        shutil.move(os.path.join(single, item), target_dir)
-                    os.rmdir(single)
+            _move_to_target(staging, target_dir)
         except Exception as e:
-            _console_msg(f"\nWarning: failed to restructure toolchain directory: {e}")
+            _console_msg(f"\nFailed to install toolchain: {e}")
+            return None
 
         return target_dir
 
@@ -340,28 +452,34 @@ def discover_toolchain(soc_series, soc_data, toolchain_root=None, toolchain_type
         path, source = find_toolchain_in_settings(toolchain_root, toolchain_version, prefix)
         if path:
             _console_msg(f"Found toolchain in settings.json: {path}")
-            return path, toolchain_version, prefix, source
+            return _found(path, toolchain_version, prefix, '', source)
 
     # 2. If toolchain_root is set: check convention path {root}/toolchains/<version>/<subdir>
     if toolchain_root:
         path, source = find_toolchain_in_convention(toolchain_root, toolchain_version, subdir, prefix)
         if path:
             _console_msg(f"Found toolchain at convention path: {path}")
-            return path, toolchain_version, prefix, source
+            return _found(path, toolchain_version, prefix, '', source)
 
     # 3. If toolchain_root is set: try using it directly as the toolchain path
-    #    (useful for Zephyr SDK which doesn't follow the Andes convention structure)
+    #    (useful for Zephyr SDK which doesn't follow the Andes convention structure).
+    #    Return the full toolchain dir (<root>/<subdir>) so downstream consumers
+    #    (e.g. CMake, which appends '/bin') get the directory that actually
+    #    contains the bin/ folder.
     if toolchain_root:
         if validate_toolchain_path(toolchain_root, subdir, prefix):
-            _console_msg(f"Found toolchain at toolchain root: {toolchain_root}")
-            return toolchain_root, toolchain_version, prefix, "toolchain-root"
+            root_path = os.path.join(toolchain_root, subdir)
+            _console_msg(f"Found toolchain at toolchain root: {root_path}")
+            return _found(root_path, toolchain_version, prefix, '', "toolchain-root")
 
-    # 4. No toolchain_root: check default dir ~/.telink/toolchains/<version>/<subdir>
-    if not toolchain_root:
-        path, source = find_toolchain_default_dir(toolchain_version, subdir, prefix)
-        if path:
-            _console_msg(f"Found toolchain at default directory: {path}")
-            return path, toolchain_version, prefix, source
+    # 4. Fallback: check default dir ~/.telink/toolchains/<version>/<subdir>.
+    #    Searched even when toolchain_root is set, because interactive downloads
+    #    are always installed under the user's home directory (never into the
+    #    toolchain root).
+    path, source = find_toolchain_default_dir(toolchain_version, subdir, prefix)
+    if path:
+        _console_msg(f"Found toolchain at default directory: {path}")
+        return _found(path, toolchain_version, prefix, '', source)
 
     # 5. Always: VS Code settings as fallback
     vscode_path, vscode_source = find_toolchain_vscode(toolchain_version, info)
@@ -370,7 +488,7 @@ def discover_toolchain(soc_series, soc_data, toolchain_root=None, toolchain_type
             if validate_toolchain_path(vscode_path, try_subdir, prefix):
                 result_path = os.path.join(vscode_path, try_subdir) if try_subdir else vscode_path
                 _console_msg(f"Found toolchain via VS Code: {result_path}")
-                return result_path, toolchain_version, prefix, f"vscode:{vscode_source}"
+                return _found(result_path, toolchain_version, prefix, '', f"vscode:{vscode_source}")
 
     # ── Not found ──────────────────────────────────────────
     if not sys.stdin.isatty():
@@ -396,10 +514,10 @@ def discover_toolchain(soc_series, soc_data, toolchain_root=None, toolchain_type
         _console_msg("Download cancelled.")
         return None, toolchain_version, prefix, None
 
-    if toolchain_root:
-        default_target = os.path.join(toolchain_root, CONVENTION_ROOT, toolchain_version)
-    else:
-        default_target = os.path.join(os.path.expanduser("~"), ".telink", CONVENTION_ROOT, toolchain_version)
+    # Always install into the user's home directory (~/.telink/toolchains/<version>).
+    # TELINK_TOOLCHAIN_PATH is treated as read-only: we never write into the
+    # toolchain root (it may point at a shared/IDE-managed path).
+    default_target = os.path.join(os.path.expanduser("~"), ".telink", CONVENTION_ROOT, toolchain_version)
 
     path_answer = _console_input(f"  Use default path '{default_target}'? (Y/n): ").lower()
     if path_answer in ('n', 'no'):
@@ -421,28 +539,13 @@ def discover_toolchain(soc_series, soc_data, toolchain_root=None, toolchain_type
 
     _console_msg("Download complete!")
 
-    # Auto-write to settings.json if toolchain_root is set
-    if toolchain_root:
-        try:
-            settings = load_settings(toolchain_root)
-            if 'toolchains' not in settings:
-                settings['toolchains'] = {}
-            settings['toolchains'][toolchain_version] = {
-                'path': final_path,
-                'version': toolchain_version,
-            }
-            save_settings(toolchain_root, settings)
-            _console_msg(f"  Written to {os.path.join(toolchain_root, SETTINGS_FILENAME)}")
-        except Exception as e:
-            _console_msg(f"  Warning: could not write settings.json: {e}")
-
-    return final_path, toolchain_version, prefix, "downloaded"
+    return _found(final_path, toolchain_version, prefix, '', "downloaded")
 
 
 def main():
     parser = argparse.ArgumentParser(description="Discover toolchain path for given SoC series.")
     parser.add_argument("--soc-series", required=True, help="SoC series (e.g., TL321X)")
-    parser.add_argument("--soc-yaml", default=None, help="Path to soc.yaml (default: <script_dir>/../soc/soc.yaml)")
+    parser.add_argument("--soc-yaml", default=None, help="Path to soc.yaml (default: <script_dir>/../core/soc.yaml)")
     parser.add_argument("--toolchain-root", default=None,
                         help="Toolchain root directory (default: value of TELINK_TOOLCHAIN_PATH env var)")
     parser.add_argument("--toolchain-type", default="andes", choices=["andes", "zephyr"],
@@ -457,7 +560,7 @@ def main():
     # Determine soc.yaml path
     if args.soc_yaml is None:
         script_dir = Path(__file__).parent
-        default_yaml = script_dir.parent / "soc" / "soc.yaml"
+        default_yaml = script_dir.parent / "core" / "soc.yaml"
         soc_yaml_path = str(default_yaml)
     else:
         soc_yaml_path = args.soc_yaml
@@ -481,12 +584,20 @@ def main():
 
     if path:
         if args.output == "json":
+            info = get_toolchain_info(version, soc_data)
             result = {
                 "toolchain_path": path,
                 "toolchain_version": version,
                 "prefix": prefix,
-                "found_by": found_by
+                "found_by": found_by,
+                "extra_flags": info.get("extra_flags", [])
             }
+            gcc_mm, _ = get_gcc_version(
+                os.path.join(path, 'bin'),
+                prefix
+            )
+            if gcc_mm:
+                result["gcc_version"] = gcc_mm
             print(json.dumps(result, indent=2))
         else:
             print(path)

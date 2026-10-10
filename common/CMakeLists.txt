@@ -1,9 +1,9 @@
 set(COMMON_INCLUDE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/include")
 set(COMMON_SRC_PATH "${CMAKE_CURRENT_SOURCE_DIR}/src")
 
-target_sources(${TARGET_NAME} PRIVATE "${COMMON_SRC_PATH}/tlk_sdk_version.c")
 target_sources(${TARGET_NAME} PRIVATE "${COMMON_SRC_PATH}/tlk_init.c")
 target_sources(${TARGET_NAME} PRIVATE "${COMMON_SRC_PATH}/tlk_loop.c")
+target_sources(${TARGET_NAME} PRIVATE "${COMMON_SRC_PATH}/tlk_str_utils.c")
 
 set(COMMON_COMPILE_OPTIONS
     "--imacros=${COMMON_INCLUDE_PATH}/tlk_soc_addr.h"

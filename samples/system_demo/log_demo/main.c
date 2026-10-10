@@ -22,10 +22,8 @@
  *
  *******************************************************************************************************/
 #include "common/include/tlk_utils.h"
-#include "core/include/tlk_gpio.h"
 
 #include "system/debug/log/tlk_log.h"
-#include "tlk_board_pinout.h"
 
 #include "api/include/tlk_time.h"
 
@@ -34,13 +32,14 @@ TLK_LOG_CREATE(demo_log, "LOG_DEMO");
 #if TLK_IS_DISABLED(CONFIG_TLK_TASK_PLANNER)
 
 static uint32_t last = 0;
-int             main(void)
+
+int main(void)
 {
     while (1)
     {
         tlk_log_iface_loop();
         tlk_logrotate();
-        uint32_t now = tlk_api_micros();
+        uint32_t now = tlk_api_time_micros();
         if (now - last >= 1000000)
         {
             last = now;
@@ -55,7 +54,7 @@ void user_setup(void) {}
 void user_loop(void)
 {
     static uint32_t last = 0;
-    uint32_t        now  = tlk_api_micros();
+    uint32_t        now  = tlk_api_time_micros();
     if (now - last >= 1000000)
     {
         last = now;

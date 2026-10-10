@@ -1,9 +1,13 @@
 #ifndef TLK_INCLUDE_DRIVERS_ADC_H_
 #define TLK_INCLUDE_DRIVERS_ADC_H_
 
+#if TLK_IS_DISABLED(CONFIG_TLK_ADC)
+#warning ADC driver is disabled in Kconfig, but its header is being used; note that its implementation will not be linked until you enable it in Kconfig.
+#endif
+
 #include "core/include/tlk_gpio.h"
 
-#if TLK_IS_ENABLED(CONFIG_TLK_DMA)
+#if TLK_IS_ENABLED(CONFIG_TLK_ADC_DMA)
 #include "core/include/tlk_dma.h"
 #endif
 
@@ -52,7 +56,7 @@ struct tlk_adc_config
     enum tlk_adc_sample_freq sample_freq;
     enum tlk_adc_resolution  resolution;
     uint32_t                 timeout_us;
-#if TLK_IS_ENABLED(CONFIG_TLK_DMA)
+#if TLK_IS_ENABLED(CONFIG_TLK_ADC_DMA)
     enum tlk_dma_chn dma_channel;
     bool             dma_en;
 #endif
@@ -67,8 +71,6 @@ enum tlk_adc_status
     TLK_ADC_UNSUPPORTED,
     TLK_ADC_TIMEOUT,
 };
-
-extern struct tlk_adc_config tlk_adc_config;
 
 /**
  * @brief Configure the ADC module.

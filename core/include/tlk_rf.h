@@ -1,7 +1,12 @@
 #ifndef TLK_INCLUDE_DRIVERS_RF_H_
 #define TLK_INCLUDE_DRIVERS_RF_H_
 
+#if TLK_IS_DISABLED(CONFIG_TLK_RF)
+#warning RF driver is disabled in Kconfig, but its header is being used; note that its implementation will not be linked until you enable it in Kconfig.
+#endif
+
 #include "properties/tlk_rf.h"
+#include <stdint.h>
 
 #define TLK_RF_US_TO_TICK(us) ((us) * UNISDK_RF_TICK_1US)
 
@@ -74,6 +79,16 @@ enum tlk_rf_fs_rx_time
     TLK_FOR_CALL(UNISDK_RF_FS_RX_TIME_COUNT, TLK_RF_DECLARE_FS_RX_TIME)
 };
 
+#define TLK_RF_PIPE(num)         TLK_BIT(num)
+#define TLK_RF_DECLARE_PIPE(num) TLK_RF_PIPE_##num = TLK_RF_PIPE(num),
+
+enum tlk_rf_pipe
+{
+    TLK_RF_PIPE_NONE = 0,
+    TLK_RF_PIPE_ALL  = TLK_BIT_RNG(0, (UNISDK_RF_PIPE_COUNT - 1)),
+    TLK_FOR_CALL(UNISDK_RF_PIPE_COUNT, TLK_RF_DECLARE_PIPE)
+};
+
 typedef void (*tlk_rf_irq_handler_t)(enum tlk_rf_irq);
 
 #define TLK_RF_BLE_CRC_SIZE     3
@@ -111,7 +126,7 @@ struct tlk_rf_zigbee_pdu
     uint8_t payload[];
 } __attribute__((packed));
 
-struct tlk_rf_private_pdu
+struct tlk_rf_private_esb_pdu
 {
     uint8_t payload_size;
     uint8_t payload[];
@@ -126,8 +141,14 @@ struct tlk_rf_hybee_pdu
 struct tlk_rf_rx_packet_tail
 {
     uint32_t timestamp;
-    int16_t  frequency_offset;
-    uint8_t  rssi;
+    struct
+    {
+        uint16_t frequency_offset : 11;
+        uint16_t reserved0        : 1;
+        uint16_t pipe_id          : 3;
+        uint16_t reserved1        : 1;
+    };
+    uint8_t rssi;
     union
     {
         uint8_t rx_status;
@@ -170,31 +191,36 @@ struct tlk_rf_module
         };
     };
 
-    volatile uint8_t rx_len;
-    volatile int8_t  rx_rssi;
+    struct
+    {
+        uint8_t initialized   : 1;
+        uint8_t fs_tx_enabled : 1;
+        uint8_t fs_rx_enabled : 1;
+        uint8_t _reserved     : 5;
+    };
+
+    volatile int8_t rx_rssi;
 
     enum tlk_rf_mode mode;
 
+    tlk_rf_irq_handler_t irq_handler;
     union
     {
         uint8_t* volatile rx_packet_raw; // The pointer to the received packet in the FIFO
         struct tlk_rf_packet* volatile rx_packet;
     };
 
-    tlk_rf_irq_handler_t irq_handler;
+    union
+    {
+        uint8_t* volatile rx_packet_tail_raw;
+        struct tlk_rf_rx_packet_tail* volatile rx_packet_tail;
+    };
+
     struct
     {
         enum tlk_rf_fs_tx_time tx_time;
         enum tlk_rf_fs_rx_time rx_time;
     } fs;
-
-    struct
-    {
-        uint8_t initialized   : 1;
-        uint8_t fs_tx_enabled : 1;
-        uint8_t fs_rx_enabled : 1;
-        uint8_t _reserved     : 7;
-    };
 };
 
 struct tlk_rf_fifo_config
@@ -234,10 +260,18 @@ struct tlk_rf_ble_config
     uint32_t access_code;
 };
 
+enum tlk_rf_private_format
+{
+    TLK_RF_PRIVATE_ESB,
+    TLK_RF_PRIVATE_SB,
+};
+
 struct tlk_rf_private_config
 {
-    uint32_t access_code;
-    uint8_t  preamble_length;
+    enum tlk_rf_private_format format;
+    uint32_t                   access_code;
+    uint8_t                    preamble_length;
+    uint8_t                    sb_packet_length;
 };
 
 union tlk_rf_mode_config
@@ -248,7 +282,9 @@ union tlk_rf_mode_config
 
 // TODO: add the configs for zigbee and hybee
 
-extern struct tlk_rf_module tlk_rf_instance;
+extern const struct tlk_rf_module* const tlk_rf_instance_p;
+// Temporary define for the compatibility
+#define tlk_rf_instance (*tlk_rf_instance_p)
 
 /**
  * @brief Used to prepare the packet for tx.
@@ -258,7 +294,7 @@ extern struct tlk_rf_module tlk_rf_instance;
  *
  * @return None.
  */
-void tlk_rf_prepare_tx_packet(struct tlk_rf_packet* packet, uint8_t pdu_size);
+void tlk_rf_tx_prepare_packet(struct tlk_rf_packet* packet, uint8_t pdu_size);
 
 /**
  * @brief Used to calculate the payload size from the received packet size.
@@ -305,7 +341,7 @@ void tlk_rf_set_channel(int8_t channel);
  *
  * @return None.
  */
-void tlk_rf_set_ble_channel(int8_t ble_channel);
+void tlk_rf_ble_set_channel(int8_t ble_channel);
 
 /**
  * @brief Sets the access code.
@@ -324,6 +360,15 @@ void tlk_rf_set_access_code(uint32_t access_code);
  * @return None.
  */
 void tlk_rf_set_preamble_length(uint8_t preamble_length);
+
+/**
+ * @brief Sets the PN state.
+ *
+ * @param is_enabled - whether PN needs to be enabled.
+ *
+ * @return None.
+ */
+void tlk_rf_set_pn(bool is_enabled);
 
 /**
  * @brief Used for the full RF driver configuration.
@@ -358,7 +403,7 @@ void tlk_rf_reset_registers(void);
  *
  * @return None.
  */
-void tlk_rf_set_irq_handler(tlk_rf_irq_handler_t handler);
+void tlk_rf_irq_set_handler(tlk_rf_irq_handler_t handler);
 
 /**
  * @brief Enables the tracking of the corresponding irqs.
@@ -419,7 +464,7 @@ void tlk_rf_irq_process(void);
  *
  * @return None.
  */
-void tlk_rf_set_tx_fifo(uint8_t* buffer, uint8_t depth, uint16_t size);
+void tlk_rf_tx_fifo_set(uint8_t* buffer, uint8_t depth, uint16_t size);
 
 /**
  * @brief Sets the rx buffer. Need to be called before any rx operation.
@@ -432,7 +477,53 @@ void tlk_rf_set_tx_fifo(uint8_t* buffer, uint8_t depth, uint16_t size);
  *
  * @return None.
  */
-void tlk_rf_set_rx_fifo(uint8_t* buffer, uint8_t count, uint16_t size);
+void tlk_rf_rx_fifo_set(uint8_t* buffer, uint8_t count, uint16_t size);
+
+/**
+ * @brief  This function serve to get ptx wptr.
+ *
+ * @param  pipe_id - The pipe number.
+ *
+ * @return The write pointer of the tx.
+ */
+uint8_t tlk_rf_tx_wptr_get(uint8_t pipe_id);
+
+/**
+ * @brief  This function serve to update the wptr of tx terminal.
+ *
+ * @param  pipe_id - The number of pipe which need to update wptr.
+ * @param  wptr - The pointer of write in tx terminal.
+ *
+ * @return None.
+ */
+void tlk_rf_tx_wptr_set(uint8_t pipe_id, uint8_t wptr);
+
+/**
+ * @brief  This function serve to clear the writer pointer of tx terminal.
+ *
+ * @param  pipe_id - The number of pipe.
+ *
+ * @return None.
+ */
+void tlk_rf_tx_wptr_clear(uint8_t pipe_id);
+
+/**
+ * @brief  This function serve to get ptx rptr.
+ *
+ * @param  pipe_id - The number of tx pipe.
+ *
+ * @return The read pointer of the tx.
+ */
+uint8_t tlk_rf_tx_rptr_get(uint8_t pipe_id);
+
+/**
+ * @brief  This function serve to clear read pointer of tx terminal.
+ *
+ * @param  pipe_id - The number of tx pipe.
+ *
+ * @return None.
+ */
+void tlk_rf_tx_rptr_clear(uint8_t pipe_id);
 
 /**
  * @brief Sets the tx settle time.
@@ -441,7 +532,7 @@ void tlk_rf_set_rx_fifo(uint8_t* buffer, uint8_t count, uint16_t size);
  *
  * @return None.
  */
-void tlk_rf_set_tx_settle_time(uint16_t time_us);
+void tlk_rf_tx_set_settle_time(uint16_t time_us);
 
 /**
  * @brief Sets the rx settle time.
@@ -450,7 +541,7 @@ void tlk_rf_set_tx_settle_time(uint16_t time_us);
  *
  * @return None.
  */
-void tlk_rf_set_rx_settle_time(uint16_t time_us);
+void tlk_rf_rx_set_settle_time(uint16_t time_us);
 
 /**
  * @brief Starts the packet transmission. Should be called only after tlk_rf_set_tx_state and delay.
@@ -638,5 +729,51 @@ void tlk_rf_fs_tx_disable(void);
  * @return None.
  */
 void tlk_rf_fs_rx_disable(void);
+
+/**
+ * @brief Enable the RX pipe (logical channel).
+ *
+ * @param pipe - Pipe to enable.
+ *
+ * @return None.
+ */
+void tlk_rf_rx_pipe_enable(enum tlk_rf_pipe pipe);
+
+/**
+ * @brief Disable the RX pipe (logical channel).
+ *
+ * @param pipe - Pipe to disable.
+ *
+ * @return None.
+ */
+void tlk_rf_rx_pipe_disable(enum tlk_rf_pipe pipe);
+
+/**
+ * @brief Set the access code length.
+ *
+ * @param length - Access code length in bytes.
+ *
+ * @return None.
+ */
+void tlk_rf_set_access_code_length(uint8_t length);
+
+/**
+ * @brief Set the access code for pipe (logical channel).
+ *
+ * @param pipe - Pipe to configure.
+ * @param code - Pointer to the corresponding access code.
+ *
+ * @return None.
+ */
+void tlk_rf_pipe_set_access_code(enum tlk_rf_pipe pipe, uint8_t* code);
+
+/**
+ * @brief Set the current tx pipe (logical channel).
+ *
+ * @param pipe - Current pipe.
+ *
+ * @return None.
+ */
+void tlk_rf_tx_pipe_set(enum tlk_rf_pipe pipe);
 
 #endif

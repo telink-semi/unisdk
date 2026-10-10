@@ -132,7 +132,7 @@ typedef enum
  * @note  this function must be used when the system wants to disable all the interrupt.
  * @return     none
  */
-static _tlk_always_inline unsigned int tlk_core_interrupt_disable(void)
+_tlk_always_inline_ static unsigned int tlk_core_interrupt_disable(void)
 {
     unsigned int r = tlk_read_csr(NDS_MSTATUS) & TLK_FLD_MSTATUS_MIE;
     if (r)
@@ -151,7 +151,7 @@ static _tlk_always_inline unsigned int tlk_core_interrupt_disable(void)
  * @return     0
  * @note this function must be used when the system wants to restore all the interrupt.
  */
-static _tlk_always_inline unsigned int tlk_core_restore_interrupt(unsigned int en)
+_tlk_always_inline_ static unsigned int tlk_core_interrupt_restore(unsigned int en)
 {
     if (en)
     {
@@ -168,7 +168,7 @@ static _tlk_always_inline unsigned int tlk_core_restore_interrupt(unsigned int e
  * @param[in] mie_mask - MIE(Machine Interrupt Enable) register mask.
  * @return  none
  */
-static _tlk_always_inline void tlk_core_mie_enable(tlk_mie_e mie_mask)
+_tlk_always_inline_ static void tlk_core_mie_enable(tlk_mie_e mie_mask)
 {
     tlk_set_csr(NDS_MIE, mie_mask);
 }
@@ -180,7 +180,7 @@ static _tlk_always_inline void tlk_core_mie_enable(tlk_mie_e mie_mask)
  * @return     mie register value before disable.
  * @note       tlk_core_mie_disable and tlk_core_mie_restore must be used in pairs.
  */
-static _tlk_always_inline unsigned int tlk_core_mie_disable(tlk_mie_e mie_mask)
+_tlk_always_inline_ static unsigned int tlk_core_mie_disable(tlk_mie_e mie_mask)
 {
     unsigned int r = tlk_read_csr(NDS_MIE);
     tlk_clear_csr(NDS_MIE, mie_mask);
@@ -193,7 +193,7 @@ static _tlk_always_inline unsigned int tlk_core_mie_disable(tlk_mie_e mie_mask)
  * @return     none.
  * @note       tlk_core_mie_disable and tlk_core_mie_restore must be used in pairs.
  */
-static _tlk_always_inline void tlk_core_mie_restore(unsigned int mie_value)
+_tlk_always_inline_ static void tlk_core_mie_restore(unsigned int mie_value)
 {
     tlk_write_csr(NDS_MIE, mie_value);
 }
@@ -203,7 +203,7 @@ static _tlk_always_inline void tlk_core_mie_restore(unsigned int mie_value)
  * interrupt) will also enable.
  * @return  none
  */
-static _tlk_always_inline void tlk_core_interrupt_enable(void)
+_tlk_always_inline_ static void tlk_core_interrupt_enable(void)
 {
     tlk_set_csr(NDS_MSTATUS, TLK_FLD_MSTATUS_MIE); // global interrupts enable
     tlk_fence_iorw; /* Hardware may change this value, fence IO ensures that software changes are
@@ -216,7 +216,7 @@ static _tlk_always_inline void tlk_core_interrupt_enable(void)
  * @param[in]  ctl - the value of mhsp_ctl, refer to tlk_mhsp_ctl_e for the definition of MHSP_CTL
  * @return     none
  */
-static _tlk_always_inline void tlk_core_set_mhsp_ctr(tlk_mhsp_ctl_e ctl)
+_tlk_always_inline_ static void tlk_core_mhsp_set_ctr(tlk_mhsp_ctl_e ctl)
 {
     tlk_write_csr(NDS_MHSP_CTL, (unsigned int) ctl);
 }
@@ -237,7 +237,7 @@ static _tlk_always_inline void tlk_core_set_mhsp_ctr(tlk_mhsp_ctl_e ctl)
  * @param[in]  bound - the value of  hsp_bound .
  * @return     none
  */
-static _tlk_always_inline void tlk_core_set_msp_bound(unsigned int bound)
+_tlk_always_inline_ static void tlk_core_msp_set_bound(unsigned int bound)
 {
     tlk_write_csr(NDS_MSP_BOUND, bound);
 }
@@ -251,7 +251,7 @@ static _tlk_always_inline void tlk_core_set_msp_bound(unsigned int bound)
  * @param[in]  base - the value of hsp_base .
  * @return     none
  */
-static _tlk_always_inline void tlk_core_set_msp_base(unsigned int base)
+_tlk_always_inline_ static void tlk_core_msp_set_base(unsigned int base)
 {
     tlk_write_csr(NDS_MSP_BASE, base);
 }
@@ -265,7 +265,7 @@ static _tlk_always_inline void tlk_core_set_msp_base(unsigned int base)
  this updated value,you can read this value.
  * @return     none
  */
-static _tlk_always_inline unsigned int tlk_core_get_msp_bound(void)
+_tlk_always_inline_ static unsigned int tlk_core_msp_get_bound(void)
 {
     return tlk_read_csr(NDS_MSP_BOUND);
 }
@@ -274,7 +274,7 @@ static _tlk_always_inline unsigned int tlk_core_get_msp_bound(void)
  * @brief This function serves to get hsp base registers.there is no recording.
  * @return     none
  */
-static _tlk_always_inline unsigned int tlk_core_get_msp_base(void)
+_tlk_always_inline_ static unsigned int tlk_core_msp_get_base(void)
 {
     return tlk_read_csr(NDS_MSP_BASE);
 }
@@ -285,7 +285,7 @@ static _tlk_always_inline unsigned int tlk_core_get_msp_base(void)
  interrupt. This register is updated when a trap, reset, NMI or vector interrupt occurs
  * @return     none
  */
-static _tlk_always_inline unsigned int tlk_core_get_mcause(void)
+_tlk_always_inline_ static unsigned int tlk_core_mcause_get(void)
 {
     return tlk_read_csr(NDS_MCAUSE);
 }
@@ -296,7 +296,7 @@ static _tlk_always_inline unsigned int tlk_core_get_mcause(void)
  * to the value of the instruction pc currently encountered with the exception
  * @return     none
  */
-static _tlk_always_inline unsigned int tlk_core_get_mepc(void)
+_tlk_always_inline_ static unsigned int tlk_core_mepc_get(void)
 {
     return tlk_read_csr(NDS_MEPC);
 }
@@ -338,14 +338,14 @@ static _tlk_always_inline unsigned int tlk_core_get_mepc(void)
  * and start to execute from the instruction after the WFI instruction, the processing steps after
  * WFI instruction as follows:
  *                 -# Getting the wakeup source using interface tlk_plic_interrupt_claim().
- *                 -# Take stimer for example, using the interfaces tlk_stimer_get_irq_status() and
- * tlk_stimer_clr_irq_status() to get and clear the corresponding interrupt flag bit according to
+ *                 -# Take stimer for example, using the interfaces tlk_stimer_irq_get_status() and
+ * tlk_stimer_irq_clr_status() to get and clear the corresponding interrupt flag bit according to
  * the interrupt source.
  *                 -# Your application code.
  *                 -# Using interface tlk_plic_interrupt_complete() to notify PLIC that the
  * corresponding interrupt processing is complete.
  */
-static _tlk_always_inline void tlk_core_entry_wfi_mode(void)
+_tlk_always_inline_ static void tlk_core_enter_wfi(void)
 {
     /* Interrupts disabled by the mie CSR will not be able to wake up the processor.
       However,the processor can be awoken by these interrupts regardless the value of the global
@@ -357,7 +357,7 @@ static _tlk_always_inline void tlk_core_entry_wfi_mode(void)
  * @brief     This function serves to get current pc.
  * @return    current pc
  */
-static _tlk_always_inline unsigned int tlk_core_get_current_pc(void)
+_tlk_always_inline_ static unsigned int tlk_core_get_current_pc(void)
 {
     unsigned int current_pc = 0;
     __asm__("auipc %0, 0" : "=r"(current_pc)::"a0");
@@ -381,7 +381,8 @@ static _tlk_always_inline unsigned int tlk_core_get_current_pc(void)
  * @param return_fn Optional function called in U-mode after entry_fn returns.
  *                  Ignored if entry_fn is NULL.
  */
-static _tlk_always_inline void tlk_core_umode(void (*entry_fn)(void), void (*return_fn)(void))
+_tlk_always_inline_ static void tlk_core_enable_umode(void (*entry_fn)(void),
+                                                      void (*return_fn)(void))
 {
     unsigned int prev_mie = tlk_core_interrupt_disable();
     tlk_clear_csr(NDS_MSTATUS, TLK_FLD_MSTATUS_MPP | TLK_FLD_MSTATUS_MPIE);
@@ -426,7 +427,7 @@ static _tlk_always_inline void tlk_core_umode(void (*entry_fn)(void), void (*ret
  * inside an ecall handler when the caller wants to remain in
  * M-mode after the trap returns.
  */
-static _tlk_always_inline void tlk_core_mmode(void)
+_tlk_always_inline_ static void tlk_core_enable_mmode(void)
 {
     tlk_set_csr(NDS_MSTATUS, TLK_FLD_MSTATUS_MPP);
 }

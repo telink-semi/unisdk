@@ -13,6 +13,11 @@ class PinmuxIdentifier:
     board: str | None = None
     soc: str = ""
     soc_series: str = ""
+    core: str = ""
+    """The physical package name (CONFIG_TLK_CORE, e.g. "B92", "TL321X") -
+    since the packages/<core>/soc/<soc_series>/ restructure, a package
+    can host more than one soc_series (e.g. B92 hosts both TLSR922X and
+    TLSR952X), so this is needed on its own to resolve pinmux data paths."""
 
     def __init__(self, type: PinmuxType = PinmuxType.SOC, name: str = "") -> None:
         if type == PinmuxType.BOARD:

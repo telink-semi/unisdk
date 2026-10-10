@@ -43,13 +43,13 @@ struct tlk_storage_device
     void* const                    user;
 };
 
-bool                       tlk_storage_device_exists(const struct tlk_storage_device* dev);
-void                       tlk_storage_device_add(struct tlk_storage_device* dev);
-void                       tlk_storage_device_remove(struct tlk_storage_device* dev);
-struct tlk_storage_device* tlk_storage_device_get_next(const struct tlk_storage_device* dev);
-struct tlk_storage_device* tlk_storage_device_find(uintptr_t addr, size_t len);
+bool                       tlk_storage_is_exist_device(const struct tlk_storage_device* dev);
+void                       tlk_storage_add_device(struct tlk_storage_device* dev);
+void                       tlk_storage_remove_device(struct tlk_storage_device* dev);
+struct tlk_storage_device* tlk_storage_get_next_device(const struct tlk_storage_device* dev);
+struct tlk_storage_device* tlk_storage_find_device(uintptr_t addr, size_t len);
 
-#define TLK_STORAGE_DEVICE_DEFINE(_name, _addr, _size, _page, _clean, _rd, _er, _wr, _user)        \
+#define TLK_STORAGE_DEFINE_DEVICE(_name, _addr, _size, _page, _clean, _rd, _er, _wr, _user)        \
     static uint8_t _name##_buffer[_page ? _page : STORAGE_DEVICE_DEFAULT_BUFFER_SIZE];             \
     static struct tlk_storage_device _name = {                                                     \
         .name       = #_name,                                                                      \

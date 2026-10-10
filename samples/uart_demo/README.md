@@ -3,9 +3,9 @@
 This example demonstrates the usage of the UART driver. The sample performs a simple "echo" function: it waits to receive data, and, after successful reception, transmits this data back.
 
 This sample shows:
-- if `CONFIG_TLK_UART_USED_AUTO_CONFIG` is disabled:
-    * Manual UART configuration using `tlk_uart_configure` and `tlk_uart_configure_pinmux`
-    * Manual UART flow configuration using `tlk_uart_configure_flow_control` and `tlk_uart_configure_flow_control_pinmux` if `CONFIG_TLK_UART1_FLOW_CONTROL` is enabled
+- if `CONFIG_TLK_UART_USE_AUTO_CONFIG` is disabled:
+    * Manual UART configuration using `tlk_uart_configure` and `tlk_uart_pinmux_configure`
+    * Manual UART flow configuration using `tlk_uart_flow_control_configure` and `tlk_uart_flow_control_pinmux_configure` if `CONFIG_TLK_UART1_FLOW_CONTROL` is enabled
 - Callback-based data reception using `tlk_uart_receive_bytes`.
 - Basic data transmission using `tlk_uart_send_bytes`.
 - Power management and sleep prevention. (Optional)
@@ -13,7 +13,7 @@ This sample shows:
 ## How It Works
 
 ### Initialization
-1.  **Manual Configuration:** If `CONFIG_TLK_UART_USED_AUTO_CONFIG` is disabled, the sample configures `TLK_UART1` with set parameters.
+1.  **Manual Configuration:** If `CONFIG_TLK_UART_USE_AUTO_CONFIG` is disabled, the sample configures `TLK_UART1` with set parameters.
 2.  **Power Management Test:** If `CONFIG_TLK_UART_DEMO_SLEEP` is enabled, the application will first print "Before sleep", enter a system sleep state for 2 seconds, and then print "After sleep" after wake up. This verifies that the UART driver functions correctly works after sleep.
 3.  **Interrupts:** Global interrupts are enabled by `tlk_core_interrupt_enable()` to allow the UART's asynchronous callbacks.
 

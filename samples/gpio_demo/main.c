@@ -26,7 +26,6 @@
 #include "common/include/tlk_utils.h"
 #include "core/include/tlk_core.h"
 #include "core/include/tlk_gpio.h"
-#include "tlk_board_pinout.h"
 
 #if TLK_IS_ENABLED(CONFIG_TLK_GPIO_DEMO_INTERRUPT)
 
@@ -34,36 +33,35 @@ void gpio_cb(enum tlk_gpio_port port, enum tlk_gpio_pin pin)
 {
     (void) port;
     (void) pin;
-    tlk_gpio_pin_toggle(UNISDK_BOARD_LED_1_PORT, UNISDK_BOARD_LED_1_PIN);
+    tlk_gpio_pin_toggle(PINMUX_LED_1_PORT, PINMUX_LED_1_PIN);
 }
 #endif
 
 int main(void)
 {
-    tlk_gpio_configure(UNISDK_BOARD_LED_0_PORT, UNISDK_BOARD_LED_0_PIN, TLK_GPIO_OUTPUT);
-    tlk_gpio_configure(UNISDK_BOARD_LED_1_PORT, UNISDK_BOARD_LED_1_PIN, TLK_GPIO_OUTPUT);
+    tlk_gpio_configure(PINMUX_LED_0_PORT, PINMUX_LED_0_PIN, TLK_GPIO_OUTPUT);
+    tlk_gpio_configure(PINMUX_LED_1_PORT, PINMUX_LED_1_PIN, TLK_GPIO_OUTPUT);
 
 #if TLK_IS_ENABLED(CONFIG_TLK_GPIO_DEMO_INTERRUPT)
 
     // Applying HIGH to KEY_2 pin to detect a logic '1' on the KEY_0, when pressed.
-    tlk_gpio_configure(UNISDK_BOARD_KEY_2_PORT, UNISDK_BOARD_KEY_2_PIN, TLK_GPIO_OUTPUT);
-    tlk_gpio_pin_write(UNISDK_BOARD_KEY_2_PORT, UNISDK_BOARD_KEY_2_PIN, 1);
+    tlk_gpio_configure(PINMUX_KEY_2_PORT, PINMUX_KEY_2_PIN, TLK_GPIO_OUTPUT);
+    tlk_gpio_pin_write(PINMUX_KEY_2_PORT, PINMUX_KEY_2_PIN, 1);
 
-    tlk_gpio_configure(UNISDK_BOARD_KEY_0_PORT, UNISDK_BOARD_KEY_0_PIN, TLK_GPIO_INPUT_PULL_DOWN);
+    tlk_gpio_configure(PINMUX_KEY_0_PORT, PINMUX_KEY_0_PIN, TLK_GPIO_INPUT_PULL_DOWN);
 
-    struct tlk_gpio_irq_callback callback = {.handler = gpio_cb, .pin = UNISDK_BOARD_KEY_0_PIN};
+    struct tlk_gpio_irq_callback callback = {.handler = gpio_cb, .pin = PINMUX_KEY_0_PIN};
 
-    tlk_gpio_irq_add_callback(UNISDK_BOARD_KEY_0_PORT, &callback);
-    tlk_gpio_irq_configure(
-        UNISDK_BOARD_KEY_0_PORT, UNISDK_BOARD_KEY_0_PIN, TLK_GPIO_INTR_RISING_EDGE);
+    tlk_gpio_irq_add_callback(PINMUX_KEY_0_PORT, &callback);
+    tlk_gpio_irq_configure(PINMUX_KEY_0_PORT, PINMUX_KEY_0_PIN, TLK_GPIO_INTR_RISING_EDGE);
 
     tlk_core_interrupt_enable();
 #endif
 
     while (1)
     {
-        tlk_gpio_pin_toggle(UNISDK_BOARD_LED_0_PORT, UNISDK_BOARD_LED_0_PIN);
-        tlk_api_delay(TLK_SEC_TO_US(2));
+        tlk_gpio_pin_toggle(PINMUX_LED_0_PORT, PINMUX_LED_0_PIN);
+        tlk_api_time_delay(TLK_SEC_TO_US(2));
         tlk_api_sleep(TLK_SEC_TO_MS(2));
     }
 }

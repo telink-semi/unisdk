@@ -1,5 +1,5 @@
-set(TARGET_LIBRARY_DIR "${TELINK_BASE}/libraries") # Root directory of the already built libraries
 set(TARGET_LIBRARY_BUILD_DIR "${CMAKE_BINARY_DIR}/libraries") # Output directory for libraries buiding
+set(LIBRARY_BASE_DIR "${TELINK_BASE}/packages/${CONFIG_TLK_CORE}/libraries") # Prebuilt libraries of the installed MCU package (SDK mode)
 set(TELINK_SOC_LIBS "") # Accumulates all SOC library targets registered via telink_add_library()
 
 # Declares a static SOC library.
@@ -8,7 +8,7 @@ set(TELINK_SOC_LIBS "") # Accumulates all SOC library targets registered via tel
 #
 # Usage: telink_add_library(<name> [CONDITION <config_var>])
 macro(telink_add_library LIB_NAME)
-    if (NOT IS_DIRECTORY ${TARGET_LIBRARY_DIR})
+    if(NOT IS_SDK_MODE)
         add_library(${LIB_NAME} STATIC EXCLUDE_FROM_ALL)
 
         message(STATUS "DEV SRC: Library to build: ${LIB_NAME}")
@@ -18,6 +18,10 @@ macro(telink_add_library LIB_NAME)
         )
 
         add_dependencies(${LIB_NAME} generate_headers)
+        # telink_apply_compiler_options() below force-includes AUTOCONF_H, PINMUX_H and
+        # GIT_VERSION_H via --imacros; without these dependencies nothing generates those
+        # headers before compiling this target, which then races their generation.
+        add_dependencies(${LIB_NAME} generate_autoconf check_pinmux generate_git_version)
 
         add_custom_command(TARGET ${LIB_NAME} POST_BUILD
             COMMAND ${CMAKE_STRIP} -g $<TARGET_FILE:${LIB_NAME}>
@@ -37,7 +41,7 @@ macro(telink_add_library LIB_NAME)
             message(STATUS "SDK: Linking library: ${LIB_NAME}")
 
             target_link_libraries(${TARGET_NAME} PRIVATE
-                "${TARGET_LIBRARY_DIR}/lib${LIB_NAME}.a"
+                "${LIBRARY_BASE_DIR}/lib${LIB_NAME}.a"
             )
         endif()
     endif()
@@ -46,7 +50,7 @@ endmacro()
 # Applies include directories to all registered SOC libraries.
 # Usage: telink_libraries_include_directories(PRIVATE <path> ...)
 macro(telink_libraries_include_directories)
-    if (NOT IS_DIRECTORY ${TARGET_LIBRARY_DIR})
+    if(NOT IS_SDK_MODE)
         foreach(_lib IN LISTS TELINK_SOC_LIBS)
             target_include_directories(${_lib} ${ARGN})
         endforeach()
@@ -57,7 +61,7 @@ endmacro()
 # Applies compile options to all registered SOC libraries.
 # Usage: telink_libraries_compile_options(PRIVATE <options> ...)
 macro(telink_libraries_compile_options)
-    if (NOT IS_DIRECTORY ${TARGET_LIBRARY_DIR})
+    if(NOT IS_SDK_MODE)
         foreach(_lib IN LISTS TELINK_SOC_LIBS)
             target_compile_options(${_lib} ${ARGN})
         endforeach()
@@ -67,13 +71,13 @@ endmacro()
 
 # Creates an "umbrella" target 'build_soc_libraries' that builds all registered SOC libraries at once,
 # then collects their sources, deduplicates them, and writes the result to
-# <file_prefix>_sources.txt in the libraries build directory (used by sdk_exporter.sh).
+# <file_prefix>_sources.txt in the libraries build directory.
 #
 # Call once after all telink_add_library() declarations.
 # Usage: telink_create_soc_libraries_target(<file_prefix>)
 #        cmake --build build --target build_soc_libraries
 macro(telink_declare_libraries_target SOC_LIB_NAME)
-    if (NOT IS_DIRECTORY ${TARGET_LIBRARY_DIR})
+    if(NOT IS_SDK_MODE)
         add_custom_target(build_soc_libraries
             DEPENDS ${TELINK_SOC_LIBS}
             COMMENT "DEV SRC: Building all SOC libraries"

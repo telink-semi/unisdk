@@ -17,7 +17,7 @@ typedef void (*tlk_pre_init_func_t)(void);
 
 #define TLK_REGISTER_PRE_INIT(fn, level, priority) _TLK_REGISTER_PRE_INIT(fn, level, priority)
 
-void tlk_pre_init(void);
+void tlk_perform_pre_init(void);
 
 typedef void (*tlk_before_suspend_func_t)(void);
 
@@ -28,7 +28,7 @@ typedef void (*tlk_before_suspend_func_t)(void);
 #define TLK_REGISTER_BEFORE_SUSPEND(fn, level, priority)                                           \
     _TLK_REGISTER_BEFORE_SUSPEND(fn, level, priority)
 
-void tlk_before_suspend(void);
+void tlk_perform_before_suspend(void);
 
 typedef void (*tlk_after_suspend_func_t)(void);
 
@@ -39,7 +39,7 @@ typedef void (*tlk_after_suspend_func_t)(void);
 #define TLK_REGISTER_AFTER_SUSPEND(fn, level, priority)                                            \
     _TLK_REGISTER_AFTER_SUSPEND(fn, level, priority)
 
-void tlk_after_suspend(void);
+void tlk_perform_after_suspend(void);
 
 typedef void (*tlk_before_sleep_func_t)(void);
 
@@ -50,7 +50,7 @@ typedef void (*tlk_before_sleep_func_t)(void);
 #define TLK_REGISTER_BEFORE_SLEEP(fn, level, priority)                                             \
     _TLK_REGISTER_BEFORE_SLEEP(fn, level, priority)
 
-void tlk_before_sleep(void);
+void tlk_perform_before_sleep(void);
 
 typedef void (*tlk_after_sleep_func_t)(void);
 
@@ -60,7 +60,7 @@ typedef void (*tlk_after_sleep_func_t)(void);
 
 #define TLK_REGISTER_AFTER_SLEEP(fn, level, priority) _TLK_REGISTER_AFTER_SLEEP(fn, level, priority)
 
-void tlk_after_sleep(void);
+void tlk_perform_after_sleep(void);
 
 typedef bool (*tlk_prevent_suspend_func_t)(void);
 

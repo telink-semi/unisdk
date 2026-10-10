@@ -6,6 +6,7 @@ import sys
 
 from scripts.pinmux.data.path_manager import PathManager
 from scripts.pinmux.data.pinmux_manager import PinmuxManager
+from scripts.pinmux.data.pinmux_error import PinmuxError
 
 
 # Parse command line arguments
@@ -52,7 +53,10 @@ if args.no_ui:
         logger.info("Closing the pinmux configurator without errors...")
         sys.exit(0)
     else:
-        logger.error("Closing the pinmux configurator with errors...")
+        try:
+            manager.validate()
+        except PinmuxError as error:
+            logger.error(f"{error}. Run 'make pinmux' (or 'make config') to assign pins.")
         sys.exit(1)
 
 from .app import PinmuxApp

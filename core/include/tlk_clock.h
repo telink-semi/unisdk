@@ -8,7 +8,7 @@
         while (!(TLK_DEBRACKET condition))                                                         \
         {                                                                                          \
             if ((tlk_clock_cclk_get_tick() - start) >                                              \
-                (tlk_sys_clk.cclk * TLK_DEBRACKET timeout_us))                                     \
+                (tlk_sys_clk->cclk * TLK_DEBRACKET timeout_us))                                    \
             {                                                                                      \
                 TLK_DEBRACKET timeout_handler                                                      \
             }                                                                                      \
@@ -45,8 +45,15 @@ struct tlk_clock_sys_clk_config
     uint8_t                       mspi_clk;
 };
 
-extern struct tlk_clock_sys_clk_config tlk_default_sys_clk;
-extern struct tlk_clock_sys_clk_config tlk_sys_clk;
+struct tlk_clock_24m_xtal_cap
+{
+    bool    use_external_cap;
+    uint8_t internal_cap_value;
+};
+
+// Add the .data section attribute to remain it accessible without using flash.
+extern const struct tlk_clock_sys_clk_config tlk_default_sys_clk __attribute__((section(".data")));
+extern const struct tlk_clock_sys_clk_config* const tlk_sys_clk __attribute__((section(".data")));
 
 /**
  * @brief Set the 32K clock source.
@@ -90,6 +97,13 @@ uint64_t tlk_clock_cclk_get_tick(void);
  * @param delay_tick - desired delay in ticks.
  */
 void tlk_clock_cclk_delay(uint64_t delay_tick);
+
+/**
+ * @brief Configure the capacitor of the 24M XTAL.
+ *
+ * @param cfg - configuration structure.
+ */
+void tlk_clock_24m_xtal_configure_cap(struct tlk_clock_24m_xtal_cap cfg);
 
 /**
  * @brief Enable the 24M XTAL.

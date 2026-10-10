@@ -1,336 +1,365 @@
 # SPDX-License-Identifier: Apache-2.0
+#
+# Cmake Configuration Time options in the kconfig.cmake:
+#   SOC_SERIES - SOC_SERIES to be used
+#   SOC - SOC to be used
+#   BOARD - BOARD to be used
 
 include_guard(GLOBAL)
 
-include(extensions)
-include(python)
+set(MENUCONFIG_SCRIPT ${TELINK_BASE}/scripts/menuconfig.py) # Menuconfig script
 
-# 1. Define core file paths
-set(CHIP_CONFIG_FILE ${CMAKE_BINARY_DIR}/chip.config)          # Configuration file
-set(BUILD_CONFIG_FILE ${CMAKE_BINARY_DIR}/build.config)        # Configuration file
-set(DOTCONFIG ${CMAKE_BINARY_DIR}/.config)                     # Configuration file (merged from chip.config and build.config)
-set(AUTOCONF_H ${CMAKE_BINARY_DIR}/autoconf.h)                 # Precompiled header file generated after parsing
-set(MENUCONFIG_SCRIPT ${TELINK_BASE}/scripts/menuconfig.py)    # Menuconfig script
-set(PARSE_SCRIPT ${TELINK_BASE}/scripts/parse_config.py)       # Parsing script
-set(PREPROCESS_SCRIPT ${TELINK_BASE}/scripts/preprocess_kconfig.py)  # Preprocessing script
-set(KCONFIG_BINARY_DIR ${CMAKE_CURRENT_BINARY_DIR}/Kconfig)    # Kconfig binary directory for source includes
-set(KCONFIG_APPLICATION_DIR ${CMAKE_CURRENT_SOURCE_DIR})       # Application directory for Kconfig
+# === Configuration file: chip.config ===
+set(CHIP_CONFIG_FILE ${CMAKE_BINARY_DIR}/chip.config)
+set(CHIP_GEN_SCRIPT ${TELINK_BASE}/scripts/generators/chip_config_gen.py)
 
-# Collect all files that should be cleaned automatically
-set(KCONFIG_CLEAN_FILES
-    ${CHIP_CONFIG_FILE}
-    ${BUILD_CONFIG_FILE}
-    ${DOTCONFIG}
-    ${AUTOCONF_H}
-    ${PINMUX_H}
-    ${KCONFIG_BINARY_DIR}
-)
-
-# Process SOC and BOARD parameters if provided
-if(DEFINED SOC)
-  message(STATUS "SOC parameter detected: ${SOC}")
-  set(SOC_CONFIG_ARG "SOC=${SOC}")
-else()
-  set(SOC_CONFIG_ARG "")
+# At least one MCU package is required: packages/Kconfig.mcu builds the "SoC Series" choice from
+# packages/*/Kconfig.core, so without one chip.config stays empty and no core can be selected
+file(GLOB MCU_KCONFIG_CORES ${TELINK_BASE}/packages/*/Kconfig.core)
+if(NOT MCU_KCONFIG_CORES)
+    message(FATAL_ERROR
+        "No MCU package installed in ${TELINK_BASE}/packages.\n"
+        "Install one, e.g.:\n"
+        "  python scripts/tlkpkg/registry_client.py install-mcu <CORE> --target-root ${TELINK_BASE}\n"
+        "or from the Component Registry in the Telink UniSDK VS Code extension.")
 endif()
 
-if(DEFINED BOARD)
-  message(STATUS "BOARD parameter detected: ${BOARD}")
-  set(BOARD_CONFIG_ARG "BOARD=${BOARD}")
-else()
-  set(BOARD_CONFIG_ARG "")
+# Create a list of the parameters passed for the CMake configuration (SOC_SERIES, SOC, BOARD),
+# and unset them, as they need to be processed only once-either - to set up the hardware (if chip.config is missing),
+# or to modify the hardware configuration (if chip.config is present)
+set(CHIP_CONFIG_FLAGS "")
+
+if(SOC_SERIES)
+    message(STATUS "Option SOC_SERIES: ${SOC_SERIES}")
+    list(APPEND CHIP_CONFIG_FLAGS --soc-series ${SOC_SERIES})
 endif()
 
-# Validate SOC and BOARD combination using dynamic Kconfig parsing
-if(SOC_CONFIG_ARG AND BOARD_CONFIG_ARG)
-  message(STATUS "Validating SOC and BOARD combination...")
-
-  # Extract SOC and BOARD names from arguments
-  string(REGEX REPLACE "SOC=" "" SOC_NAME "${SOC_CONFIG_ARG}")
-  string(REGEX REPLACE "BOARD=" "" BOARD_NAME "${BOARD_CONFIG_ARG}")
-
-  # Run validation using our kconfig_parser
-  execute_process(
-    COMMAND ${PYTHON_EXECUTABLE}
-            ${TELINK_BASE}/scripts/kconfig_parser.py
-            --kconfig ${TELINK_BASE}/Kconfig.chip
-            --validate ${SOC_NAME} ${BOARD_NAME}
-    WORKING_DIRECTORY ${TELINK_BASE}
-    RESULT_VARIABLE VALIDATION_RESULT
-    OUTPUT_VARIABLE VALIDATION_OUTPUT
-    ERROR_VARIABLE VALIDATION_ERROR
-  )
-
-  if(NOT VALIDATION_RESULT EQUAL 0)
-    message(FATAL_ERROR "SOC/BOARD validation failed: ${VALIDATION_ERROR}")
-  else()
-    message(STATUS "SOC/BOARD validation passed: ${VALIDATION_OUTPUT}")
-  endif()
+if(SOC)
+    message(STATUS "Option SOC: ${SOC}")
+    list(APPEND CHIP_CONFIG_FLAGS --soc ${SOC})
 endif()
 
-# Set additional clean files for the directory in one call
-set_directory_properties(
-    PROPERTIES ADDITIONAL_CLEAN_FILES "${KCONFIG_CLEAN_FILES}"
-)
+if(BOARD)
+    message(STATUS "Option BOARD: ${BOARD}")
+    list(APPEND CHIP_CONFIG_FLAGS --board ${BOARD})
+endif()
 
-# First, ensure .config file exists and is generated during configuration phase if missing
-if(NOT EXISTS ${DOTCONFIG})
-  message(STATUS "Auto-generating configuration files...")
+unset(SOC_SERIES CACHE)
+unset(SOC CACHE)
+unset(BOARD CACHE)
 
-  # Create .config directly during configuration phase if it doesn't exist
-  if(NOT EXISTS ${CHIP_CONFIG_FILE})
-    # Apply SOC and BOARD configurations using Python setter if provided
-    if(SOC_CONFIG_ARG OR BOARD_CONFIG_ARG)
-      message(STATUS "Applying SOC/BOARD configurations using Python setter...")
 
-      # Build command arguments
-      set(SETTER_ARGS "")
-      if(SOC_CONFIG_ARG)
-        string(REGEX REPLACE "SOC=" "" SOC_NAME "${SOC_CONFIG_ARG}")
-        list(APPEND SETTER_ARGS "--soc" "${SOC_NAME}")
-      endif()
-      if(BOARD_CONFIG_ARG)
-        string(REGEX REPLACE "BOARD=" "" BOARD_NAME "${BOARD_CONFIG_ARG}")
-        list(APPEND SETTER_ARGS "--board" "${BOARD_NAME}")
-      endif()
-
-      execute_process(
-        COMMAND ${PYTHON_EXECUTABLE}
-                ${TELINK_BASE}/scripts/soc_board_setter.py
-                --kconfig ${TELINK_BASE}/Kconfig.chip
-                --telink-base ${TELINK_BASE}
-                --config-file ${CHIP_CONFIG_FILE}
-                ${SETTER_ARGS}
-        WORKING_DIRECTORY ${CMAKE_BINARY_DIR}
-        RESULT_VARIABLE SETTER_RESULT
-        OUTPUT_VARIABLE SETTER_OUTPUT
-        ERROR_VARIABLE SETTER_ERROR
-      )
-
-      if(NOT SETTER_RESULT EQUAL 0)
-        message(FATAL_ERROR "SOC/BOARD setter failed: ${SETTER_ERROR}")
-      else()
-        message(STATUS "SOC/BOARD setter applied successfully: ${SETTER_OUTPUT}")
-      endif()
-    else()
-      execute_process(
-        COMMAND ${CMAKE_COMMAND} -E env KCONFIG_BINARY_DIR=${KCONFIG_BINARY_DIR} KCONFIG_APPLICATION_DIR=${KCONFIG_APPLICATION_DIR} ${PYTHON_EXECUTABLE}
-        ${TELINK_BASE}/scripts/kconfig.py
-        --telink-base=${TELINK_BASE}
+# Custom target for generating chip.config
+add_custom_target(
+    config_chip
+    COMMAND ${CMAKE_COMMAND} -E env
+            KCONFIG_CONFIG=${CHIP_CONFIG_FILE}
+            ${PYTHON_EXECUTABLE} ${MENUCONFIG_SCRIPT} ${TELINK_BASE}/Kconfig.chip
+    WORKING_DIRECTORY ${CMAKE_BINARY_DIR}
+    VERBATIM
+    DEPENDS
         ${TELINK_BASE}/Kconfig.chip
-        ${CHIP_CONFIG_FILE}
-        WORKING_DIRECTORY ${TELINK_BASE}
-        )
-    endif()
-  endif()
-
-  # Updating the Kconfig files, that heed to be parsed
-  if(NOT IS_DIRECTORY "${TELINK_BASE}/libraries")
-    message(STATUS "DEV SRC: Running Kconfig preprocessor")
-    execute_process(
-        COMMAND ${PYTHON_EXECUTABLE}
-        ${PREPROCESS_SCRIPT}
-        --root-dir=${TELINK_BASE}
-        --build-dir=${CMAKE_BINARY_DIR}
-        WORKING_DIRECTORY ${CMAKE_BINARY_DIR}
-    )
-  else()
-    message(STATUS "SDK: Copying pre-processed Kconfig files")
-
-    file(STRINGS "${CHIP_CONFIG_FILE}" _soc_line REGEX "^CONFIG_TLK_SOC_SERIES=")
-    string(REGEX REPLACE ".*CONFIG_TLK_SOC_SERIES=\"?([A-Za-z0-9_]+)\"?.*" "\\1" _soc_series "${_soc_line}")
-
-    if(_soc_series)
-      set(SOC_PREPROCESSED_KCONFIG_DIR "${TELINK_BASE}/kconfig/${_soc_series}")
-
-      file(COPY "${SOC_PREPROCESSED_KCONFIG_DIR}/" DESTINATION "${KCONFIG_BINARY_DIR}")
-      message(STATUS "SDK: Kconfig files copied for SOC series: ${_soc_series}")
-
-    else()
-      message(FATAL_ERROR "SDK: Could not determine CONFIG_TLK_SOC_SERIES from ${CHIP_CONFIG_FILE}")
-    endif()
-  endif()
-
-  # Create build.config directly during configuration phase if it doesn't exist
-  if(NOT EXISTS ${BUILD_CONFIG_FILE})
-    execute_process(
-      COMMAND ${CMAKE_COMMAND} -E env KCONFIG_BINARY_DIR=${KCONFIG_BINARY_DIR} KCONFIG_APPLICATION_DIR=${KCONFIG_APPLICATION_DIR} ${PYTHON_EXECUTABLE}
-      ${TELINK_BASE}/scripts/kconfig.py
-      --telink-base=${TELINK_BASE}
-      ${TELINK_BASE}/Kconfig.build
-      ${BUILD_CONFIG_FILE}
-      WORKING_DIRECTORY ${TELINK_BASE}
-      )
-  endif()
-
-  # Create .config directly during configuration phase if it doesn't exist
-  file(WRITE ${DOTCONFIG} "# Auto-generated .config file during CMake configuration\n")
-  # Append content from build.config and chip.config if they exist
-  file(READ ${CHIP_CONFIG_FILE} CHIP_CONFIG_CONTENT)
-  file(APPEND ${DOTCONFIG} "${CHIP_CONFIG_CONTENT}")
-  file(APPEND ${DOTCONFIG} "\n")
-  file(READ ${BUILD_CONFIG_FILE} BUILD_CONFIG_CONTENT)
-  file(APPEND ${DOTCONFIG} "${BUILD_CONFIG_CONTENT}")
-endif()
-
-# Ensure CMake detects changes in configuration files and reconfigures
-set_property(DIRECTORY APPEND PROPERTY CMAKE_CONFIGURE_DEPENDS ${DOTCONFIG})
-
-
-
-# Create a custom target for generating chip.config
-add_custom_target(
-  generate_chip_config
-  COMMAND ${CMAKE_COMMAND} -E env KCONFIG_CONFIG=${CHIP_CONFIG_FILE} KCONFIG_BINARY_DIR=${KCONFIG_BINARY_DIR} KCONFIG_APPLICATION_DIR=${KCONFIG_APPLICATION_DIR} ${PYTHON_EXECUTABLE} ${MENUCONFIG_SCRIPT} ${TELINK_BASE}/Kconfig.chip
-  WORKING_DIRECTORY ${CMAKE_BINARY_DIR}
-  VERBATIM
-  DEPENDS ${MENUCONFIG_SCRIPT} ${TELINK_BASE}/Kconfig.chip
-  USES_TERMINAL
-  COMMENT "Generate chip.config file"
-)
-
-if(NOT IS_DIRECTORY "${TELINK_BASE}/libraries")
-  # Parse the Kconfig files, using yaml dict from the selected hardware, via the preprocess script
-  add_custom_target(
-    prepare_kconfig_files
-    COMMAND ${PYTHON_EXECUTABLE} ${PREPROCESS_SCRIPT}
-            --root-dir=${TELINK_BASE}
-            --build-dir=${CMAKE_BINARY_DIR}
-    WORKING_DIRECTORY ${CMAKE_BINARY_DIR}
-    VERBATIM
-    DEPENDS ${CHIP_CONFIG_FILE}
+        ${MENUCONFIG_SCRIPT}
     USES_TERMINAL
-    COMMENT "DEV SRC: Running Kconfig preprocessor\n"
-  )
-else()
-  # Reading the soc series in the chip.config
-  file(STRINGS "${CHIP_CONFIG_FILE}" _soc_line REGEX "^CONFIG_TLK_SOC_SERIES=")
-  string(REGEX REPLACE ".*CONFIG_TLK_SOC_SERIES=\"?([A-Za-z0-9_]+)\"?.*" "\\1" _soc_series "${_soc_line}")
+    COMMENT "Generating chip.config"
+)
 
-  message(STATUS "SDK: SOC for which kconfigs will be copied: ${_soc_series}")
 
-  # Path to the folder with pre-processed configs in exported SDK, for selected hardware
-  set(SOC_PREPROCESSED_KCONFIG_DIR "${TELINK_BASE}/kconfig/${_soc_series}")
+# Check if the chip.config is configured for the Cmake Configure Time OR chip.config update request by flags
+if(NOT EXISTS ${CHIP_CONFIG_FILE} OR CHIP_CONFIG_FLAGS)
+    if(NOT EXISTS ${CHIP_CONFIG_FILE})
+        message(STATUS "chip.config is not configured")
+        message(STATUS "Preparing default chip.config")
+    else()
+        message(STATUS "chip.config update request by flags")
+    endif()
 
-  # Copy existing pre-processed configs in exported SDK, for selected hardware into the KCONFIG_BINARY_DIR
-  add_custom_target(
-    prepare_kconfig_files
-    COMMAND ${CMAKE_COMMAND} -E rm -rf "${KCONFIG_BINARY_DIR}"
-    COMMAND ${CMAKE_COMMAND} -E copy_directory "${SOC_PREPROCESSED_KCONFIG_DIR}" "${KCONFIG_BINARY_DIR}"
-    WORKING_DIRECTORY ${CMAKE_BINARY_DIR}
-    VERBATIM
-    DEPENDS ${CHIP_CONFIG_FILE}
-    COMMENT "SDK: Copying pre-processed Kconfig files"
-  )
+    execute_process(
+        COMMAND ${PYTHON_EXECUTABLE} ${CHIP_GEN_SCRIPT}
+                ${TELINK_BASE}/Kconfig.chip ${CHIP_CONFIG_FILE} ${CHIP_CONFIG_FLAGS}
+        WORKING_DIRECTORY ${TELINK_BASE}
+        RESULT_VARIABLE RESULT
+    )
+
+    if(NOT RESULT EQUAL 0)
+        message(FATAL_ERROR "chip.config generation failed")
+    endif()
 endif()
 
-# Create a custom target for generating build.config
-add_custom_target(
-  generate_build_config
-  COMMAND ${CMAKE_COMMAND} -E env KCONFIG_CONFIG=${BUILD_CONFIG_FILE} KCONFIG_BINARY_DIR=${KCONFIG_BINARY_DIR} KCONFIG_APPLICATION_DIR=${KCONFIG_APPLICATION_DIR} ${PYTHON_EXECUTABLE} ${MENUCONFIG_SCRIPT} ${TELINK_BASE}/Kconfig.build
-  WORKING_DIRECTORY ${TELINK_BASE}
-  VERBATIM
-  DEPENDS ${MENUCONFIG_SCRIPT} ${TELINK_BASE}/Kconfig.build
-  USES_TERMINAL
-  COMMENT "Generate build.config file"
-)
+if(NOT EXISTS ${CHIP_CONFIG_FILE})
+    message(FATAL_ERROR "chip.config is still not configured")
+endif()
 
-# Create a custom target for updating .config
-add_custom_target(
-  update_dotconfig
-  COMMAND ${CMAKE_COMMAND} -E remove -f ${DOTCONFIG}
-  COMMAND ${CMAKE_COMMAND} -E echo "# Auto-generated by CMake" > ${DOTCONFIG}
-  COMMAND ${CMAKE_COMMAND} -E cat ${BUILD_CONFIG_FILE} >> ${DOTCONFIG}
-  COMMAND ${CMAKE_COMMAND} -E echo "" >> ${DOTCONFIG}
-  COMMAND ${CMAKE_COMMAND} -E cat ${CHIP_CONFIG_FILE} >> ${DOTCONFIG}
-  WORKING_DIRECTORY ${CMAKE_BINARY_DIR}
-  VERBATIM
-  DEPENDS ${BUILD_CONFIG_FILE} ${CHIP_CONFIG_FILE}
-  COMMENT "Update .config file using cross-platform CMake commands"
-)
 
-# Create the parse_config target that depends on autoconf.h
-add_custom_target(
-  parse_config
-  DEPENDS ${DOTCONFIG}  # Depends on .config and parsed header to ensure it's generated
-  COMMENT "Completed .config parsing"
-)
+# Parse the chip.config configuration for Cmake variables
+parse_configs(${CHIP_CONFIG_FILE})
 
-# Parse .config during build, generate precompiled header (executed before main program compilation)
-file(STRINGS ${CMAKE_BINARY_DIR}/.config CONFIG_LINES)
+# Print the selected CORE
+if(CONFIG_TLK_CORE)
+    message(STATUS "Using ${CONFIG_TLK_CORE} core")
+    message(STATUS "Using ${CONFIG_TLK_SOC_SERIES} SOC series")
+else()
+    message(FATAL_ERROR "Core is not selected")
+endif()
 
-file(WRITE "${AUTOCONF_H}" "/* Auto-generated from .config */\n")
-foreach(line IN LISTS CONFIG_LINES)
-    string(REGEX MATCH "^CONFIG_([A-Za-z0-9_]+)=" matched "${line}")
-    if(matched)
-        string(REGEX REPLACE "=" ";" parts "${line}")
-        list(GET parts 0 name)
-        list(GET parts 1 value)
+# Print the selected SOC
+if(CONFIG_TLK_SOC)
+    message(STATUS "Using ${CONFIG_TLK_SOC} SOC")
+else()
+    message(FATAL_ERROR "SOC is not selected")
+endif()
 
-        # Handle boolean (y/n) as 1/0
-        if(value STREQUAL "y")
-            set(${name} 1)
-            file(APPEND "${AUTOCONF_H}" "#define ${name} 1\n")
-
-        elseif(value STREQUAL "n")
-            set(${name} 0)
-            file(APPEND "${AUTOCONF_H}" "#define ${name} 0\n")
-
-        # String with quotes: CONFIG_NAME="Value"
-        elseif(value MATCHES "^\".*\"$")
-            # Remove quotes to get bare strings
-            string(REGEX REPLACE "^\"(.*)\"$" "\\1" value_stripped "${value}")
-            set(${name} "${value_stripped}")
-            # Pass as a define like CONFIG_NAME ABC
-            file(APPEND "${AUTOCONF_H}" "#define ${name} ${value_stripped}\n")
-
-        # Numbers or other values
-        else()
-            set(${name} ${value})
-            file(APPEND "${AUTOCONF_H}" "#define ${name} ${value}\n")
-
-        endif()
-    endif()
-endforeach()
-
-# Print the current hardware
-message(STATUS "Using ${CONFIG_TLK_CORE} core")
-message(STATUS "Using ${CONFIG_TLK_SOC_SERIES} soc series")
-message(STATUS "Using ${CONFIG_TLK_SOC} soc")
-if (CONFIG_TLK_HAS_BOARD_SELECTED)
+# Print the selected BOARD
+if(CONFIG_TLK_BOARD_IS_SELECTED)
     message(STATUS "Using ${CONFIG_TLK_BOARD} board")
 else()
     message(STATUS "Board is not selected")
 endif()
 
+# === Configuration file: chip.config ===
 
-# Main config target that orchestrates all configuration steps
+
+# === Configuration file: build.config ===
+set(BUILD_CONFIG_FILE ${CMAKE_BINARY_DIR}/build.config)
+set(KCONFIG_APPLICATION_DIR "${APPLICATION_SOURCE_DIR}" CACHE INTERNAL "Application directory for Kconfig") # Application directory for Kconfig
+
+
+# === Part 1: Kconfig files parsing
+if(NOT IS_SDK_MODE)
+    set(YAML_CACHE_GEN_SCRIPT "${TELINK_BASE}/scripts/generators/yaml_cache_gen.py") # Script to generate properties cache file
+    set(KCONFIG_PARSER_SCRIPT "${TELINK_BASE}/scripts/parsers/parse_kconfig.py")     # Script to parse the Kconfig file
+
+    if(CONFIG_TLK_BOARD_IS_SELECTED)
+        set(GENERATED_KCONFIG_BASE_DIR "${GENERATED_BASE_DIR}/kconfig/${CONFIG_TLK_SOC_SERIES}/${CONFIG_TLK_BOARD}" CACHE INTERNAL "Directory to generate kconfigs in")   # Directory to generate kconfigs in
+        set(KCONFIG_CACHE_DIR          "${GENERATED_BASE_DIR}/_attributes/${CONFIG_TLK_SOC_SERIES}/${CONFIG_TLK_BOARD}") # Directory for Kconfig auto-generation attributes
+    else()
+        set(GENERATED_KCONFIG_BASE_DIR "${GENERATED_BASE_DIR}/kconfig/${CONFIG_TLK_SOC_SERIES}" CACHE INTERNAL "Directory to generate kconfigs in")     # Directory to generate kconfigs in
+        set(KCONFIG_CACHE_DIR          "${GENERATED_BASE_DIR}/_attributes/${CONFIG_TLK_SOC_SERIES}") # Directory for Kconfig auto-generation attributes
+    endif()
+
+    set(PROPERTIES_CACHE_FILE "${KCONFIG_CACHE_DIR}/properties.pkl") # Cache file containing parsed data from all property YAML files
+
+
+    # Include YAML helpers
+    include(yaml_helper)
+
+    # Custom command to automatically update the parsed properties cache if any CORE, SOC, or BOARD YAML file changes
+    add_custom_command(
+        OUTPUT ${PROPERTIES_CACHE_FILE}
+        COMMAND ${CMAKE_COMMAND} -E make_directory "${KCONFIG_CACHE_DIR}"
+        COMMAND ${PYTHON_EXECUTABLE} ${YAML_CACHE_GEN_SCRIPT}
+            ${PROPERTIES_CACHE_FILE}
+            ${PROPERTY_YAML_FILES}
+        DEPENDS
+            ${YAML_CACHE_GEN_SCRIPT}
+            ${PROPERTY_YAML_FILES}
+        COMMENT "Generating properties cache file"
+        VERBATIM
+        WORKING_DIRECTORY ${TELINK_BASE}
+    )
+
+
+    # Create a list of all Kconfig files that have to be parsed for selected CORE, SOC, BOARD
+    set(KCONFIGS_TO_PARSE "")
+
+    macro(add_kconfigs_to_parse SOURCES)
+        list(GET ${SOURCES} 0 src_dir)
+        list(GET ${SOURCES} 1 out_dir)
+
+        if(EXISTS "${src_dir}")
+            file(GLOB kconfig_files "${src_dir}/Kconfig*")
+
+            foreach(kconfig_file IN LISTS kconfig_files)
+                get_filename_component(file_name "${kconfig_file}" NAME)
+                set(kconfig_out_file "${out_dir}/${file_name}")
+
+                add_custom_command(
+                    OUTPUT "${kconfig_out_file}"
+                    COMMAND ${CMAKE_COMMAND} -E make_directory "${out_dir}"
+                    COMMAND ${PYTHON_EXECUTABLE} ${KCONFIG_PARSER_SCRIPT}
+                        "${PROPERTIES_CACHE_FILE}"
+                        "${kconfig_file}"
+                        "${kconfig_out_file}"
+                    DEPENDS
+                        ${KCONFIG_PARSER_SCRIPT}
+                        ${kconfig_file}
+                        ${PROPERTIES_CACHE_FILE}
+                    COMMENT "Parsing ${kconfig_out_file}"
+                    VERBATIM
+                    WORKING_DIRECTORY "${TELINK_BASE}"
+                )
+
+                list(APPEND KCONFIGS_TO_PARSE "${kconfig_out_file}")
+            endforeach()
+        endif()
+    endmacro()
+
+
+    # Kconfig sources
+    set(API_KCONFIG_SOURCES
+        "${TELINK_BASE}/core/api"
+        "${GENERATED_KCONFIG_BASE_DIR}/core/api"
+    )
+
+    set(CORE_KCONFIG_SOURCES
+        "${TELINK_BASE}/core/configs"
+        "${GENERATED_KCONFIG_BASE_DIR}/core/configs"
+    )
+
+    set(SYSTEM_KCONFIG_SOURCES
+        "${TELINK_BASE}/system"
+        "${GENERATED_KCONFIG_BASE_DIR}/system"
+    )
+
+    add_kconfigs_to_parse(API_KCONFIG_SOURCES)
+    add_kconfigs_to_parse(CORE_KCONFIG_SOURCES)
+    add_kconfigs_to_parse(SYSTEM_KCONFIG_SOURCES)
+
+
+    # Custom target for parsing Kconfig files
+    add_custom_target(
+        parse_kconfig
+        DEPENDS
+            ${TELINK_BASE}/Kconfig.build
+            ${KCONFIGS_TO_PARSE}
+        COMMENT "Parsing Kconfig files"
+    )
+
+else()
+    # Parsed at export time and installed with the MCU package (scripts/tlkpkg/mcu/mcu_export.py)
+    if(CONFIG_TLK_BOARD_IS_SELECTED)
+        set(GENERATED_KCONFIG_BASE_DIR "${TELINK_BASE}/packages/${CONFIG_TLK_CORE}/kconfig/${CONFIG_TLK_SOC_SERIES}/${CONFIG_TLK_BOARD}" CACHE INTERNAL "Directory with generated kconfigs") # Directory with generated kconfigs
+    else()
+        set(GENERATED_KCONFIG_BASE_DIR "${TELINK_BASE}/packages/${CONFIG_TLK_CORE}/kconfig/${CONFIG_TLK_SOC_SERIES}" CACHE INTERNAL "Directory with generated kconfigs") # Directory with generated kconfigs
+    endif()
+endif()
+
+
+# === Part 2: build.config functionality
+set(PRJ_CONF_FILE "${APPLICATION_SOURCE_DIR}/prj.conf")
+set(BUILD_CONFIG_PREREQUISITES "")
+
+if(NOT IS_SDK_MODE)
+    list(APPEND BUILD_CONFIG_PREREQUISITES parse_kconfig)
+endif()
+
+
+# Custom target to parse prj.conf file
+if(NOT EXISTS ${BUILD_CONFIG_FILE} AND EXISTS ${PRJ_CONF_FILE})
+    message(STATUS "Using default sample configs from: ${PRJ_CONF_FILE}")
+
+    add_custom_target(
+        _parse_prj_conf
+        COMMAND ${CMAKE_COMMAND} -E env
+            KCONFIG_BINARY_DIR=${GENERATED_KCONFIG_BASE_DIR}
+            KCONFIG_APPLICATION_DIR=${KCONFIG_APPLICATION_DIR}
+            ${PYTHON_EXECUTABLE} -c
+            "import sys, kconfiglib; k=kconfiglib.Kconfig(r'${TELINK_BASE}/Kconfig.build'); k.load_config(sys.argv[1]); k.write_config(sys.argv[2])"
+            "${PRJ_CONF_FILE}"
+            "${BUILD_CONFIG_FILE}"
+        WORKING_DIRECTORY ${TELINK_BASE}
+        DEPENDS
+            ${TELINK_BASE}/Kconfig.build
+        VERBATIM
+    )
+
+    list(APPEND BUILD_CONFIG_PREREQUISITES _parse_prj_conf)
+endif()
+
+
+# Custom target for generating build.config
 add_custom_target(
-    config
-    # Generate chip.config (this will start menuconfig)
-    COMMAND ${CMAKE_COMMAND} --build ${CMAKE_BINARY_DIR} --target generate_chip_config
-
-    # Reconfigure CMake to detect changes
-    COMMAND ${CMAKE_COMMAND} ${CMAKE_BINARY_DIR}
-
-    # For dev SDK: Parse the Kconfig files, using yaml dict from the selected hardware, via the preprocess script
-    # For exported SDK: Copy existing pre-processed configs in exported SDK, for selected hardware into the KCONFIG_BINARY_DIR
-    COMMAND ${CMAKE_COMMAND} --build ${CMAKE_BINARY_DIR} --target prepare_kconfig_files
-
-    # Generate build.config (this will start menuconfig)
-    COMMAND ${CMAKE_COMMAND} --build ${CMAKE_BINARY_DIR} --target generate_build_config
-
-    # Update .config by merging build.config and chip.config
-    COMMAND ${CMAKE_COMMAND} --build ${CMAKE_BINARY_DIR} --target update_dotconfig
-
-    COMMAND ${CMAKE_COMMAND} --build ${CMAKE_BINARY_DIR} --target update_dotpinmux
-
-    # Reconfigure CMake to detect changes
-    COMMAND ${CMAKE_COMMAND} ${CMAKE_BINARY_DIR}
-
-    WORKING_DIRECTORY ${CMAKE_BINARY_DIR}
+    config_build
+    COMMAND ${CMAKE_COMMAND} -E env
+            KCONFIG_CONFIG=${BUILD_CONFIG_FILE}
+            KCONFIG_BINARY_DIR=${GENERATED_KCONFIG_BASE_DIR}
+            KCONFIG_APPLICATION_DIR=${KCONFIG_APPLICATION_DIR}
+            ${PYTHON_EXECUTABLE} ${MENUCONFIG_SCRIPT} ${TELINK_BASE}/Kconfig.build
+    WORKING_DIRECTORY ${TELINK_BASE}
+    DEPENDS
+        ${TELINK_BASE}/Kconfig.build
+        ${MENUCONFIG_SCRIPT}
     VERBATIM
-    DEPENDS ${MENUCONFIG_SCRIPT} ${TELINK_BASE}/Kconfig.chip ${TELINK_BASE}/Kconfig.build
     USES_TERMINAL
-    COMMENT "Run full configuration process with menuconfig"
+    COMMENT "Generating build.config file via menuconfig GUI"
 )
+
+# Prerequisites are wired with add_dependencies, never with a nested
+# `cmake --build` of this build directory: on Windows a nested ninja that has
+# to regenerate build.ninja fails ("failed recompaction: Permission denied")
+# because the outer ninja keeps .ninja_log open.
+add_dependencies(config_build ${BUILD_CONFIG_PREREQUISITES})
+
+
+# Non-interactive counterpart of config_build: (re)write build.config from
+# the application's prj.conf (or plain Kconfig defaults without one), no
+# menuconfig. Run by the Makefile's cmake/reconfigure targets whenever
+# build.config is missing, so a fresh or just-switched application builds
+# with its own prj.conf right away.
+set(BUILD_CONFIG_DEFAULT_INPUTS "")
+
+if(EXISTS ${PRJ_CONF_FILE})
+    set(BUILD_CONFIG_DEFAULT_INPUTS "${PRJ_CONF_FILE}")
+endif()
+
+add_custom_target(
+    config_build_default
+    COMMAND ${CMAKE_COMMAND} -E env
+        KCONFIG_BINARY_DIR=${GENERATED_KCONFIG_BASE_DIR}
+        KCONFIG_APPLICATION_DIR=${KCONFIG_APPLICATION_DIR}
+        ${PYTHON_EXECUTABLE} -c
+        "import sys, kconfiglib; k=kconfiglib.Kconfig(r'${TELINK_BASE}/Kconfig.build'); [k.load_config(f) for f in sys.argv[2:]]; k.write_config(sys.argv[1])"
+        "${BUILD_CONFIG_FILE}"
+        ${BUILD_CONFIG_DEFAULT_INPUTS}
+    WORKING_DIRECTORY ${TELINK_BASE}
+    VERBATIM
+    COMMENT "Generating build.config from the application's prj.conf"
+)
+
+if(NOT IS_SDK_MODE)
+    add_dependencies(config_build_default parse_kconfig)
+endif()
+
+
+# Parse the build.config for Cmake variables
+parse_configs(${BUILD_CONFIG_FILE})
+
+# === Configuration file: build.config ===
+
+
+# All configuration files
+set(CONFIG_FILES
+    ${CHIP_CONFIG_FILE}
+    ${BUILD_CONFIG_FILE}
+)
+
+# If any file from CONFIG_FILES changes - autoautomatically reconfigure the CMake
+set_property(DIRECTORY APPEND PROPERTY CMAKE_CONFIGURE_DEPENDS ${CONFIG_FILES})
+
+
+# === Auto-generated file: autoconf.h ===
+set(AUTOCONF_H ${CMAKE_BINARY_DIR}/autoconf.h)                               # C header file with all configs (CONFIG_FILES)
+set(AUTOCONF_GEN_SCRIPT "${TELINK_BASE}/scripts/generators/config_h_gen.py") # Script to generate configs header from the config files
+
+
+# Custom command to automatically update the AUTOCONF_H if any file from CONFIG_FILES changes
+add_custom_command(
+    OUTPUT  ${AUTOCONF_H}
+    COMMAND ${PYTHON_EXECUTABLE} ${AUTOCONF_GEN_SCRIPT}
+        ${AUTOCONF_H}
+        ${CONFIG_FILES}
+    DEPENDS ${CONFIG_FILES}
+    COMMENT "Generating autoconf.h"
+    VERBATIM
+)
+
+# Custom target for automatically update the AUTOCONF_H
+add_custom_target(
+    generate_autoconf
+    DEPENDS ${AUTOCONF_H}
+    COMMENT "Generating autoconf.h"
+)
+# === Auto-generated file: autoconf.h ===
+
+
+list(APPEND FILES_TO_CLEAN ${CONFIG_FILES} ${AUTOCONF_H})

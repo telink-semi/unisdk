@@ -22,9 +22,9 @@ This SDK includes:
 
 ## 2. Quick Development Information
 
-For detailed device support list, please refer to [Release Notes](https://telink-semi.github.io/unisdk-doc/en/main/releases/index.html).
+For detailed device support list, please refer to [Release Notes](https://telink-semi.github.io/unisdk-doc/en/latest/releases/index.html).
 
-For development environment setup, SDK acquisition, and getting started methods, please refer to [SDK Get Started](https://telink-semi.github.io/unisdk-doc/en/main/getting_started/index.html).
+For development environment setup, SDK acquisition, and getting started methods, please refer to [SDK Get Started](https://telink-semi.github.io/unisdk-doc/en/latest/getting_started/index.html).
 
 For detailed software architecture, repository structure, example projects and functional module descriptions, please refer to [UniSDK Documentation](https://telink-semi.github.io/unisdk-doc/).
 
@@ -32,21 +32,21 @@ For detailed software architecture, repository structure, example projects and f
 
 | Document | Description | Link |
 |----------|-------------|------|
-| Quick Start Guide (Get Started) | SDK getting started guide | [getting_started](https://telink-semi.github.io/unisdk-doc/en/main/getting_started/index.html) |
-| Development Guide | Detailed SDK usage guide | [developing](https://telink-semi.github.io/unisdk-doc/en/main/developing/index.html) |
-| Examples Manual | Detailed example project explanations | [samples](https://telink-semi.github.io/unisdk-doc/en/main/samples/index.html) |
-| API Reference | API documentation and reference | [public_api](https://telink-semi.github.io/unisdk-doc/en/main/api_reference/index.html) |
-| Release Notes | SDK changes and new features | [releases](https://telink-semi.github.io/unisdk-doc/en/main/releases/index.html) |
+| Quick Start Guide (Get Started) | SDK getting started guide | [getting_started](https://telink-semi.github.io/unisdk-doc/en/latest/getting_started/index.html) |
+| Development Guide | Detailed SDK usage guide | [developing](https://telink-semi.github.io/unisdk-doc/en/latest/developing/index.html) |
+| Examples Manual | Detailed example project explanations | [samples](https://telink-semi.github.io/unisdk-doc/en/latest/samples/index.html) |
+| API Reference | API documentation and reference | [public_api](https://telink-semi.github.io/unisdk-doc/en/latest/api_reference/index.html) |
+| Release Notes | SDK changes and new features | [releases](https://telink-semi.github.io/unisdk-doc/en/latest/releases/index.html) |
 | Telink Official Forum | Technical support and discussions | https://forum.telink-semi.cn/ |
 | Telink Official Website | Product and documentation center | https://www.telink-semi.com/ |
 
 ## 4. Release Information
 
-Version history and detailed changes are available at: [Release Notes](https://telink-semi.github.io/unisdk-doc/en/main/releases/index.html)
+Version history and detailed changes are available at: [Release Notes](https://telink-semi.github.io/unisdk-doc/en/latest/releases/index.html)
 
 ## 5. Contribution Guide
 
-Contribution instructions: [Contribution Guide](https://telink-semi.github.io/unisdk-doc/en/main/contribute/index.html)
+Contribution instructions: [Contribution Guide](https://telink-semi.github.io/unisdk-doc/en/latest/contribute/index.html)
 
 ## 6. License
 

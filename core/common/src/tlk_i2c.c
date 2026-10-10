@@ -1,7 +1,7 @@
 #include "core/include/tlk_i2c.h"
 #include "common/include/tlk_init.h"
 
-#if TLK_IS_ENABLED(CONFIG_TLK_I2C_AUTO_CONFIG)
+#if TLK_IS_ENABLED(CONFIG_TLK_I2C_USE_AUTO_CONFIG)
 
 #define TLK_DECLARE_I2C_AUTO_CONFIG(num)                                                           \
     __attribute__((used, noinline)) static void tlk_i2c##num##_auto_config(void)                   \
@@ -19,7 +19,7 @@
                 },                                                                                 \
         };                                                                                         \
                                                                                                    \
-        tlk_i2c_configure_pinmux(&tlk_i2c##num, &pinmux);                                          \
+        tlk_i2c_pinmux_configure(&tlk_i2c##num, &pinmux);                                          \
                                                                                                    \
         TLK_IF_ENABLED(CONFIG_TLK_I2C##num##_AC_MODE_MASTER,                                       \
                        (struct tlk_i2c_master_config config =                                      \

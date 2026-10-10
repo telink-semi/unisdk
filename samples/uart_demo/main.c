@@ -34,6 +34,7 @@
 #include "core/include/tlk_pm.h"
 #endif
 
+#define UART_NUM     TLK_UART0
 #define UART_TIMEOUT TLK_SEC_TO_US(5)
 
 /* ==== VARIABLES ==== */
@@ -69,7 +70,7 @@ int main(void)
 {
     tlk_core_interrupt_enable();
 
-#if TLK_IS_DISABLED(CONFIG_TLK_UART_DEMO_AUTO_CONFIG)
+#if TLK_IS_DISABLED(CONFIG_TLK_UART0_AUTO_CONFIG)
     struct tlk_uart_config config = {.baudrate       = 115200,
                                      .parity         = TLK_UART_PARITY_NONE,
                                      .stop_bit       = TLK_UART_STOP_BIT_ONE,
@@ -83,52 +84,48 @@ int main(void)
                                          .port = TLK_GPIO_PORT_C,
                                          .pin  = TLK_GPIO_PIN_5,
                                      }};
-    tlk_uart_configure(CONFIG_TLK_UART_DEMO_UART, &config);
+    tlk_uart_configure(UART_NUM, &config);
 
-    // TODO: change the CONFIG_TLK_UART0_FLOW_CONTROL to CONFIG_TLK_UART_DEMO_FLOW_CONTROL
     TLK_IF_ENABLED(CONFIG_TLK_UART0_FLOW_CONTROL,
-                   (struct tlk_uart_flow_control_config flow_control_config =
-                        {.flow_control  = TLK_UART_FLOW_RTS_CTS,
-                         .flow_polarity = TLK_UART_ACTIVE_LOW,
-                         .rts_port_pin =
-                             (struct tlk_gpio_port_pin){
-                                 .port = TLK_GPIO_PORT_C,
-                                 .pin  = TLK_GPIO_PIN_6,
-                             },
-                         .cts_port_pin =
+                   (struct tlk_uart_flow_control_config flow_control_config = {
+                        .flow_control  = TLK_UART_FLOW_RTS_CTS,
+                        .flow_polarity = TLK_UART_ACTIVE_LOW,
+                        .rts_port_pin =
+                            (struct tlk_gpio_port_pin){
+                                .port = TLK_GPIO_PORT_C,
+                                .pin  = TLK_GPIO_PIN_6,
+                            },
+                        .cts_port_pin =
 
-                             (struct tlk_gpio_port_pin){
-                                 .port = TLK_GPIO_PORT_C,
-                                 .pin  = TLK_GPIO_PIN_7,
-                             }};) tlk_uart_configure_flow_control(CONFIG_TLK_UART_DEMO_UART,
-                                                                  &flow_control_config););
+                            (struct tlk_gpio_port_pin){
+                                .port = TLK_GPIO_PORT_C,
+                                .pin  = TLK_GPIO_PIN_7,
+                            }};) tlk_uart_flow_control_configure(UART_NUM, &flow_control_config););
 
-    uart_print(CONFIG_TLK_UART_DEMO_UART, "Configured manually\n", UART_TIMEOUT);
+    uart_print(UART_NUM, "Configured manually\n", UART_TIMEOUT);
 #endif
 
     while (1)
     {
 
 #if TLK_IS_ENABLED(CONFIG_TLK_UART_DEMO_SLEEP)
-        uart_print(CONFIG_TLK_UART_DEMO_UART, "Before sleep\n", UART_TIMEOUT);
+        uart_print(UART_NUM, "Before sleep\n", UART_TIMEOUT);
         tlk_api_sleep(TLK_SEC_TO_MS(2));
-        uart_print(CONFIG_TLK_UART_DEMO_UART, "After sleep\n", UART_TIMEOUT);
+        uart_print(UART_NUM, "After sleep\n", UART_TIMEOUT);
 #endif
 
         memset(data, 0, CONFIG_TLK_UART_DEMO_BUFFER_SIZE);
-        uart_print(CONFIG_TLK_UART_DEMO_UART, "Start listening!\n", UART_TIMEOUT);
+        uart_print(UART_NUM, "Start listening!\n", UART_TIMEOUT);
 
-        enum tlk_uart_status recieve_status = tlk_uart_receive_bytes(
-            CONFIG_TLK_UART_DEMO_UART, data, CONFIG_TLK_UART_DEMO_BUFFER_SIZE, rx_handler);
+        enum tlk_uart_status recieve_status =
+            tlk_uart_receive_bytes(UART_NUM, data, CONFIG_TLK_UART_DEMO_BUFFER_SIZE, rx_handler);
 
 #if TLK_IS_ENABLED(CONFIG_TLK_UART_DEMO_PREVENT)
-        enum tlk_pm_sleep_status sleep_status = tlk_pm_sleep(TLK_PM_SLEEP_MODE_SUSPEND, 10);
+        enum tlk_pm_sleep_status sleep_status = TLK_PM_SLEEP_MS(TLK_PM_SLEEP_MODE_SUSPEND, 10);
 
         if (sleep_status == TLK_PM_SLEEP_DENIED)
         {
-            uart_print(CONFIG_TLK_UART_DEMO_UART,
-                       "The sleep was prevented due to active receiving\n",
-                       UART_TIMEOUT);
+            uart_print(UART_NUM, "The sleep was prevented due to active receiving\n", UART_TIMEOUT);
         }
 #endif
 
@@ -139,11 +136,10 @@ int main(void)
             {
             }
 
-            uart_print(CONFIG_TLK_UART_DEMO_UART, "OK\n", UART_TIMEOUT);
-            uart_print(CONFIG_TLK_UART_DEMO_UART, "Recieved: ", UART_TIMEOUT);
+            uart_print(UART_NUM, "OK\n", UART_TIMEOUT);
+            uart_print(UART_NUM, "Recieved: ", UART_TIMEOUT);
 
-            tlk_uart_send_bytes(
-                CONFIG_TLK_UART_DEMO_UART, data, rx_count, tx_handler, UART_TIMEOUT);
+            tlk_uart_send_bytes(UART_NUM, data, rx_count, tx_handler, UART_TIMEOUT);
 
             while (!tx_done)
             {
@@ -152,18 +148,18 @@ int main(void)
             tx_done  = 0;
             rx_count = 0;
 
-            uart_print(CONFIG_TLK_UART_DEMO_UART, "\n", UART_TIMEOUT);
+            uart_print(UART_NUM, "\n", UART_TIMEOUT);
             break;
 
         case TLK_UART_TIMEOUT:
-            uart_print(CONFIG_TLK_UART_DEMO_UART, "TIMEOUT\n", UART_TIMEOUT);
+            uart_print(UART_NUM, "TIMEOUT\n", UART_TIMEOUT);
             break;
 
         case TLK_UART_ERROR:
-            uart_print(CONFIG_TLK_UART_DEMO_UART, "ERR\n", UART_TIMEOUT);
+            uart_print(UART_NUM, "ERR\n", UART_TIMEOUT);
             break;
         }
 
-        uart_print(CONFIG_TLK_UART_DEMO_UART, "\n", UART_TIMEOUT);
+        uart_print(UART_NUM, "\n", UART_TIMEOUT);
     }
 }

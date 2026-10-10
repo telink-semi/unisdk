@@ -1,5 +1,0 @@
-config TLK_ADV_DEMO
-    bool
-    select TLK_RF
-    select TLK_GPIO
-    default y

@@ -1,10 +1,3 @@
-config TLK_BLE_CONTROLLER_DEMO
-    def_bool y
-    select TLK_UART
-    select TLK_UART1_ENABLED
-    select TLK_RF
-    select TLK_BLE_CONTROLLER
-
 config TLK_BLE_CONTROLLER_HCI_ACL_DATA_SIZE
     def_int 50
 

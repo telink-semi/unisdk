@@ -32,17 +32,17 @@
     __attribute__((section(".text"))) __attribute__((noinline))
 
 /**
- *  _tlk_always_inline needs to be added in the following two cases:
- * 1. The subfunctions in the pm_sleep_wakeup function need to use _tlk_always_inline and
- * _tlk_attribute_ram_code_sec_noinline_, as detailed in the internal comments of pm_sleep_wakeup.
- * 2. The BLE SDK uses interrupt preemption, flash interface operations can be interrupted by
- * high-priority interrupts, which requires that the high-priority interrupt handler function,can
- * not have a text segment of code. So the BLE SDK provides the following requirements: Add the
- * following function to _tlk_always_inline: rf_set_tx_rx_off, rf_set_ble_crc_adv,
- * rf_set_ble_crc_value, rf_set_rx_maxlen, tlk_stimer_get_tick, tlk_clock_time_exceed,
- * rf_receiving_flag, tlk_dma_config, gpio_toggle, tlk_gpio_set_low_level, gpio_set_level.
+ * Use this macro carefully. The always_inline attribute is a strong request to the compiler to
+ * inline the function, but it does not guarantee inlining in every situation. In general, without
+ * LTO, the function body must be visible in the same translation unit for the compiler to inline
+ * it. With LTO enabled (-flto), the compiler can inline functions across translation units. Prefer
+ * relying on the compiler's normal optimization whenever possible. With optimization enabled, the
+ * compiler will generally inline functions when it determines that doing so is beneficial.
+ * Therefore, always_inline should only be used when there is a specific reason to require inlining.
+ * For PM-related functions and similar functions where execution from flash isn't possible, prefer
+ * using the ram_code attribute instead.
  */
-#define _tlk_always_inline inline __attribute__((always_inline))
+#define _tlk_always_inline_ inline __attribute__((always_inline))
 
 #define _tlk_attribute_data_retention_sec_ __attribute__((section(".retention_data")))
 

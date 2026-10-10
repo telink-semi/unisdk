@@ -6,10 +6,10 @@
  *
  * This function transmits a null-terminated string containing
  * a critical diagnostic message to the UART backend,
- * when CONFIG_TLK_CRITICAL_PRINTOUT is enabled.
+ * when CONFIG_TLK_CRITICAL_PRINT is enabled.
  *
  * The macro @ref tlk_critical_print() expands to this function
- * only if CONFIG_TLK_CRITICAL_PRINTOUT is defined at compile time.
+ * only if CONFIG_TLK_CRITICAL_PRINT is defined at compile time.
  * Otherwise, the macro expands to an empty statement and the
  * call is compiled out.
  *
@@ -23,7 +23,7 @@
  *
  * @see tlk_critical_print
  */
-#if TLK_IS_ENABLED(CONFIG_TLK_CRITICAL_PRINTOUT)
+#if TLK_IS_ENABLED(CONFIG_TLK_CRITICAL_PRINT)
 void _tlk_critical_print(const char* buf);
 int  _tlk_critical_printf(const char* fmt, ...);
 #define tlk_critical_print(buf)       _tlk_critical_print(buf)

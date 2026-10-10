@@ -54,7 +54,7 @@ void tlk_trap_register_ecall_callback(void (*cb)(void))
  * @brief     Default exception irq handler.
  * @return    None.
  */
-__attribute__((weak)) _tlk_attribute_ram_code_sec_ void tlk_exception_handler(void)
+__attribute__((weak)) _tlk_attribute_ram_code_sec_ void tlk_exception_handle(void)
 {
     /* unhandled trap */
     tlk_exception_mtval   = tlk_read_csr(NDS_MTVAL);
@@ -88,36 +88,36 @@ __attribute_trap_entry_ void tlk_trap_entry(void)
     {
         switch (mcause & UNISDK_TRAP_MCAUSE_EXCEPTION_CODE_MASK)
         {
-#if TLK_IS_ENABLED(CONFIG_TLK_MTIMER_IRQ_ENABLE)
+#if TLK_IS_ENABLED(CONFIG_TLK_MTIMER_IRQ)
         case UNISDK_TRAP_MCAUSE_EXCEPTION_CODE_MTI:
         {
-            extern void tlk_mtimer_handler(void);
+            extern void tlk_mtimer_irq_handle(void);
 
-            tlk_mtimer_handler();
+            tlk_mtimer_irq_handle();
             break;
         }
 #endif
 #if TLK_IS_ENABLED(CONFIG_TLK_PLIC_SW)
         case UNISDK_TRAP_MCAUSE_EXCEPTION_CODE_MSI:
         {
-            extern void tlk_plic_sw_handler(void);
+            extern void tlk_plic_sw_handle(void);
 
-            tlk_plic_sw_handler();
+            tlk_plic_sw_handle();
             break;
         }
 #endif
 #if TLK_IS_ENABLED(CONFIG_TLK_PLIC) && TLK_IS_DISABLED(CONFIG_TLK_PLIC_VECTOR_MODE)
         case UNISDK_TRAP_MCAUSE_EXCEPTION_CODE_MEI:
         {
-            extern void tlk_plic_handler(void);
+            extern void tlk_plic_handle(void);
 
-            tlk_plic_handler();
+            tlk_plic_handle();
             break;
         }
 #endif
         default:
         {
-            tlk_exception_handler();
+            tlk_exception_handle();
             break;
         }
         }
@@ -130,7 +130,7 @@ __attribute_trap_entry_ void tlk_trap_entry(void)
         {
             if (tlk_trap_ecall_callback)
             {
-#ifdef CONFIG_TLK_TRAP_ECALL_NESTING
+#ifdef CONFIG_TLK_TRAP_ECALL_NEST
                 /* save CSRs to stack */
                 tlk_core_save_nested_context();
                 /* enable global interupt */
@@ -138,7 +138,7 @@ __attribute_trap_entry_ void tlk_trap_entry(void)
 #endif
                 /* call the handler */
                 tlk_trap_ecall_callback();
-#ifdef CONFIG_TLK_TRAP_ECALL_NESTING
+#ifdef CONFIG_TLK_TRAP_ECALL_NEST
                 /* save MPP bit (u_mode / m_mode) */
                 uint32_t mpp = tlk_read_csr(NDS_MSTATUS) & TLK_FLD_MSTATUS_MPP;
                 /* disable global interrupts before critical section */
@@ -151,7 +151,7 @@ __attribute_trap_entry_ void tlk_trap_entry(void)
             }
             else
             {
-                tlk_exception_handler();
+                tlk_exception_handle();
             }
 
             tlk_write_csr(NDS_MEPC, tlk_read_csr(NDS_MEPC) + 4);
@@ -160,7 +160,7 @@ __attribute_trap_entry_ void tlk_trap_entry(void)
         default:
         {
             // In case of exception
-            tlk_exception_handler();
+            tlk_exception_handle();
             break;
         }
         }

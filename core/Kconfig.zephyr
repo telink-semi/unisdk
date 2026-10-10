@@ -24,19 +24,19 @@ config TLK_GPIO
 
 if TLK_GPIO
 
-config TLK_GPIO_PORT_A_ENABLED
+config TLK_GPIO_PORTA
     bool "GPIO Port A"
     default y
-config TLK_GPIO_PORT_B_ENABLED
+config TLK_GPIO_PORTB
     bool "GPIO Port B"
     default y
-config TLK_GPIO_PORT_C_ENABLED
+config TLK_GPIO_PORTC
     bool "GPIO Port C"
     default y
-config TLK_GPIO_PORT_D_ENABLED
+config TLK_GPIO_PORTD
     bool "GPIO Port D"
     default y
-config TLK_GPIO_PORT_E_ENABLED
+config TLK_GPIO_PORTE
     bool "GPIO Port E"
     default y
 
@@ -81,18 +81,18 @@ config TLK_UART_PM_DEVICE
     help
         Hidden: set automatically when any UART enables PM.
 
-config TLK_UART0_ENABLED
+config TLK_UART0
     bool "UART0"
     default y
     help
         Enable UART0 instance.
 
-config TLK_UART1_ENABLED
+config TLK_UART1
     bool "UART1"
     help
         Enable UART1 instance.
 
-config TLK_UART2_ENABLED
+config TLK_UART2
     bool "UART2"
     help
         Enable UART2 instance.
@@ -162,7 +162,7 @@ config TLK_DMA
 
 if TLK_DMA
 
-config TLK_DMA_IRQ_HANDLER
+config TLK_DMA_IRQ
     bool "DMA interrupt handler"
     help
         Enable interrupt-driven DMA transfers.
@@ -369,7 +369,7 @@ menuconfig TLK_CRYPTO
 
 if TLK_CRYPTO
 
-config TLK_CRYPTO_DMA_SUPPORT
+config TLK_CRYPTO_DMA
     bool "Support DMA functionality for cryptography"
     select TLK_DMA
 

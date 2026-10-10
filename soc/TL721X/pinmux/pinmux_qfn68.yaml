@@ -1,5 +1,0 @@
-pinmux:
-  port:
-    pd:
-      pins:
-        p4: delete

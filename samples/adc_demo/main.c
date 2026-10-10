@@ -26,9 +26,12 @@
 #include "common/include/tlk_utils.h"
 #include "core/include/tlk_adc.h"
 #include "core/include/tlk_core.h"
-#include "core/include/tlk_dma.h"
 #include "core/include/tlk_sys.h"
 #include "system/debug/log/tlk_log.h"
+
+#if TLK_IS_ENABLED(CONFIG_TLK_ADC_DEMO_DMA)
+#include "core/include/tlk_dma.h"
+#endif
 
 #if TLK_IS_ENABLED(CONFIG_TLK_ADC_DEMO_PM)
 #include "api/include/tlk_sleep.h"
@@ -60,9 +63,9 @@ int main(void)
                 .pin  = TLK_GPIO_PIN_0,
             },
         .timeout_us = 10000,
-#if TLK_IS_ENABLED(CONFIG_TLK_DMA)
-        .dma_en      = false,
-        .dma_channel = tlk_dma_request_chn(),
+#if TLK_IS_ENABLED(CONFIG_TLK_ADC_DEMO_DMA)
+        .dma_en      = true,
+        .dma_channel = tlk_dma_chn_request(),
 #endif
     };
 
@@ -89,7 +92,7 @@ int main(void)
 #if TLK_IS_ENABLED(CONFIG_TLK_ADC_DEMO_PM)
         tlk_api_sleep(TLK_SEC_TO_MS(1));
 #else
-        tlk_api_delay(TLK_SEC_TO_US(1));
+        tlk_api_time_delay(TLK_SEC_TO_US(1));
 #endif
     }
     return 0;

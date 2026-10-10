@@ -12,7 +12,11 @@ set(CMAKE_SKIP_RPATH True)
 set(CMAKE_LINK_LIBRARY_SUFFIX "")
 
 # Read the settings
-set(SETTINGS_FILE "${TELINK_BASE}/common/build_settings.json")
+if(CONFIG_TLK_TOOLCHAIN_TYPE STREQUAL "zephyr")
+    set(SETTINGS_FILE "${TELINK_BASE}/common/build_settings_zephyr.json")
+else()
+    set(SETTINGS_FILE "${TELINK_BASE}/common/build_settings.json")
+endif()
 file(READ "${SETTINGS_FILE}" TARGET_JSON)
 
 string(JSON LINKER_OPTS GET ${TARGET_JSON} linker_options)
@@ -21,14 +25,22 @@ if(LINKER_OPTS)
     json_to_list(${LINKER_OPTS} LINKER_OPTS_LIST)
 endif()
 
+# Apply toolchain-specific extra flags (e.g. -march/-mabi for the hardware-FPU
+# toolchain variant) after the JSON-based options, so they override the ABI
+# implied by -mcpu there. The linker driver invocation needs the same flags as
+# the compiler to select the matching libgcc/libc multilib.
+if(TLK_TOOLCHAIN_EXTRA_FLAGS)
+    list(APPEND LINKER_OPTS_LIST ${TLK_TOOLCHAIN_EXTRA_FLAGS})
+endif()
+
 # Set path to hardware-specific properties "chip" header file.
 # Macros from this header are needed for common linker script.
 
 if(CONFIG_TLK_CORE)
-    if(NOT IS_DIRECTORY "${TELINK_BASE}/libraries")
-        set(CHIP_H ${GENERATED_BASE_DIR}/core/${CONFIG_TLK_CORE}/properties/tlk_chip.h)
+    if(NOT IS_SDK_MODE)
+        set(CHIP_H ${GENERATED_HEADERS_BASE_DIR}/packages/${CONFIG_TLK_CORE}/properties/tlk_chip.h)
     else()
-        set(CHIP_H ${TELINK_BASE}/core/${CONFIG_TLK_CORE}/properties/tlk_chip.h)
+        set(CHIP_H ${TELINK_BASE}/packages/${CONFIG_TLK_CORE}/properties/tlk_chip.h)
     endif()
 
     message(STATUS "Detected Chip Header: ${CHIP_H}")
@@ -40,10 +52,12 @@ else()
     )
 endif()
 
+set(MCUBOOT_RECOVERY_H ${TELINK_BASE}/subsystem/mcuboot/include/tlk_mcuboot_recovery.h)
+
 add_custom_command(
     OUTPUT ${CMAKE_BINARY_DIR}/flash_boot.ld
-    COMMAND ${CMAKE_C_COMPILER} -E -P -x c --imacros=${AUTOCONF_H} --imacros=${CHIP_H} ${TELINK_BASE}/core/common/startup/flash_boot.link -o ${CMAKE_BINARY_DIR}/flash_boot.ld
-    DEPENDS ${TELINK_BASE}/core/common/startup/flash_boot.link ${CHIP_H} ${AUTOCONF_H}
+    COMMAND ${CMAKE_C_COMPILER} -E -P -x c --imacros=${AUTOCONF_H} --imacros=${CHIP_H} --imacros=${MCUBOOT_RECOVERY_H} ${TELINK_BASE}/core/common/startup/flash_boot.link -o ${CMAKE_BINARY_DIR}/flash_boot.ld
+    DEPENDS ${TELINK_BASE}/core/common/startup/flash_boot.link ${CHIP_H} ${AUTOCONF_H} ${MCUBOOT_RECOVERY_H}
     COMMENT "Preprocessing linker script"
 )
 

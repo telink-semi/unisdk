@@ -34,18 +34,36 @@
     TLK_IF_ENABLED_ELSE(                                                                           \
         CONFIG_TLK_RF_DEMO_MODE_BLE,                                                               \
         (struct tlk_rf_ble_pdu),                                                                   \
-        (TLK_IF_ENABLED_ELSE(CONFIG_TLK_RF_DEMO_MODE_ZIGBEE,                                       \
-                             (struct tlk_rf_zigbee_pdu),                                           \
-                             (TLK_IF_ENABLED_ELSE(CONFIG_TLK_RF_DEMO_MODE_PRIVATE,                 \
-                                                  (struct tlk_rf_private_pdu),                     \
-                                                  (TLK_IF_ENABLED(CONFIG_TLK_RF_DEMO_MODE_HYBEE,   \
-                                                                  (struct tlk_rf_hybee_pdu))))))))
+        (TLK_IF_ENABLED_ELSE(                                                                      \
+            CONFIG_TLK_RF_DEMO_MODE_ZIGBEE,                                                        \
+            (struct tlk_rf_zigbee_pdu),                                                            \
+            (TLK_IF_ENABLED_ELSE(                                                                  \
+                CONFIG_TLK_RF_DEMO_MODE_HYBEE,                                                     \
+                (struct tlk_rf_hybee_pdu),                                                         \
+                (TLK_IF_ENABLED(CONFIG_TLK_RF_DEMO_MODE_PRIVATE,                                   \
+                                (TLK_IF_ENABLED_ELSE(CONFIG_TLK_RF_DEMO_SB_FORMAT,                 \
+                                                     (struct rf_demo_private_sb_pdu),              \
+                                                     (struct tlk_rf_private_esb_pdu))))))))))
 
 #define GET_PDU(packet) ((PACKET_PDU_TYPE*) ((packet)->pdu))
 
 #define PACKET_PAYLOAD_SIZE                                                                        \
     (TX_PAYLOAD_SIZE TLK_IF_ENABLED(CONFIG_TLK_RF_DEMO_MODE_ZIGBEE, (+TLK_RF_ZIGBEE_CRC_SIZE))     \
          TLK_IF_ENABLED(CONFIG_TLK_RF_DEMO_MODE_HYBEE, (+TLK_RF_HYBEE_CRC_SIZE)))
+
+/**
+ * Private SB format has no predefined PDU struct, since PDU contains only payload,
+ * and we cannot define the struct which contains only uint8_t payload[],
+ * because then the struct will have 0 size, which is not allowed by the C standard.
+ * However, this demo expects to have a PDU type with a payload field,
+ * so to make it compatible, we define a custom dummy PDU type for demo.
+ * The customer may define their own struct with meaningful fields for the application.
+ */
+struct rf_demo_private_sb_pdu
+{
+    uint8_t command;   // example of some useful data
+    uint8_t payload[]; // the field that is used in the demo
+} __attribute__((packed));
 
 extern struct tlk_rf_packet* tx_packet;
 

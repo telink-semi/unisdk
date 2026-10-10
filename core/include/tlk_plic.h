@@ -1,6 +1,10 @@
 #ifndef TLK_INCLUDE_DRIVERS_PLIC_H_
 #define TLK_INCLUDE_DRIVERS_PLIC_H_
 
+#if TLK_IS_DISABLED(CONFIG_TLK_PLIC)
+#warning PLIC driver is disabled in Kconfig, but its header is being used; note that its implementation will not be linked until you enable it in Kconfig.
+#endif
+
 #include "core/include/tlk_core.h"
 #include <stdbool.h>
 
@@ -62,14 +66,14 @@ void tlk_plic_set_threshold(enum tlk_irq_priority threshold);
  *
  * @return None.
  */
-void tlk_plic_preempt_enable(void);
+void tlk_plic_enable_preempt(void);
 
 /**
  * @brief Disable PLIC interrupt preemption feature.
  *
  * @return None.
  */
-void tlk_plic_preempt_disable(void);
+void tlk_plic_disable_preempt(void);
 
 #endif
 
@@ -85,12 +89,24 @@ void tlk_plic_set_pending(uint32_t src);
 /**
  * @brief Clears all pending interrupt requests.
  *
- * @return int32_t Status code (1 for success).
+ * @return Status code (1 for success).
  */
-_tlk_attribute_ram_code_sec_noinline_ int32_t tlk_plic_clr_all_request(void);
+int32_t tlk_plic_clr_all_request(void);
 
+/**
+ * @brief Claims the interrupt.
+ *
+ * @return Triggered interrupt source ID.
+ */
 uint32_t tlk_plic_interrupt_claim(void);
 
+/**
+ * @brief Completes the interrupt.
+ *
+ * @param src The interrupt source ID.
+ *
+ * @return None.
+ */
 void tlk_plic_interrupt_complete(uint32_t src);
 
 /**
@@ -104,8 +120,7 @@ void tlk_plic_interrupt_complete(uint32_t src);
  *
  * @return None.
  */
-_tlk_attribute_ram_code_sec_noinline_ void tlk_plic_irqs_preprocess_for_wfi(uint8_t   flag,
-                                                                            tlk_mie_e mie);
+void tlk_plic_preprocess_irqs_for_wfi(uint8_t flag, tlk_mie_e mie);
 
 /**
  * @brief Restores the PLIC state after WFI.
@@ -115,17 +130,27 @@ _tlk_attribute_ram_code_sec_noinline_ void tlk_plic_irqs_preprocess_for_wfi(uint
  *
  * @return None.
  */
-_tlk_attribute_ram_code_sec_noinline_ void tlk_plic_irqs_postprocess_for_wfi(void);
+void tlk_plic_postprocess_irqs_for_wfi(void);
 
-_tlk_attribute_ram_code_sec_noinline_ bool tlk_plic_is_in_isr(void);
-
-#if TLK_IS_ENABLED(CONFIG_TLK_PLIC)
-extern volatile uint8_t nesting_counter;
-#endif
+/**
+ * @brief Determines whether execution happens in an ISR now.
+ *
+ * @return true if execution happens in ISR.
+ */
+bool tlk_plic_is_in_isr(void);
 
 #if TLK_IS_ENABLED(CONFIG_TLK_PLIC_VECTOR_MODE)
-extern void tlk_plic_isr(tlk_func_isr_t func, uint32_t src);
+/**
+ * @brief The wrapper for calling of the ISR in vector mode.
+ *
+ * @param func  ISR to be called.
+ * @param src   Interrupt number.
+ * @return      None.
+ */
+void tlk_plic_isr(tlk_func_isr_t func, uint32_t src);
 #endif
+
+extern volatile uint8_t tlk_plic_nesting_counter;
 
 #define TLK_ISR_ENTRY_NAME(irq_num) entry_irq##irq_num
 #define TLK_PLIC_ISR_REGISTER(isr, irq_num)                                                        \
@@ -133,9 +158,9 @@ extern void tlk_plic_isr(tlk_func_isr_t func, uint32_t src);
                    (__attribute__((interrupt("machine"), aligned(4)))))                            \
     _tlk_attribute_ram_code_sec_noinline_ void TLK_ISR_ENTRY_NAME(irq_num)(void)                   \
     {                                                                                              \
-        TLK_IF_ENABLED(CONFIG_TLK_PLIC, (nesting_counter++;))                                      \
+        tlk_plic_nesting_counter++;                                                                \
         TLK_IF_ENABLED_ELSE(CONFIG_TLK_PLIC_VECTOR_MODE, (tlk_plic_isr(isr, irq_num);), (isr();))  \
-        TLK_IF_ENABLED(CONFIG_TLK_PLIC, (nesting_counter--;))                                      \
+        tlk_plic_nesting_counter--;                                                                \
     }
 
 #endif

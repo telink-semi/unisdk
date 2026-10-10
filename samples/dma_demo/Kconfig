@@ -1,16 +1,9 @@
-config TLK_DMA_DEMO
-    def_bool y
-    select TLK_DMA
-    select TLK_API_PRINT # TODO: change to log
-    select TLK_API_TIME
-
-
 menu "DMA Sample configuration"
 
 config TLK_DMA_DEMO_INTERRUPT
     bool "DMA demo with interrupt"
     select TLK_PLIC
-    select TLK_DMA_IRQ_HANDLER
+    select TLK_DMA_IRQ
 
 config TLK_DMA_DEMO_SLEEP
     bool "DMA demo with sleep"

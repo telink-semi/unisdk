@@ -1,12 +1,14 @@
-#include "api/include/tlk_sleep.h"
 #include "api/include/tlk_time.h"
 #include "common/include/tlk_utils.h"
+#include "core/include/tlk_core.h"
 #include "core/include/tlk_gpio.h"
 #include "core/include/tlk_i2c.h"
 #include "system/debug/log/tlk_log.h"
-#include "tlk_board_pinout.h"
-#include "tlk_core.h"
 #include <string.h>
+
+#if TLK_IS_ENABLED(CONFIG_TLK_I2C_DEMO_PM)
+#include "api/include/tlk_sleep.h"
+#endif
 
 #define SLAVE_ADDRESS 0x5a
 #define BUFFER_SIZE   8
@@ -39,10 +41,10 @@ void handler(struct tlk_i2c_device* dev, enum tlk_i2c_event event)
     switch (event)
     {
     case TLK_I2C_EVENT_WRITE_REQUEST:
-        tlk_gpio_pin_toggle(UNISDK_BOARD_LED_0_PORT, UNISDK_BOARD_LED_0_PIN);
+        tlk_gpio_pin_toggle(PINMUX_LED_0_PORT, PINMUX_LED_0_PIN);
         break;
     case TLK_I2C_EVENT_READ_REQUEST:
-        tlk_gpio_pin_toggle(UNISDK_BOARD_LED_1_PORT, UNISDK_BOARD_LED_1_PIN);
+        tlk_gpio_pin_toggle(PINMUX_LED_1_PORT, PINMUX_LED_1_PIN);
         memcpy(tx_buffer, rx_buffer, BUFFER_SIZE);
         break;
     case TLK_I2C_EVENT_STOP:
@@ -64,7 +66,7 @@ int main(void)
 
     tlk_core_interrupt_enable();
 
-    tlk_i2c_configure_pinmux(dev, &pinmux);
+    tlk_i2c_pinmux_configure(dev, &pinmux);
 
 #if TLK_IS_ENABLED(CONFIG_TLK_I2C_DEMO_ROLE_MASTER)
 
@@ -84,7 +86,7 @@ int main(void)
         status = tlk_i2c_master_write(dev, SLAVE_ADDRESS, tx_buffer, BUFFER_SIZE);
         TLK_LOG_INFO(i2c_demo, "Master write status: %s", status_to_string(status));
 
-        tlk_api_delay(TLK_MS_TO_US(10));
+        tlk_api_time_delay(TLK_MS_TO_US(10));
 
         status = tlk_i2c_master_read(dev, SLAVE_ADDRESS, rx_buffer, BUFFER_SIZE);
         TLK_LOG_INFO(i2c_demo, "Master read status: %s", status_to_string(status));
@@ -99,12 +101,12 @@ int main(void)
             TLK_LOG_INFO(i2c_demo, "Error: Wrong data received.");
         }
 
-        tlk_api_delay(TLK_MS_TO_US(500));
+        tlk_api_time_delay(TLK_MS_TO_US(500));
 
 #if TLK_IS_ENABLED(CONFIG_TLK_I2C_DEMO_PM)
         tlk_api_sleep(500);
 #else
-        tlk_api_delay(TLK_MS_TO_US(500));
+        tlk_api_time_delay(TLK_MS_TO_US(500));
 #endif
     }
 
@@ -120,8 +122,8 @@ int main(void)
     tlk_i2c_slave_set_tx(dev, tx_buffer, BUFFER_SIZE);
     tlk_i2c_slave_set_rx(dev, rx_buffer, BUFFER_SIZE);
 
-    tlk_gpio_configure(UNISDK_BOARD_LED_0_PORT, UNISDK_BOARD_LED_0_PIN, TLK_GPIO_OUTPUT);
-    tlk_gpio_configure(UNISDK_BOARD_LED_1_PORT, UNISDK_BOARD_LED_1_PIN, TLK_GPIO_OUTPUT);
+    tlk_gpio_configure(PINMUX_LED_0_PORT, PINMUX_LED_0_PIN, TLK_GPIO_OUTPUT);
+    tlk_gpio_configure(PINMUX_LED_1_PORT, PINMUX_LED_1_PIN, TLK_GPIO_OUTPUT);
 
     while (1)
     {

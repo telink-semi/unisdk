@@ -27,7 +27,7 @@
 
 .extern tlk_core_init
 .extern tlk_core_init_flash
-.extern tlk_pre_init
+.extern tlk_perform_pre_init
 .extern main
 
     .section .vectors, "ax"
@@ -128,19 +128,19 @@ _EXECIT_INIT_END:
 
     /* Run the core_init, pre-init */
     call tlk_core_init_flash
-    call tlk_pre_init
+    call tlk_perform_pre_init
 
     /* Jump to the main function */
 _MAIN_FUNC:
-#if TLK_IS_ENABLED (CONFIG_TLK_TASK_PLANNER)
+#if TLK_IS_ENABLED(CONFIG_TLK_TASK_PLANNER)
     call user_setup
 #else
     call main
 #endif
-#if TLK_IS_ENABLED (CONFIG_TLK_TASK_PLANNER_MODE_LOOP)
+#if TLK_IS_ENABLED(CONFIG_TLK_TASK_PLANNER_MODE_LOOP)
     call tlk_platform_loop
 #elif TLK_IS_ENABLED (CONFIG_TLK_TASK_PLANNER_MODE_SCHEDULER)
-    call task_planner_run
+    call tlk_task_planner_run
 #endif
 _END:
     j    _END

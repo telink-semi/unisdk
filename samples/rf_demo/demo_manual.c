@@ -37,7 +37,7 @@ static void switch_channel(void)
         current_channel = 17;
     }
 
-    tlk_rf_set_ble_channel(current_channel);
+    tlk_rf_ble_set_channel(current_channel);
 }
 
 static void fast_settle_init(void)
@@ -55,24 +55,24 @@ void transmitter_loop(void)
 {
     TLK_IF_ENABLED(CONFIG_TLK_RF_DEMO_CHANNEL_SWITCHING, (fast_settle_init()));
 
-    tlk_rf_set_tx_fifo(tx_buffer, TX_FIFO_DEPTH, TX_FIFO_SIZE);
-    tlk_rf_set_rx_fifo(rx_buffer, RX_FIFO_COUNT, RX_FIFO_SIZE);
+    tlk_rf_tx_fifo_set(tx_buffer, TX_FIFO_DEPTH, TX_FIFO_SIZE);
+    tlk_rf_rx_fifo_set(rx_buffer, RX_FIFO_COUNT, RX_FIFO_SIZE);
 
     while (1)
     {
         TLK_IF_ENABLED(CONFIG_TLK_RF_DEMO_CHANNEL_SWITCHING, (switch_channel()));
 
-        tlk_rf_prepare_tx_packet(tx_packet, TX_PDU_SIZE);
+        tlk_rf_tx_prepare_packet(tx_packet, TX_PDU_SIZE);
         GET_PDU(tx_packet)->payload_size = PACKET_PAYLOAD_SIZE;
         GET_PDU(tx_packet)->payload[0]++;
 
         on_ping_sent();
 
         tlk_rf_set_tx_state();
-        tlk_api_delay(tlk_rf_instance.fs.tx_time);
+        tlk_api_time_delay(tlk_rf_instance.fs.tx_time);
         tlk_rf_start_tx_state();
 
-        ping = tlk_api_micros();
+        ping = tlk_api_time_micros();
 
         while (!tlk_rf_instance.tx_end)
         {
@@ -82,26 +82,27 @@ void transmitter_loop(void)
         tlk_rf_set_idle_state();
 
         tlk_rf_set_rx_state();
-        tlk_api_delay(tlk_rf_instance.fs.rx_time);
+        tlk_api_time_delay(tlk_rf_instance.fs.rx_time);
 
-        while (!tlk_rf_instance.rx_end && tlk_api_micros() - ping < TLK_MS_TO_US(PING_TIMEOUT_MS))
+        while (!tlk_rf_instance.rx_end &&
+               tlk_api_time_micros() - ping < TLK_MS_TO_US(PING_TIMEOUT_MS))
         {
             TLK_IF_ENABLED(CONFIG_TLK_RF_DEMO_POLLING_MODE, (tlk_rf_irq_process()));
         }
 
         tlk_rf_set_idle_state();
 
-        ping = tlk_api_micros() - ping;
+        ping = tlk_api_time_micros() - ping;
 
         on_pong_received();
 
 #if TLK_IS_ENABLED(CONFIG_TLK_RF_DEMO_PM)
         /* The delay just to see that chip is active. */
-        tlk_api_delay(TLK_MS_TO_US(250));
+        tlk_api_time_delay(TLK_MS_TO_US(250));
 
         tlk_api_sleep(1000 + 500);
 #else
-        tlk_api_delay(TLK_MS_TO_US(1000));
+        tlk_api_time_delay(TLK_MS_TO_US(1000));
 #endif
 
         TLK_IF_ENABLED(CONFIG_TLK_RF_DEMO_MODE_SWITCHING, (switch_mode()));
@@ -112,15 +113,15 @@ void receiver_loop(void)
 {
     TLK_IF_ENABLED(CONFIG_TLK_RF_DEMO_CHANNEL_SWITCHING, (fast_settle_init()));
 
-    tlk_rf_set_tx_fifo(tx_buffer, TX_FIFO_DEPTH, TX_FIFO_SIZE);
-    tlk_rf_set_rx_fifo(rx_buffer, RX_FIFO_COUNT, RX_FIFO_SIZE);
+    tlk_rf_tx_fifo_set(tx_buffer, TX_FIFO_DEPTH, TX_FIFO_SIZE);
+    tlk_rf_rx_fifo_set(rx_buffer, RX_FIFO_COUNT, RX_FIFO_SIZE);
 
     while (1)
     {
         TLK_IF_ENABLED(CONFIG_TLK_RF_DEMO_CHANNEL_SWITCHING, (switch_channel()));
 
         tlk_rf_set_rx_state();
-        tlk_api_delay(tlk_rf_instance.fs.rx_time);
+        tlk_api_time_delay(tlk_rf_instance.fs.rx_time);
 
         while (!tlk_rf_instance.rx_end)
         {
@@ -132,11 +133,11 @@ void receiver_loop(void)
         on_ping_received();
 
         memcpy(tx_buffer, tlk_rf_instance.rx_packet, TX_PACKET_SIZE);
-        tlk_rf_prepare_tx_packet(tx_packet, TX_PDU_SIZE);
+        tlk_rf_tx_prepare_packet(tx_packet, TX_PDU_SIZE);
         GET_PDU(tx_packet)->payload_size = PACKET_PAYLOAD_SIZE;
 
         tlk_rf_set_tx_state();
-        tlk_api_delay(tlk_rf_instance.fs.tx_time);
+        tlk_api_time_delay(tlk_rf_instance.fs.tx_time);
         tlk_rf_start_tx_state();
 
         while (!tlk_rf_instance.tx_end)

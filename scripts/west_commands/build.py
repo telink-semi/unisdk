@@ -15,8 +15,8 @@ sys.path.insert(0, str(script_dir))
 BUILD_USAGE = '''
 west tl-build [-h] [-d BUILD_DIR]
            [-t TARGET] [-p {auto, always, never}] [-c] [--cmake-only]
-           [-o BUILD_OPT] [--kconfig] [--clean] [--flash] [-b BOARD] [--soc SOC]
-           [source_dir] -- [cmake_opt [cmake_opt ...]]'''
+           [-o BUILD_OPT] [--kconfig] [--clean] [-b BOARD] [--soc SOC]
+           [-s SOURCE_DIR] [source_dir] -- [cmake_opt [cmake_opt ...]]'''
 
 BUILD_DESCRIPTION = '''\nConvenience wrapper for building Telink applications.
 
@@ -58,10 +58,14 @@ class Build(WestCommand):
         # Add standard build options
         parser.add_argument("source_dir", nargs='?', default=os.getcwd(),
                           help="Application source directory (default: current directory)")
+        parser.add_argument("-s", "--source-dir", dest="source_dir_opt",
+                          help="Application source directory (alternative to the positional argument)")
         parser.add_argument("-d", "--build-dir",
                           help="Build directory")
-        parser.add_argument("-c", "--cmake-only", action="store_true",
+        parser.add_argument("--cmake-only", action="store_true",
                           help="Just run CMake, don't build")
+        parser.add_argument("-c", "--cmake", action="store_true",
+                          help="Force a cmake run")
         parser.add_argument("-k", "--kconfig", action="store_true", 
                         help="Run configuration before building")
         parser.add_argument("-t", "--target",
@@ -71,10 +75,8 @@ class Build(WestCommand):
                           help="Control whether to use a pristine build directory")
         parser.add_argument("--clean", action="store_true",
                           help="Clean build directory before building")
-        parser.add_argument("--flash", action="store_true",
-                          help="Flash firmware after building")
-        parser.add_argument("-o", "--build-option", dest="build_options", action="append",
-                          help="Extra options to pass to the build system")
+        parser.add_argument("-o", "--build-opt", "--build-option", dest="build_options", action="append",
+                          help="Extra options to pass to the build system (e.g. VERBOSE=1)")
         parser.add_argument("--soc", 
                           help="Specify SOC for configuration")
         parser.add_argument("-b", "--board", 
@@ -83,19 +85,17 @@ class Build(WestCommand):
         return parser
         
     def _run_menuconfig(self):
-        """Run CMake config target for interactive configuration"""
+        """Run the configuration targets for interactive configuration"""
         try:
-            # Base build arguments
-            build_args = [
-                'cmake', '--build', str(self.build_dir),
-                '--target', 'config'
-            ]
-            
-            # Run CMake config target
-            result = subprocess.run(build_args, cwd=self.source_dir)
-            if result.returncode:
-                self.die(f"Error running cmake config with return code {result.returncode}")
-            return result.returncode
+            # One top-level build per step: a nested build can't regenerate
+            # build.ninja on Windows (see cmake/modules/kconfig.cmake)
+            for target in ('config_chip', 'config_build', 'generate_autoconf', 'update_dotpinmux'):
+                build_args = ['cmake', '--build', str(self.build_dir), '--target', target]
+                result = subprocess.run(build_args, cwd=self.source_dir)
+                if result.returncode:
+                    self.die(f"Error running cmake target {target} with return code {result.returncode}")
+                    return result.returncode
+            return 0
         except Exception as e:
             self.die(f"Error running cmake config: {e}")
             return 1
@@ -139,13 +139,12 @@ class Build(WestCommand):
         cached_app = cached_proj
 
         self.dbg('APP_DIR:', cached_app, level=Verbosity.DBG_EXTREME)
-        source_abs = (os.path.abspath(self.args.source_dir)
-                      if self.args.source_dir else None)
+        source_abs = str(self.source_dir)
         cached_abs = os.path.abspath(cached_app) if cached_app else None
 
         # If the build directory specifies a source app, make sure it's
-        # consistent with --source-dir.
-        apps_mismatched = (source_abs and cached_abs and
+        # consistent with the requested source directory.
+        apps_mismatched = (cached_abs and
             pathlib.Path(source_abs).resolve() != pathlib.Path(cached_abs).resolve())
 
         if apps_mismatched and not self.auto_pristine and not self.args.clean:
@@ -189,7 +188,9 @@ class Build(WestCommand):
                 return 1
 
         # Set up paths
-        self.source_dir = pathlib.Path(self.args.source_dir).resolve()
+        # Prefer -s/--source-dir, fall back to the positional argument.
+        source_arg = getattr(args, 'source_dir_opt', None) or args.source_dir
+        self.source_dir = pathlib.Path(source_arg).resolve()
         self.inf(f"Build source directory {self.source_dir}")
 
         # Set build directory
@@ -230,9 +231,14 @@ class Build(WestCommand):
 
         self._sanity_check()
 
+        # Force a cmake run if requested (-c/--cmake, zephyr west build
+        # compatibility).
+        if getattr(self.args, 'cmake', False):
+            self.run_cmake = True
+
         # Configure CMake
-        self.inf(f"Configuring build in {self.build_dir}...")
         if self.run_cmake:
+            self.inf(f"Configuring build in {self.build_dir}...")
             if not self.args.board and not self.args.soc and not self.args.kconfig:
                 self.wrn("Neither board nor soc specified, using default values. " \
                 "If cmake was already configured, the cached values will be used.")
@@ -269,8 +275,24 @@ class Build(WestCommand):
         return (self.build_dir / ".config").exists()
     
     def _clean_build(self):
-        """Clean build directory (strong clean: removes everything including config)"""
+        """Clean build directory (strong clean: removes everything including config)
+
+        Prefer reusing the CMake 'pristine' target so that west, make and CI
+        all share the same clean implementation. Fall back to removing the
+        whole directory when the build dir is not configured (no build.ninja)
+        or when the pristine target fails.
+        """
         if self.build_dir.exists():
+            if (self.build_dir / "build.ninja").exists():
+                try:
+                    result = subprocess.run(
+                        ['cmake', '--build', str(self.build_dir), '--target', 'pristine'])
+                    if result.returncode == 0:
+                        self.inf(f"Pristine-cleaned build directory: {self.build_dir}")
+                        return 0
+                    self.wrn("pristine target failed, falling back to full directory removal")
+                except Exception as e:
+                    self.wrn(f"pristine target failed ({e}), falling back to full directory removal")
             import shutil
             try:
                 shutil.rmtree(self.build_dir)

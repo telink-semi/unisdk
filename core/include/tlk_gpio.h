@@ -1,6 +1,14 @@
 #ifndef TLK_INCLUDE_DRIVERS_GPIO_H_
 #define TLK_INCLUDE_DRIVERS_GPIO_H_
 
+#if TLK_IS_DISABLED(CONFIG_TLK_GPIO)
+#warning GPIO driver is disabled in Kconfig, but its header is being used; note that its implementation will not be linked until you enable it in Kconfig.
+#endif
+
+#if TLK_IS_DISABLED(CONFIG_TLK_GPIO_USE_PORT)
+#warning GPIO driver has no enabled ports; enable the ones you are going to use, otherwise disable the driver entirely.
+#endif
+
 #include "common/include/tlk_linked_list.h"
 #include "properties/tlk_gpio.h"
 
@@ -9,7 +17,7 @@
 #define TLK_DECLARE_GPIO_PORT(num)         _TLK_DECLARE_GPIO_PORT(num, UNISDK_GPIO_PORT_NAMES_##num)
 
 #define TLK_DECLARE_GPIO_PORT_IF_ENABLED(num)                                                      \
-    TLK_IF_ENABLED(CONFIG_TLK_GPIO_PORT_##num##_ENABLED, (TLK_DECLARE_GPIO_PORT(num)))
+    TLK_IF_ENABLED(CONFIG_TLK_GPIO_PORT_##num, (TLK_DECLARE_GPIO_PORT(num)))
 
 enum tlk_gpio_port
 {

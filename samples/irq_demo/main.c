@@ -150,7 +150,7 @@ static void tlk_sample_mei_low_isr(void)
         tlk_plic_set_pending(TLK_SAMPLE_PLIC_SRC_HIGH);
 
         // delay to set the pending for high-priority IRQ
-        tlk_api_delay(100);
+        tlk_api_time_delay(100);
     }
 
 #endif
@@ -192,7 +192,7 @@ static void tlk_sample_mei_high_isr(void)
         tlk_plic_set_pending(TLK_SAMPLE_PLIC_SRC_LOW);
 
         // delay to set the pending for low-priority IRQ
-        tlk_api_delay(100);
+        tlk_api_time_delay(100);
     }
 
 #endif
@@ -211,7 +211,7 @@ int main(void)
     tlk_plic_sw_register_callback(tlk_sample_msi_handler);
 
     // MTI Configuration
-    tlk_mtimer_register_callback(tlk_sample_mti_handler);
+    tlk_mtimer_irq_register_callback(tlk_sample_mti_handler);
 
     // MEI Configuration
     tlk_plic_set_priority(TLK_SAMPLE_PLIC_SRC_LOW, TLK_IRQ_PRI_LEV1);
@@ -223,7 +223,7 @@ int main(void)
 
 #if TLK_IS_ENABLED(CONFIG_TLK_IRQ_DEMO_IRQ_BASE_PLIC) &&                                           \
     TLK_IS_ENABLED(CONFIG_TLK_IRQ_DEMO_PLIC_PREEMPT)
-    tlk_plic_preempt_enable();
+    tlk_plic_enable_preempt();
 #endif
 
     // M-mode interrupts configuration

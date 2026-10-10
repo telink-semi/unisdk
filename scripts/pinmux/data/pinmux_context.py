@@ -1,4 +1,5 @@
 import logging
+from pathlib import Path
 
 from scripts.pinmux.data.path_manager import PathManager
 from scripts.pinmux.data.pin_data import PinData
@@ -27,9 +28,10 @@ class PinmuxContext:
     ports: dict[PortName, PortData] = {}
     functions: dict[PinmuxFunctionName, PinmuxFunction] = {}
 
-    def __init__(self, path_manager: PathManager, dotconfig: ConfigReader) -> None:
+    def __init__(self, path_manager: PathManager, chip_config: ConfigReader, build_config: ConfigReader) -> None:
         self.path_manager = path_manager
-        self.dotconfig = dotconfig
+        self.chip_config = chip_config
+        self.build_config = build_config
 
     @property
     def port_names(self) -> set[PortName]:
@@ -53,15 +55,33 @@ class PinmuxContext:
         return data
 
 
+    @property
+    def soc_pinmux_dir(self) -> Path:
+        """packages/<core>/soc/<soc_series>/pinmux/ - the restructure that
+        introduced packages/ moved this out from under soc/<soc_series>/
+        directly, and made the package (CONFIG_TLK_CORE) a separate path
+        segment since one package can host more than one soc_series."""
+
+        return self.path_manager.root_dir / "packages" / self.id.core / "soc" / self.id.soc_series / "pinmux"
+
+    @property
+    def board_pinmux_dir(self) -> Path:
+        """packages/<core>/boards/<board>/pinmux/."""
+        
+        if not self.id.has_board:
+            return Path()
+        
+        return self.path_manager.root_dir / "packages" / self.id.core / "boards" / self.id.board / "pinmux"
+    
     def read_ports(self) -> None:
-        data_yaml_path = self.path_manager.root_dir / "soc" / self.id.soc_series / "pinmux" / "pinmux.yaml"
+        data_yaml_path = self.soc_pinmux_dir / "pinmux.yaml"
         data_yaml = YamlReader(data_yaml_path)
         ports = data_yaml.data.get("pinmux", {}).get("port", {})
         if not isinstance(ports, dict):
             logger.error(f"Cannot read port data in {data_yaml.path}")
             return
 
-        data_yaml_override_path = self.path_manager.root_dir / "soc" / self.id.soc_series / "pinmux" / f"pinmux_{self.id.case.lower()}.yaml"
+        data_yaml_override_path = self.soc_pinmux_dir / f"pinmux_{self.id.case.lower()}.yaml"
         data_yaml_override = YamlReader(data_yaml_override_path)
         ports_override = data_yaml_override.data.get("pinmux", {}).get("port", {})
         if isinstance(ports_override, dict) and ports_override:
@@ -96,7 +116,7 @@ class PinmuxContext:
 
             port = PortData(port_name[1].upper(), self)
             
-            port.disabled = not self.dotconfig.configs.get(f"TLK_GPIO_PORT_{port.name}_ENABLED", False)
+            port.disabled = not self.build_config.configs.get(f"TLK_GPIO_PORT_{port.name}", False)
 
             port_ex = listify(port_entry.get("exclude"))
             # port_in = listify(port_entry.get("include")) # unsupported feature for now
@@ -147,12 +167,14 @@ class PinmuxContext:
                 self.ports[port_name[1].upper()] = port
 
     def read_functions(self) -> None:
-        if self.id.type == PinmuxType.BOARD:
-            # TODO: parse board's yaml as well
-            pass
-
-        yaml_path = self.path_manager.root_dir / "soc" / self.id.soc_series / "pinmux" / "function.yaml"
+        yaml_path = self.soc_pinmux_dir / "function.yaml"
         yaml = YamlReader(yaml_path).data
+
+        if self.id.type == PinmuxType.BOARD:
+            board_yaml_path = self.board_pinmux_dir / "function.yaml"
+            board_yaml = YamlReader(board_yaml_path).data
+
+            merge(yaml, board_yaml)
 
         nested_functions: dict[str, dict] = yaml.get("pinmux", {}).get("function", {})
 
@@ -173,29 +195,34 @@ class PinmuxContext:
                 function.optional = function_data.get("optional", False)
                 function.repeatable = function_data.get("repeatable", False)
 
-                if not self.dotconfig.configs.get(function.depends_on, None):
+                if not self.build_config.configs.get(function.depends_on, None):
                     logger.info(f"Skipping {function.name} function...")
                     continue
 
                 self.functions[function.name] = function
 
     def read_id(self) -> None:
-        """Read the identifier from the dotconfig."""
+        """Read the identifier from the chip_config."""
 
-        if self.dotconfig.configs.get("TLK_HAS_BOARD_SELECTED", False):
-            self.id.board = self.dotconfig.configs.get("TLK_BOARD")
+        if self.chip_config.configs.get("TLK_BOARD_IS_SELECTED", False):
+            self.id.board = self.chip_config.configs.get("TLK_BOARD")
 
-        self.id.soc_series = self.dotconfig.configs.get("TLK_SOC_SERIES", "")
+        self.id.soc_series = self.chip_config.configs.get("TLK_SOC_SERIES", "")
         if not self.id.soc_series:
             logger.error("CONFIG_TLK_SOC_SERIES not found")
             return
-        
-        self.id.soc = self.dotconfig.configs.get("TLK_SOC", "")
+
+        self.id.core = self.chip_config.configs.get("TLK_CORE", "")
+        if not self.id.core:
+            logger.error("CONFIG_TLK_CORE not found")
+            return
+
+        self.id.soc = self.chip_config.configs.get("TLK_SOC", "")
         if not self.id.soc:
             logger.error("CONFIG_TLK_SOC not found")
             return
 
-        self.id.case = self.dotconfig.configs.get("TLK_CASE", "")
+        self.id.case = self.chip_config.configs.get("TLK_CASE", "")
         if not self.id.case:
             logger.error("CONFIG_TLK_CASE not found")
             return

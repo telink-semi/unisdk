@@ -130,7 +130,7 @@ uint16_t const* tud_descriptor_string_cb(uint8_t index, uint16_t langid)
  * - Non-blocking by default: if the CDC TX FIFO is full, remaining bytes
  *   are dropped.
  */
-uint16_t tlk_log_usb_print_buffer(const uint8_t* buf, uint16_t len)
+uint16_t tlk_debug_log_usb_print_buffer(const uint8_t* buf, uint16_t len)
 {
     if (buf == NULL || len == 0)
     {
@@ -220,12 +220,12 @@ uint16_t tlk_log_usb_print_buffer(const uint8_t* buf, uint16_t len)
     return total_written;
 }
 
-void tlk_log_usb_cdc_init(void)
+void tlk_debug_log_usb_cdc_init(void)
 {
     tud_init(BOARD_TUD_RHPORT);
 }
 
-void tlk_log_usb_run(void)
+void tlk_debug_log_usb_run(void)
 {
     tud_task();
 }

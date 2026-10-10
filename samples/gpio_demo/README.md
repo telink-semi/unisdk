@@ -29,7 +29,7 @@ This sample shows:
 The application enters an infinite `while` loop and performs:
 
 - Periodic toggling of **LED0**
-- `tlk_api_delay(TLK_SEC_TO_MS(1000))` followed by `tlk_api_sleep(1000)`
+- `tlk_api_time_delay(TLK_SEC_TO_MS(1000))` followed by `tlk_api_sleep(1000)`
   demonstrating delay and sleep API usage in combination with GPIO output.
 
 ## Configuration Options
